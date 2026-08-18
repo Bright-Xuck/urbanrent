@@ -11,3 +11,78 @@ generator client {
 datasource db {
   provider = "postgresql"
 }
+
+// ============================================================
+// Enums
+// ============================================================
+
+enum Role {
+  TENANT
+  LANDLORD
+  ADMIN
+}
+
+enum VerificationState {
+  UNVERIFIED
+  VERIFIED
+}
+
+enum AccountState {
+  ACTIVE
+  SUSPENDED
+}
+
+enum PropertyStatus {
+  DRAFT
+  PUBLISHED
+  UNPUBLISHED
+  ARCHIVED
+}
+
+// ============================================================
+// Models
+// ============================================================
+
+model User {
+  id                String            @id @default(uuid()) @db.Uuid
+  email             String            @unique
+  passwordHash      String
+  role              Role
+  verificationState VerificationState @default(UNVERIFIED)
+  accountState      AccountState      @default(ACTIVE)
+  createdAt         DateTime          @default(now()) @map("created_at")
+  updatedAt         DateTime          @updatedAt @map("updated_at")
+
+  sessions   Session[]
+  properties Property[]
+
+  @@map("users")
+}
+
+model Session {
+  id        String    @id @default(uuid()) @db.Uuid
+  userId    String    @db.Uuid
+  tokenHash String    @map("token_hash")
+  issuedAt  DateTime  @default(now()) @map("issued_at")
+  expiresAt DateTime  @map("expires_at")
+  revokedAt DateTime? @map("revoked_at")
+  device    String?
+  userAgent String?   @map("user_agent")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@map("sessions")
+}
+
+model Property {
+  id        String   @id @default(uuid()) @db.Uuid
+  ownerId   String   @db.Uuid
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  owner User @relation(fields: [ownerId], references: [id], onDelete: Restrict)
+
+  @@index([ownerId])
+  @@map("properties")
+}
