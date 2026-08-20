@@ -22,3 +22,16 @@ export async function findUserByEmail(email: string) {
     where: { email },
   });
 }
+
+// ============================================================
+// FIND USER BY ID
+// ============================================================
+// Used by the refresh token flow. When a refresh token comes in,
+// we extract the userId from it, then load the full user record
+// so we can issue a new access token with fresh user data.
+// ============================================================
+export async function findUserById(id: string) {
+  return prisma.user.findUnique({
+    where: { id },
+  });
+}
