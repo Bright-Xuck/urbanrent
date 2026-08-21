@@ -113,8 +113,50 @@ model Property {
   createdAt DateTime @default(now()) @map("created_at")
   updatedAt DateTime @updatedAt @map("updated_at")
 
-  owner User @relation(fields: [ownerId], references: [id], onDelete: Restrict)
+  owner            User              @relation(fields: [ownerId], references: [id], onDelete: Restrict)
+  propertyAmenities PropertyAmenity[]
 
   @@index([ownerId])
   @@map("properties")
+}
+
+// ============================================================
+// Amenity - a reusable catalog of property features
+// ============================================================
+// An amenity is a shared entity (e.g. "WiFi", "Parking", "Pool").
+// It exists independently so it can be linked to many properties.
+// ============================================================
+model Amenity {
+  id      String  @id @default(uuid()) @db.Uuid
+  name    String  @unique
+  picture String?
+
+  propertyAmenities PropertyAmenity[]
+
+  @@map("amenities")
+}
+
+// ============================================================
+// PropertyAmenity - linking table (many-to-many)
+// ============================================================
+// Links a Property to an Amenity. This is a join table for the
+// many-to-many relationship: one property has many amenities,
+// and one amenity belongs to many properties.
+//
+// The @@unique([propertyId, amenityId]) prevents the same amenity
+// from being added to the same property twice.
+// ============================================================
+model PropertyAmenity {
+  id         String   @id @default(uuid()) @db.Uuid
+  propertyId String   @db.Uuid
+  amenityId  String   @db.Uuid
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+  amenity  Amenity  @relation(fields: [amenityId], references: [id], onDelete: Cascade)
+
+  @@unique([propertyId, amenityId])
+  @@index([propertyId])
+  @@index([amenityId])
+  @@map("property_amenities")
 }
