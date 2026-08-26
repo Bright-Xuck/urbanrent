@@ -1,4 +1,5 @@
-import express, { type Express } from 'express';
+import express, { type Express, type NextFunction, type Request, type Response } from 'express';
+import multer from 'multer';
 import authRoutes from './routes/authRoutes.js';
 import propertyRoutes from './routes/propertyRoutes.js';
 import amenityRoutes from './routes/amenityRoutes.js'
@@ -14,5 +15,23 @@ app.get('/health', (_req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/properties', propertyRoutes);
 app.use('/api/properties/:propid', amenityRoutes)
+
+// ------------------------------------------------------------
+// Error handler
+// ------------------------------------------------------------
+// Express routes can call next(err) — most notably multer when a file
+// is rejected (wrong type / too large). Without a handler, Express
+// returns HTML. This turns those errors into clean JSON responses.
+// Must be registered AFTER all routes.
+// ------------------------------------------------------------
+app.use((err: Error, req: Request, res: Response, _next: NextFunction) => {
+  // multer.MulterError carries structured upload errors (e.g. size limit).
+  if (err instanceof multer.MulterError) {
+    res.status(400).json({ message: err.message });
+    return;
+  }
+  // Custom errors thrown by our file filter use a plain Error.message.
+  res.status(400).json({ message: err.message ?? "Bad request" });
+});
 
 export default app;

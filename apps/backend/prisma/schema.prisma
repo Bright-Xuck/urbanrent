@@ -115,6 +115,7 @@ model Property {
 
   owner            User              @relation(fields: [ownerId], references: [id], onDelete: Restrict)
   propertyAmenities PropertyAmenity[]
+  images           PropertyImage[]
 
   @@index([ownerId])
   @@map("properties")
@@ -159,4 +160,26 @@ model PropertyAmenity {
   @@index([propertyId])
   @@index([amenityId])
   @@map("property_amenities")
+}
+
+// ============================================================
+// PropertyImage - images belonging to a property
+// ============================================================
+// Each property can have multiple images. This model stores the
+// image URL plus the Cloudinary public id (so we can delete the
+// image from Cloudinary later when needed).
+//
+// onDelete: Cascade means deleting a property removes all its images.
+// ============================================================
+model PropertyImage {
+  id         String   @id @default(uuid()) @db.Uuid
+  propertyId String   @db.Uuid
+  url        String
+  publicId   String   @map("public_id")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  @@index([propertyId])
+  @@map("property_images")
 }
