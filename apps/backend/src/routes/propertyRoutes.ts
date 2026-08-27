@@ -1,8 +1,10 @@
 import express from 'express';
 import { authenticate } from '../middleware/authenticate.js';
+import { requireLandordadmin } from '../middleware/RBAC.js';
 import {
   CreateProperty,
   GetProperties,
+  GetMyProperties,
   GetPropertyById,
   UpdateProperty,
   DeleteProperty,
@@ -15,15 +17,18 @@ import upload from '../middleware/upload.js';
 
 const router: express.Router = express.Router()
 
-// All property routes require authentication.
-// The `authenticate` middleware runs first, sets req.user,
-// and the controller uses req.user.userId as the ownerId.
-
 //create property
 router.post('/', authenticate, CreateProperty)
 
-//get all properties (owner's own listings)
-router.get('/', authenticate, GetProperties)
+//get all properties - PUBLIC marketplace browse (published only)
+//No authenticate: any visitor can browse listings.
+router.get('/', GetProperties)
+
+//get MY properties - authenticated owner dashboard (landlord/admin only)
+//IMPORTANT: this must be registered BEFORE the /:id route below, otherwise
+//Express would treat the literal "mine" as a value for the :id param and
+//swallow this route.
+router.get('/mine', authenticate, requireLandordadmin, GetMyProperties)
 
 //get a single property by id
 router.get('/:id', authenticate, GetPropertyById)

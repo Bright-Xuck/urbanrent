@@ -1,11 +1,14 @@
 import type { Request, Response } from "express";
+import type { PropertyType } from "../../generated/prisma/enums.js";
 import {
   createPropertyForOwner,
   getPropertyById,
-  getPropertiesByOwner,
+  getPublishedProperties,
+  getMyProperties,
   updatePropertyForOwner,
   deletePropertyForOwner,
 } from "../services/propertyService.js";
+import type { PropertyFilters } from "../repositories/propertyRepository.js";
 
 // ============================================================
 // PROPERTY CONTROLLER
@@ -79,21 +82,83 @@ export async function CreateProperty(req: Request, res: Response) {
 }
 
 // ============================================================
-// GET PROPERTIES (owner's own listings)
+// GET PROPERTIES (public marketplace browse)
 // ============================================================
 // GET /api/properties
-// Returns all properties owned by the authenticated user.
+// PUBLIC: no auth required. Returns ONLY published properties across
+// all landlords, paginated, so tenants/visitors can browse listings.
 // ============================================================
 export async function GetProperties(req: Request, res: Response) {
+  // Read + validate query params. Defaults: offset 0, 10 per request.
+  const offset = Number(req.query.offset) || 0;
+  const limit = Number(req.query.limit) || 10;
+  if (offset < 0 || limit < 1) {
+    res.status(400).json({ message: "offset must be >= 0 and limit must be >= 1" });
+    return;
+  }
+
+  // Read the optional filter params.
+  const { propertyType, city } = req.query;
+  const minRent = Number(req.query.minRent) || 0;
+  const maxRent = Number(req.query.maxRent) || 0;
+  const minBedrooms = Number(req.query.minBedrooms) || 0;
+
+  // Validate: minRent must be <= maxRent when both are present.
+  if (minRent > 0 && maxRent > 0 && minRent > maxRent) {
+    res.status(400).json({ message: "minRent cannot be greater than maxRent" });
+    return;
+  }
+
+  // Build the filters object. Only include keys that were actually provided,
+  // so an empty query behaves exactly like today.
+  const filters: PropertyFilters = {};
+  if (propertyType && isPropertyType(propertyType as string)) {
+    filters.propertyType = propertyType as PropertyType;
+  }
+  if (city) filters.city = city as string;
+  if (minRent > 0) filters.minRent = minRent;
+  if (maxRent > 0) filters.maxRent = maxRent;
+  if (minBedrooms > 0) filters.minBedrooms = minBedrooms;
+
+  try {
+    const result = await getPublishedProperties(filters, offset, limit);
+    res.status(200).json(result);
+  } catch (error) {
+    res.status(500).json({ message: "Internal server error" });
+  }
+}
+
+// Helper: only accept a `propertyType` value that matches a real enum member.
+function isPropertyType(value: string): boolean {
+  return ["APARTMENT", "STUDIO", "HOUSE", "VILLA", "COMMERCIAL", "OTHER"].includes(value);
+}
+
+// ============================================================
+// GET MY PROPERTIES (authenticated owner dashboard)
+// ============================================================
+// GET /api/properties/mine
+// LANDLORD/ADMIN only. Returns the caller's OWN properties in ALL
+// statuses (drafts included), paginated. ownerId always comes from
+// req.user.userId, never from the request.
+// ============================================================
+export async function GetMyProperties(req: Request, res: Response) {
   const ownerId = req.user?.userId;
   if (!ownerId) {
     res.status(401).json({ message: "Not authenticated" });
     return;
   }
 
+  // Read + validate query params. Defaults: offset 0, 10 per request.
+  const offset = Number(req.query.offset) || 0;
+  const limit = Number(req.query.limit) || 10;
+  if (offset < 0 || limit < 1) {
+    res.status(400).json({ message: "offset must be >= 0 and limit must be >= 1" });
+    return;
+  }
+
   try {
-    const properties = await getPropertiesByOwner(ownerId);
-    res.status(200).json({ properties });
+    const result = await getMyProperties(ownerId, offset, limit);
+    res.status(200).json(result);
   } catch (error) {
     res.status(500).json({ message: "Internal server error" });
   }

@@ -17,7 +17,7 @@ export function requireLandordadmin(
 ) {
   const { user } = req;
   if (user?.role !== "ADMIN" && user?.role !== "LANDLORD") {
-    res.status(501).json({ message: "not authorized" });
+    res.status(403).json({ message: "not authorized" });
     return; // the return is to stop the code from executing is this condition is met
   }
 

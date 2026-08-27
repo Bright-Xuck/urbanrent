@@ -2,10 +2,12 @@ import {
   createProperty,
   findPropertyById,
   findPropertiesByOwner,
+  findPublishedProperties,
   updateProperty,
   deleteProperty,
   type CreatePropertyInput,
   type UpdatePropertyInput,
+  type PropertyFilters,
 } from "../repositories/propertyRepository.js";
 
 // ============================================================
@@ -43,12 +45,28 @@ export async function getPropertyById(id: string) {
 }
 
 // ------------------------------------------------------------
-// GET PROPERTIES BY OWNER
+// GET MY PROPERTIES (landlord/owner dashboard)
 // ------------------------------------------------------------
-// Returns all properties owned by a specific user.
+// Returns the authenticated user's OWN properties, in ALL statuses
+// (drafts included), paginated. Only the owner ever calls this.
 // ------------------------------------------------------------
-export async function getPropertiesByOwner(ownerId: string) {
-  return findPropertiesByOwner(ownerId);
+export async function getMyProperties(ownerId: string, offset: number, limit: number) {
+  return findPropertiesByOwner(ownerId, offset, limit);
+}
+
+// ------------------------------------------------------------
+// GET PUBLISHED PROPERTIES (public marketplace browse)
+// ------------------------------------------------------------
+// Returns ONLY published properties across all landlords, paginated
+// and filtered. This is the public browse used on `GET /api/properties`,
+// open to any visitor.
+// ------------------------------------------------------------
+export async function getPublishedProperties(
+  filters: PropertyFilters,
+  offset: number,
+  limit: number
+) {
+  return findPublishedProperties(filters, offset, limit);
 }
 
 // ------------------------------------------------------------

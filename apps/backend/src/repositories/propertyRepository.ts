@@ -90,11 +90,97 @@ export async function findPropertyById(id: string) {
 // ============================================================
 // Returns all properties owned by a specific user.
 // ============================================================
-export async function findPropertiesByOwner(ownerId: string) {
-  return prisma.property.findMany({
-    where: { ownerId },
-    orderBy: { createdAt: "desc" },
-  });
+export async function findPropertiesByOwner(ownerId: string, offset: number, limit: number) {
+  // Prisma's skip = how many rows to skip (offset), take = how many rows to return (limit).
+  // One query fetches the rows for this page, another counts total rows.
+  const [properties, total] = await Promise.all([
+    prisma.property.findMany({
+      where: { ownerId },
+      orderBy: { createdAt: "desc" },
+      skip: offset,
+      take: limit,
+    }),
+    prisma.property.count({ where: { ownerId } }),
+  ]);
+
+  const totalPages = Math.ceil(total / limit);
+
+  return { properties, total, offset, limit, totalPages };
+}
+
+// The filters the public browse endpoint accepts.
+// All optional; an omitted filter is simply not applied.
+export interface PropertyFilters {
+  propertyType?: PropertyType;
+  city?: string;
+  minRent?: number;
+  maxRent?: number;
+  minBedrooms?: number;
+}
+
+// ============================================================
+// BUILD THE `where` CLAUSE FROM FILTERS
+// ============================================================
+// Takes the base where (e.g. { status: "PUBLISHED" }) and grows it
+// with whatever filters the user supplied. Filters that weren't
+// provided are simply left out of the object.
+// ============================================================
+function applyFilters(
+  base: { status: string },
+  filters: PropertyFilters
+): object {
+  const where: Record<string, unknown> = { ...base };
+
+  if (filters.propertyType) where.propertyType = filters.propertyType; // exact match
+  if (filters.city) where.city = filters.city; // exact match
+
+  // >= for bedrooms.
+  if (filters.minBedrooms) where.bedrooms = { gte: filters.minBedrooms };
+
+  // Rent is a RANGE: minRent and maxRent must collapse into ONE
+  // { gte, lte } object. Spr****eading preserves whichever is set first
+  // instead of overwriting it.
+  let rentRange: { gte?: number; lte?: number } = {};
+  if (filters.minRent) rentRange.gte = filters.minRent;
+  if (filters.maxRent) rentRange.lte = filters.maxRent;
+  if (rentRange.gte !== undefined || rentRange.lte !== undefined) {
+    where.monthlyRent = rentRange;
+  }
+
+  return where;
+}
+
+// ============================================================
+// FIND PUBLISHED PROPERTIES (public marketplace browse)
+// ============================================================
+// Returns ONLY PUBLISHED properties, across all landlords, paginated
+// and FILTERED. Used by the public GET /api/properties endpoint so
+// any visitor can browse listings without logging in.
+//
+// CRITICAL: the SAME `where` object is used for BOTH the page query
+// and the count query, so totalPages always reflects the visible
+// (filtered) results.
+// ============================================================
+export async function findPublishedProperties(
+  filters: PropertyFilters,
+  offset: number,
+  limit: number
+) {
+  const where = applyFilters({ status: "PUBLISHED" as const }, filters);
+
+  const [properties, total] = await Promise.all([
+    prisma.property.findMany({
+      where,
+      orderBy: { createdAt: "desc" },
+      skip: offset,
+      take: limit,
+    }),
+    prisma.property.count({ where }),
+  ]);
+
+  const totalPages = Math.ceil(total / limit);
+
+  return { properties, total, offset, limit, totalPages };
 }
 
 // ============================================================
