@@ -31,27 +31,32 @@ export async function uploadPropertyImages(
     throw new Error("You do not have permission to upload images to this property");
   }
 
-  // These we fill as we upload. uploadedPaths is used only for cleanup.
-  const uploaded = []; // { url, publicId }
-  const uploadedPaths = []; // Supabase object paths
+  // uploadedPaths is used only for cleanup if something fails mid-upload.
+  const uploadedPaths: string[] = []; // Supabase object paths
 
   try {
-    // 2. Upload every file, one at a time
-    for (const file of files) {
-      // Unique name per file, so two people uploading "photo.jpg"
-      // never overwrite each other.
-      const objectPath = `properties/${propertyId}/${randomUUID()}`;
+    // 2. Upload all files CONCURRENTLY.
+    //    Promise.all runs each upload in parallel instead of one-at-a-time.
+    //    Note: we push to uploadedPaths INSIDE each task BEFORE resolving,
+    //    so even if one upload fails (and Promise.all rejects), the catch
+    //    below still knows every path that actually got uploaded.
+    const uploaded = await Promise.all(
+      files.map(async (file) => {
+        // Unique name per file, so two people uploading "photo.jpg"
+        // never overwrite each other.
+        const objectPath = `properties/${propertyId}/${randomUUID()}`;
 
-      const { error } = await supabase.storage
-        .from(bucket)
-        .upload(objectPath, file.buffer, { contentType: file.mimetype });
+        const { error } = await supabase.storage
+          .from(bucket)
+          .upload(objectPath, file.buffer, { contentType: file.mimetype });
 
-      if (error) throw new Error(error.message);
+        if (error) throw new Error(error.message);
 
-      uploadedPaths.push(objectPath);
-      const { data } = supabase.storage.from(bucket).getPublicUrl(objectPath);
-      uploaded.push({ url: data.publicUrl, publicId: objectPath });
-    }
+        uploadedPaths.push(objectPath);
+        const { data } = supabase.storage.from(bucket).getPublicUrl(objectPath);
+        return { url: data.publicUrl, publicId: objectPath };
+      })
+    );
 
     // 3. Save them all at once in the database
     return await createImagesForProperty(propertyId, uploaded);
