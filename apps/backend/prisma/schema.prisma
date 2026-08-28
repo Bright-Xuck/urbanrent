@@ -48,6 +48,22 @@ enum PropertyType {
   OTHER
 }
 
+enum ApplicationStatus {
+  SUBMITTED
+  UNDER_REVIEW
+  APPROVED
+  REJECTED
+  WITHDRAWN
+}
+
+enum ViewingRequestStatus {
+  REQUESTED
+  CONFIRMED
+  DECLINED
+  COMPLETED
+  NO_SHOW
+}
+
 // ============================================================
 // Models
 // ============================================================
@@ -64,6 +80,8 @@ model User {
 
   sessions   Session[]
   properties Property[]
+  applications Application[]
+  viewingRequests ViewingRequest[]
 
   @@map("users")
 }
@@ -116,6 +134,8 @@ model Property {
   owner            User              @relation(fields: [ownerId], references: [id], onDelete: Restrict)
   propertyAmenities PropertyAmenity[]
   images           PropertyImage[]
+  applications     Application[]
+  viewingRequests  ViewingRequest[]
 
   @@index([ownerId])
   @@map("properties")
@@ -182,4 +202,77 @@ model PropertyImage {
 
   @@index([propertyId])
   @@map("property_images")
+}
+
+// ============================================================
+// Application - a tenant applies to rent a property
+// ============================================================
+// A tenant submits an application against a property. The lifecycle is
+// driven by the ApplicationStatus state machine:
+//
+//   SUBMITTED → UNDER_REVIEW → APPROVED | REJECTED
+//   SUBMITTED → APPROVED | REJECTED          (landlord can skip review)
+//   SUBMITTED → WITHDRAWN                     (tenant withdraws)
+//   UNDER_REVIEW → WITHDRAWN                  (tenant withdraws)
+//
+// NOTE: We intentionally do NOT put a @@unique([tenantId, propertyId])
+// constraint here. That would block a tenant from ever reapplying after
+// a REJECTED/WITHDRAWN application. Instead, "one ACTIVE application
+// per tenant per property" is enforced in the SERVICE layer (a tenant
+// can't have two SUBMITTED/UNDER_REVIEW applications on the same
+// property, but CAN reapply once an earlier one is terminal).
+// ============================================================
+model Application {
+  id         String            @id @default(uuid()) @db.Uuid
+  tenantId   String            @db.Uuid
+  propertyId String            @db.Uuid
+  status     ApplicationStatus @default(SUBMITTED)
+  note       String?
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  tenant   User     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([propertyId])
+  @@index([tenantId, propertyId])
+  @@map("applications")
+}
+
+// ============================================================
+// ViewingRequest - a tenant requests a viewing, landlord confirms
+// ============================================================
+// Dynamic request/confirm model: the tenant proposes one or more
+// times (stored as a JSON array), and the landlord confirms one,
+// declines, or marks a confirmed viewing as completed/no-show.
+//
+// Lifecycle:
+//   REQUESTED → CONFIRMED | DECLINED        (landlord/admin)
+//   CONFIRMED → COMPLETED | NO_SHOW         (landlord/admin)
+//
+// NOTE on concurrency: confirming a time should reject times that
+// overlap an already-CONFIRMED viewing on the same property. That
+// check MUST use a transaction with a row lock (SELECT ... FOR
+// UPDATE) to avoid a TOCTOU race — this is left as a learning
+// exercise, flagged in viewingRequestService.ts.
+// ============================================================
+model ViewingRequest {
+  id            String                @id @default(uuid()) @db.Uuid
+  propertyId    String                @db.Uuid
+  tenantId      String                @db.Uuid
+  status        ViewingRequestStatus  @default(REQUESTED)
+  proposedTimes Json?                 @map("proposed_times")
+  confirmedTime DateTime?             @map("confirmed_time")
+
+  createdAt DateTime @default(now()) @map("created_at")
+  updatedAt DateTime @updatedAt @map("updated_at")
+
+  tenant   User     @relation(fields: [tenantId], references: [id], onDelete: Cascade)
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  @@index([tenantId])
+  @@index([propertyId])
+  @@map("viewing_requests")
 }

@@ -3,6 +3,10 @@ import multer from 'multer';
 import authRoutes from './routes/authRoutes.js';
 import propertyRoutes from './routes/propertyRoutes.js';
 import amenityRoutes from './routes/amenityRoutes.js'
+import applicationRoutes from './routes/applicationRoutes.js'
+import propertyApplicationRoutes from './routes/propertyApplicationRoutes.js'
+import viewingRequestRoutes from './routes/viewingRequestRoutes.js'
+import propertyViewingRequestRoutes from './routes/propertyViewingRequestRoutes.js'
 
 const app: Express = express();
 
@@ -15,6 +19,10 @@ app.get('/health', (_req, res) => {
 app.use('/api/auth', authRoutes);
 app.use('/api/properties', propertyRoutes);
 app.use('/api/properties/:propid', amenityRoutes)
+app.use('/api/properties/:propertyId/applications', propertyApplicationRoutes)
+app.use('/api/applications', applicationRoutes)
+app.use('/api/properties/:propertyId/viewing-requests', propertyViewingRequestRoutes)
+app.use('/api/viewing-requests', viewingRequestRoutes)
 
 // ------------------------------------------------------------
 // Error handler
