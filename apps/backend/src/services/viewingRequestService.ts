@@ -1,6 +1,7 @@
 import { PropertyStatus, Role, ViewingRequestStatus } from "../../generated/prisma/enums.js";
 import { findPropertyById } from "../repositories/propertyRepository.js";
 import {
+  confirmViewingWithoutConflicts,
   createViewingRequest,
   findViewingRequestById,
   findViewingRequestsByTenant,
@@ -15,10 +16,10 @@ import {
 //   2. The ViewingRequestStatus state machine.
 //   3. CREATE guards: tenant only, property must be PUBLISHED.
 //
-// NOTE: the "confirm with no overlapping times" check is a
-// CONCURRENCY / TRANSACTION exercise — deliberately left as a marked
-// TODO at the bottom of this file for you to implement. See
-// `confirmViewing` below.
+// NOTE: confirming a viewing is ATOMIC — confirmViewingWithoutConflicts
+// (in the repository) runs the calendar check inside one transaction
+// with a pessimistic row lock, so two confirms for the same landlord
+// can never double-book the same time slot.
 // ============================================================
 
 // Transition matrix. Landlord/admin drive all of these.
@@ -35,6 +36,11 @@ const ALLOWED_TRANSITIONS: Record<ViewingRequestStatus, ViewingRequestStatus[]> 
   COMPLETED: [],
   NO_SHOW: [],
 };
+
+// How close two confirmed viewings may be before the second one is
+// blocked. 60 minutes ≈ how long a viewing takes. To change the rule
+// later (e.g. make it neighborhood-aware), change this one spot.
+const VIEWING_CONFLICT_MS = 60 * 60 * 1000; // 60 minutes, in milliseconds
 
 // ------------------------------------------------------------
 // CREATE VIEWING REQUEST (tenant only)
@@ -123,18 +129,16 @@ export async function changeViewingRequestStatus(
     if (!confirmedTime) {
       throw new Error("A confirmed time is required to confirm a viewing");
     }
-    // ═══════════════════════════════════════════════════════════
-    // CONCURRENCY EXERCISE (you implement this):
-    // Before confirming, you should verify that `confirmedTime` does
-    // NOT overlap another already-CONFIRMED viewing on the SAME
-    // property. If it does, throw an error (→ 409 in the controller).
-    //
-    // This must be done inside a TRANSACTION with a ROW LOCK to avoid
-    // the TOCTOU race (read → check → write where another request
-    // slips in between). See the write-up I gave you.
-    //
-    // Right now it just confirms without the overlap check.
-    // ═══════════════════════════════════════════════════════════
+    // Confirm atomically: the repository runs lock → re-read → calendar
+    // check → write inside ONE transaction, so two confirms for the same
+    // landlord can never slip past the check (TOCTOU).
+    // Throws "overlaps ..." → the controller returns 409 Conflict.
+    return confirmViewingWithoutConflicts(
+      request.property.ownerId,
+      id,
+      confirmedTime, // narrowed to Date by the guard above
+      VIEWING_CONFLICT_MS
+    );
   }
 
   return updateViewingRequestStatus(id, next, confirmedTime);

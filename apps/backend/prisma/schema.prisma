@@ -252,11 +252,12 @@ model Application {
 //   REQUESTED → CONFIRMED | DECLINED        (landlord/admin)
 //   CONFIRMED → COMPLETED | NO_SHOW         (landlord/admin)
 //
-// NOTE on concurrency: confirming a time should reject times that
-// overlap an already-CONFIRMED viewing on the same property. That
-// check MUST use a transaction with a row lock (SELECT ... FOR
-// UPDATE) to avoid a TOCTOU race — this is left as a learning
-// exercise, flagged in viewingRequestService.ts.
+// NOTE on concurrency: confirming a time rejects times that overlap
+// any already-CONFIRMED viewing on ANY property owned by the same
+// landlord (a landlord can't be in two viewings at once). The check
+// runs inside a transaction with a pessimistic row lock (SELECT ...
+// FOR UPDATE on the landlord's row) to avoid a TOCTOU race —
+// implemented in viewingRequestService.ts.
 // ============================================================
 model ViewingRequest {
   id            String                @id @default(uuid()) @db.Uuid

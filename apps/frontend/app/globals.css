@@ -1,0 +1,41 @@
+@import "tailwindcss";
+
+@theme {
+  --font-display: var(--font-fraunces), ui-serif, Georgia, serif;
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+
+  --color-paper: #faf8f3;
+  --color-paper-dim: #f2efe6;
+  --color-ink: #1c1b19;
+  --color-ink-soft: #55524a;
+  --color-line: #d8d2c4;
+  --color-navy: #1f3a5f;
+  --color-navy-dark: #16293f;
+  --color-ochre: #c17817;
+  --color-ochre-dark: #9c6112;
+  --color-verified: #2f6b4f;
+  --color-danger: #a13d2e;
+}
+
+body {
+  background-color: var(--color-paper);
+  color: var(--color-ink);
+}
+
+/* Visible keyboard focus, kept consistent across the whole app */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+select:focus-visible,
+textarea:focus-visible {
+  outline: 2px solid var(--color-navy);
+  outline-offset: 2px;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+  }
+}

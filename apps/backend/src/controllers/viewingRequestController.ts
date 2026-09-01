@@ -153,6 +153,13 @@ export async function ChangeViewingRequestStatus(req: Request, res: Response) {
       res.status(403).json({ message: error.message });
       return;
     }
+    // Landlord double-booked: the confirmed time overlaps another
+    // already-confirmed viewing → 409 Conflict. (Checked BEFORE the
+    // 400 branch below — the message also contains "confirmed time".)
+    if (error instanceof Error && error.message.includes("overlap")) {
+      res.status(409).json({ message: error.message });
+      return;
+    }
     if (error instanceof Error && (error.message.includes("Cannot move") || error.message.includes("confirmed time"))) {
       res.status(400).json({ message: error.message });
       return;
