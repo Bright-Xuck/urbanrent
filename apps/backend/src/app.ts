@@ -7,10 +7,12 @@ import applicationRoutes from './routes/applicationRoutes.js'
 import propertyApplicationRoutes from './routes/propertyApplicationRoutes.js'
 import viewingRequestRoutes from './routes/viewingRequestRoutes.js'
 import propertyViewingRequestRoutes from './routes/propertyViewingRequestRoutes.js'
+import cors from 'cors'
 
 const app: Express = express();
 
 app.use(express.json());
+app.use(cors())
 
 app.get('/health', (_req, res) => {
   res.json({ ok: true, message: 'Server is running' });
