@@ -58,6 +58,15 @@ export async function Login(req: Request, res: Response) {
             password,
         });
 
+        // Set the cookie BEFORE res.json() — once the response body is
+        // flushed, the Set-Cookie header can no longer be added.
+        res.cookie("RefreshToken", refreshToken, {
+            httpOnly: true,
+            secure: true,
+            path: "/api/auth",
+            maxAge: 7 * 24 * 60 * 60 * 1000,
+        });
+
         res.status(200).json({
             message: "Login successful",
             user: {
@@ -65,8 +74,7 @@ export async function Login(req: Request, res: Response) {
                 email: user.email,
                 role: user.role,
             },
-            accessToken,
-            refreshToken,
+            accessToken
         });
     } catch (error) {
         if (error instanceof Error && error.message === "Invalid email or password") {
@@ -88,7 +96,7 @@ export async function Login(req: Request, res: Response) {
 // refresh token, and we issue a new access token.
 // ============================================================
 export async function Refresh(req: Request, res: Response) {
-    const { refreshToken } = req.body;
+    const  refreshToken  = req.cookies.RefreshToken;
 
     // If no refresh token was provided, reject.
     if (!refreshToken) {
@@ -123,7 +131,7 @@ export async function Refresh(req: Request, res: Response) {
 // Revokes the session so the refresh token can no longer be used.
 // ============================================================
 export async function Logout(req: Request, res: Response) {
-    const { refreshToken } = req.body;
+    const  refreshToken  = req.cookies.RefreshToken;
 
     // If no refresh token was provided, reject.
     if (!refreshToken) {
@@ -134,6 +142,14 @@ export async function Logout(req: Request, res: Response) {
     try {
         await logoutUser(refreshToken);
 
+        // Clear the cookie BEFORE res.json() — clearCookie sets a header,
+        // and once json() flushes the response that header is dropped.
+        // path + secure must match how the cookie was set, or the browser
+        // ignores the deletion.
+        res.clearCookie("RefreshToken", {
+            path: "/api/auth",
+            secure: true,
+        });
         res.status(200).json({ message: "Logged out successfully" });
     } catch (error) {
         if (error instanceof Error && error.message === "Invalid refresh token") {

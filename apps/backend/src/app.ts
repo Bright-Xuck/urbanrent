@@ -8,11 +8,13 @@ import propertyApplicationRoutes from './routes/propertyApplicationRoutes.js'
 import viewingRequestRoutes from './routes/viewingRequestRoutes.js'
 import propertyViewingRequestRoutes from './routes/propertyViewingRequestRoutes.js'
 import cors from 'cors'
+import cookieParser from 'cookie-parser'
 
 const app: Express = express();
 
 app.use(express.json());
-app.use(cors())
+app.use(cors({ credentials: true, origin: true }))
+app.use(cookieParser())
 
 app.get('/health', (_req, res) => {
   res.json({ ok: true, message: 'Server is running' });
