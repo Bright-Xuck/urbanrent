@@ -1,4 +1,5 @@
 import { Fraunces, Inter } from "next/font/google";
+import type { ReactNode } from "react";
 import "./globals.css";
 
 const fraunces = Fraunces({
@@ -19,7 +20,7 @@ export const metadata = {
   description: "Rent formally. Cameroonian cities, one trusted record at a time.",
 };
 
-export default function RootLayout({ children }) {
+export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en" className={`${fraunces.variable} ${inter.variable}`}>
       <body className="font-sans antialiased">{children}</body>

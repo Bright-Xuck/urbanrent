@@ -105,12 +105,11 @@ export async function Refresh(req: Request, res: Response) {
     }
 
     try {
-        const { accessToken, user } = await refreshAccessToken(refreshToken);
+        const { accessToken } = await refreshAccessToken(refreshToken);
 
         res.status(200).json({
             message: "Token refreshed successfully",
-            accessToken,
-            user,
+            accessToken
         });
     } catch (error) {
         // All refresh errors (invalid, revoked, expired) return 401.

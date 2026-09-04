@@ -1,5 +1,18 @@
 import StatusBadge from "./StatusBadge";
 
+type PropertyCardProps = {
+  index: number;
+  title: string;
+  city: string;
+  neighborhood?: string;
+  bedrooms: number;
+  bathrooms: number;
+  monthlyRent: number;
+  status?: string;
+  imageLabel?: string;
+  href?: string;
+};
+
 export default function PropertyCard({
   index,
   title,
@@ -11,7 +24,7 @@ export default function PropertyCard({
   status,
   imageLabel = "Photo",
   href = "/property/1",
-}) {
+}: PropertyCardProps) {
   return (
     <a
       href={href}

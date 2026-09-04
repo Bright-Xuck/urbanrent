@@ -3,27 +3,23 @@ import { create } from "zustand";
 type Auth = {
   user: User | null;
   accessToken: string | null;
-  RefreshToken: string | null;
-  Register:(User: Omit<User, "id">)=> void
-  Login: (user: User) => void;
-  Logout: () => void;
+  login: (user: User, accessToken:string) => void;
+  logout: () => void;
 };
 
-type User = {
-  id: string;
-  email: string;
-  role: string;
+export type User = {
+  id: "TENANT" | "LANDLORD" | "ADMIN" | null
+  email: string | null
+  role: string | null;
 };
 
 export const useAuthStore = create<Auth>((set) => ({
-  user: { id: "null", email: "null", role: "null" },
+  user: { id: null, email: null, role: null },
   accessToken: null,
-  RefreshToken: null,
-  Register:()=>{
-    set((state)=>({
-        RefreshToken: state.RefreshToken
-    }))
+  login:({id, email, role}:User, accessToken)=>{
+    set(()=>({user: {id, email, role}, accessToken: accessToken}))
   },
-  Login:()=>{},
-  Logout:()=>{}
+  logout:()=>{
+    set(()=>({user: null, accessToken: null}))
+  }
 }));
