@@ -4,7 +4,18 @@
   "description": "",
   "main": "index.js",
   "scripts": {
+    "dev": "pnpm --dir apps/frontend dev",
+    "build": "pnpm --dir apps/frontend build",
+    "start": "pnpm --dir apps/frontend start",
     "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "workspaces": [
+    "apps/frontend"
+  ],
+  "dependencies": {
+    "next": "^16.3.4",
+    "react": "^19.2.8",
+    "react-dom": "^19.2.8"
   },
   "keywords": [],
   "author": "",
@@ -12,7 +23,7 @@
   "devEngines": {
     "packageManager": {
       "name": "pnpm",
-      "version": "^11.17.0",
+      "version": "11.17.0",
       "onFail": "download"
     }
   },
