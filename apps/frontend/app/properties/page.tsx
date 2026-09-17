@@ -1,0 +1,2 @@
+import {PageFrame,PropertyGrid} from "../../components/Navbar";
+export default function Properties(){return <PageFrame title="Properties" eyebrow="EXPLORE PROPERTIES"><section className="section"><div className="search-box" style={{maxWidth:"100%",marginTop:0,marginBottom:45}}><input placeholder="Search properties"/><button>All locations</button><button>All types</button><button className="search-submit">⌕</button></div><PropertyGrid/></section></PageFrame>}

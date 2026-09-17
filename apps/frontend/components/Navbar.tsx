@@ -1,69 +1,15 @@
-export default function Navbar({ authed = false, role = "guest" }) {
-  return (
-    <header className="border-b border-line bg-paper">
-      <div className="mx-auto flex max-w-6xl items-center justify-between px-6 py-4">
-        <a href="/" className="flex items-center gap-3">
-          <span className="flex h-9 w-9 items-center justify-center rounded-full border border-navy text-navy">
-            <span className="font-display text-sm">UR</span>
-          </span>
-          <span className="font-display text-lg text-ink">UrbanRent</span>
-        </a>
+import Link from "next/link";
 
-        <nav className="hidden items-center gap-8 text-sm text-ink-soft md:flex">
-          <a href="/" className="hover:text-ink">
-            Browse
-          </a>
-          {role === "landlord" && (
-            <>
-              <a href="/dashboard" className="hover:text-ink">
-                My properties
-              </a>
-              <a href="/applications" className="hover:text-ink">
-                Applications
-              </a>
-              <a href="/viewings" className="hover:text-ink">
-                Viewings
-              </a>
-            </>
-          )}
-          {role === "tenant" && (
-            <>
-              <a href="/applications" className="hover:text-ink">
-                My applications
-              </a>
-              <a href="/viewings" className="hover:text-ink">
-                My viewings
-              </a>
-            </>
-          )}
-        </nav>
-
-        {authed ? (
-          <div className="flex items-center gap-3">
-            <span className="hidden text-sm text-ink-soft sm:inline">
-              Njikang Bright
-            </span>
-            <span className="flex h-9 w-9 items-center justify-center rounded-full bg-navy text-sm text-paper">
-              NB
-            </span>
-          </div>
-        ) : (
-          <div className="flex items-center gap-3">
-            <a
-              href="/login"
-              className="text-sm text-ink-soft hover:text-ink"
-            >
-              Log in
-            </a>
-            <a
-              href="/register"
-              className="rounded-sm bg-navy px-4 py-2 text-sm text-paper hover:bg-navy-dark"
-            >
-              Create account
-            </a>
-          </div>
-        )}
-      </div>
-    </header>
-  );
+export default function Navbar({authed=false, role="guest"}: {authed?: boolean; role?: string}) {
+  return <header className="site-header"><div className="header-inner"><Link href="/" className="brand"><img src="https://realpress.thimpress.com/demo-main/wp-content/uploads/sites/19/2023/01/logo-2023-blue.png" alt="RealPress" /></Link><nav><Link className="active" href="/">Home</Link><Link href="/properties">Properties <span>⌄</span></Link><Link href="/properties/high-rise-townhouse">Property</Link><Link href="/about-us">Features <span>⌄</span></Link><Link href="/blog">Blog <span>⌄</span></Link><Link href="/about-us">Backend Demo</Link></nav><div className="header-actions"><Link href="/my-profile" className="user-icon">♙</Link><Link href="/my-profile" className="plus-icon">＋</Link></div></div></header>;
 }
+
+export function Footer(){return <footer><div className="footer-grid"><div><img className="footer-logo" src="https://realpress.thimpress.com/demo-main/wp-content/uploads/sites/19/2023/01/logo-2023-blue.png" alt="RealPress"/><p>Real estate made simple. Find your dream home with RealPress.</p></div><div><h4>Company</h4><Link href="/about-us">About Us</Link><Link href="/contact-us">Contact Us</Link><Link href="/blog">Our Blog</Link></div><div><h4>Quick Links</h4><Link href="/properties">Properties</Link><Link href="/faqs">FAQs</Link><Link href="/my-profile">My Profile</Link></div><div><h4>Contact</h4><p>info@realpress.com</p><p>+1 234 567 890</p><p>New York, USA</p></div></div><div className="footer-bottom"><span>© 2024 RealPress. All rights reserved.</span><span>Terms & Conditions &nbsp; Privacy Policy</span></div></footer>}
+
+export const propertyImages=["https://realpress.thimpress.com/demo-main/wp-content/uploads/sites/19/2022/12/14-scaled-e1689836098242-630x810.jpg","https://realpress.thimpress.com/demo-main/wp-content/uploads/sites/19/2022/12/Rectangle-1346-630x810.jpg","https://realpress.thimpress.com/demo-main/wp-content/uploads/sites/19/2022/10/10-0-min-scaled-e1689826767983-630x810.jpg","https://realpress.thimpress.com/demo-main/wp-content/uploads/sites/19/2022/12/Rectangle-1356-630x810.jpg","https://realpress.thimpress.com/demo-main/wp-content/uploads/sites/19/2022/10/rp-property-03-630x810.jpg"];
+export const propertyNames=["High-rise Townhouse","Resort Villas","Modern Studio","Modern Townhouses","Equestrian Villa"];
+export function PropertyCard({i=0}: {i?:number}){return <article className="property-card"><Link href={`/properties/${propertyNames[i%5].toLowerCase().replaceAll(" ","-")}`}><div className="property-image"><img src={propertyImages[i%5]} alt={propertyNames[i%5]}/><span className="badge">{i===2?"FOR RENT":"FOR SALE"}</span><button className="heart">♡</button></div><div className="property-info"><p className="muted">{i===2?"Apartment":"House"} · New York</p><h3>{propertyNames[i%5]}</h3><p className="price">${[850000,1200000,2400,680000,950000][i%5].toLocaleString()} <small>{i===2?"/ month":""}</small></p><div className="meta"><span>⌂ {i+2} Beds</span><span>♧ {i+1} Baths</span><span>▦ {i+1},{i+2} sqft</span></div></div></Link></article>}
+
+export function PageFrame({children, title, eyebrow}: {children:React.ReactNode;title:string;eyebrow?:string}){return <><Navbar/><section className="page-hero"><div><p className="eyebrow">{eyebrow||"REALPRESS"}</p><h1>{title}</h1><p>Home / {title}</p></div></section>{children}<Footer/></>}
+export function PropertyGrid(){return <div className="property-grid">{Array.from({length:6},(_,i)=><PropertyCard key={i} i={i}/>)}</div>}
+import type React from "react";

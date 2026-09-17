@@ -16,8 +16,8 @@ const inter = Inter({
 });
 
 export const metadata = {
-  title: "UrbanRent",
-  description: "Rent formally. Cameroonian cities, one trusted record at a time.",
+  title: "RealPress – Real Estate Platform",
+  description: "Find your next property faster with RealPress.",
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
