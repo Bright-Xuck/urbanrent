@@ -1,4 +1,10 @@
 /** @type {import('next').NextConfig} */
-const nextConfig = {};
+import path from "node:path";
+
+const nextConfig = {
+  turbopack: {
+    root: path.resolve(process.cwd(), "../.."),
+  },
+};
 
 export default nextConfig;
