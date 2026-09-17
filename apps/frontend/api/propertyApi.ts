@@ -193,35 +193,25 @@ export async function updateProperty(
 }
 
 // ------------------------------------------------------------
-// PUBLISH / UNPUBLISH — PATCH /api/properties/:id/publish
+// PUBLISH / UNPUBLISH / ARCHIVE — PATCH /api/properties/:id
 // ------------------------------------------------------------
+// There is NO separate publish endpoint on the backend, and there is
+// no need for one: `status` is just another column, so publishing is an
+// ordinary update. All three helpers below go through updateProperty,
+// which sends PATCH /api/properties/:id with { status: ... }.
+//
+// The backend checks that you own the property before changing it.
 export function publishProperty(id: string): Promise<Property> {
-  return setPublishState(id, "publish");
+  return updateProperty(id, { status: "PUBLISHED" });
 }
 
 export function unpublishProperty(id: string): Promise<Property> {
-  return setPublishState(id, "unpublish");
+  return updateProperty(id, { status: "UNPUBLISHED" });
 }
 
-// Shared by the two functions above — they only differ by the URL.
-async function setPublishState(
-  id: string,
-  action: "publish" | "unpublish"
-): Promise<Property> {
-  const token = useAuthStore.getState().accessToken;
-
-  const response = await fetch(`${API_URL}/properties/${id}/${action}`, {
-    method: "PATCH",
-    headers: { Authorization: `Bearer ${token}` },
-  });
-
-  const data = await response.json();
-
-  if (!response.ok) {
-    throw new Error(data.message || `Could not ${action} the property`);
-  }
-
-  return data.property;
+// The dashboard's "Archive" action. Same route, different status value.
+export function archiveProperty(id: string): Promise<Property> {
+  return updateProperty(id, { status: "ARCHIVED" });
 }
 
 // ------------------------------------------------------------

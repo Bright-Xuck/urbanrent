@@ -1,5 +1,0 @@
-import { PageFrame, PropertyGrid } from "../../components/Navbar";
-
-export default function Properties() {
-  return <PageFrame title="Properties" eyebrow="EXPLORE PROPERTIES"><main className="listing-page"><div className="listing-toolbar"><div><p className="eyebrow">PROPERTIES</p><h2>Find your perfect property</h2><p className="muted">Showing 6 of 24 properties</p></div><div className="sort-select">Sort by <strong>Latest</strong>⌄</div></div><div className="listing-layout"><aside className="filter-card"><h3>Filter Properties</h3><label>Keyword<input placeholder="Search by title..." /></label><label>Location<select><option>All locations</option><option>New York</option><option>Los Angeles</option></select></label><label>Property type<select><option>All types</option><option>House</option><option>Apartment</option></select></label><label>Price range<input placeholder="$ Min        $ Max" /></label><button className="btn filter-btn">Search Properties</button><button className="clear-btn">Clear all</button></aside><section><PropertyGrid /></section></div></main></PageFrame>;
-}
