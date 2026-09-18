@@ -5,6 +5,7 @@ import {
   createViewingRequest,
   findViewingRequestById,
   findViewingRequestsByTenant,
+  findViewingRequestsByOwner,
   updateViewingRequestStatus,
 } from "../repositories/viewingRequestRepository.js";
 
@@ -71,6 +72,16 @@ export async function createViewingRequestByTenant(
 // ------------------------------------------------------------
 export async function getMyViewingRequests(tenantId: string) {
   return findViewingRequestsByTenant(tenantId);
+}
+
+// ------------------------------------------------------------
+// GET INCOMING VIEWING REQUESTS (landlord inbox)
+// ------------------------------------------------------------
+// All viewing requests across the caller's OWN properties. Route is
+// role-gated to LANDLORD/ADMIN; this scopes every row to ownerId.
+// ------------------------------------------------------------
+export async function getIncomingViewingRequestsForLandlord(ownerId: string) {
+  return findViewingRequestsByOwner(ownerId);
 }
 
 // ------------------------------------------------------------

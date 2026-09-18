@@ -132,6 +132,9 @@ export type Application = {
   updatedAt: string;
   // Present on list + findById reads (the repository `include`s it).
   property?: NestedProperty;
+  // Present on the landlord "incoming" list only, so a landlord can see
+  // WHO applied. Trimmed to id + email, same shape as PropertyOwnerRef.
+  tenant?: PropertyOwnerRef;
 };
 
 // ------------------------------------------------------------
@@ -150,6 +153,9 @@ export type ViewingRequest = {
   updatedAt: string;
   // Present on list + findById reads.
   property?: NestedProperty;
+  // Present on the landlord "incoming" list only, so a landlord can see
+  // WHO requested the viewing. Trimmed to id + email.
+  tenant?: PropertyOwnerRef;
 };
 
 // ------------------------------------------------------------

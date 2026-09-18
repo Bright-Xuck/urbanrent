@@ -2,6 +2,7 @@ import type { Request, Response } from "express";
 import {
   createApplicationByTenant,
   getMyApplicationsByTenant,
+  getIncomingApplicationsForLandlord,
   getApplicationById,
   changeApplicationStatus,
 } from "../services/applicationService.js";
@@ -74,6 +75,29 @@ export async function GetMyApplications(req: Request, res: Response) {
 
   try {
     const applications = await getMyApplicationsByTenant(userId);
+    res.status(200).json({ applications });
+  } catch (error) {
+    res.status(500).json({ message: "Internal server error" });
+  }
+}
+
+// ------------------------------------------------------------
+// GET INCOMING APPLICATIONS (landlord inbox)
+// ------------------------------------------------------------
+// GET /api/applications/incoming
+// Applications submitted to ANY property the caller owns. The role gate
+// (LANDLORD/ADMIN) is requireLandordadmin on the route; the service
+// scopes the rows to ownerId, so a landlord only ever sees their own.
+// ------------------------------------------------------------
+export async function GetIncomingApplications(req: Request, res: Response) {
+  const userId = req.user?.userId;
+  if (!userId) {
+    res.status(401).json({ message: "Not authenticated" });
+    return;
+  }
+
+  try {
+    const applications = await getIncomingApplicationsForLandlord(userId);
     res.status(200).json({ applications });
   } catch (error) {
     res.status(500).json({ message: "Internal server error" });

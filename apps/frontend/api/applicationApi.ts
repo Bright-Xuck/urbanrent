@@ -67,6 +67,27 @@ export async function getMyApplications(): Promise<Application[]> {
 }
 
 // ------------------------------------------------------------
+// INCOMING — GET /api/applications/incoming (landlord/admin only)
+// ------------------------------------------------------------
+// Every application submitted to ANY property the caller owns, with the
+// applicant (tenant) included. A tenant calling this gets a 403.
+export async function getIncomingApplications(): Promise<Application[]> {
+  const token = useAuthStore.getState().accessToken;
+
+  const response = await fetch(`${API_URL}/applications/incoming`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.message || "Could not load incoming applications");
+  }
+
+  return data.applications;
+}
+
+// ------------------------------------------------------------
 // SINGLE — GET /api/applications/:id
 // ------------------------------------------------------------
 // Only the applicant, the property owner, or an admin can see it.

@@ -39,6 +39,8 @@ export default function Footer() {
           <h4>For landlords</h4>
           <Link href="/dashboard">My listings</Link>
           <Link href="/dashboard/properties/new">List a property</Link>
+          <Link href="/dashboard/applications">Applications</Link>
+          <Link href="/dashboard/viewings">Viewing requests</Link>
         </div>
 
         <div>

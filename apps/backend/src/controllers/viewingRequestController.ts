@@ -2,6 +2,7 @@ import type { Request, Response } from "express";
 import {
   createViewingRequestByTenant,
   getMyViewingRequests,
+  getIncomingViewingRequestsForLandlord,
   getViewingRequestById,
   changeViewingRequestStatus,
 } from "../services/viewingRequestService.js";
@@ -67,6 +68,28 @@ export async function GetMyViewingRequests(req: Request, res: Response) {
 
   try {
     const requests = await getMyViewingRequests(userId);
+    res.status(200).json({ requests });
+  } catch (error) {
+    res.status(500).json({ message: "Internal server error" });
+  }
+}
+
+// ------------------------------------------------------------
+// GET INCOMING VIEWING REQUESTS (landlord inbox)
+// ------------------------------------------------------------
+// GET /api/viewing-requests/incoming
+// Viewing requests submitted to ANY property the caller owns, scoped to
+// ownerId by the service; the route carries the LANDLORD/ADMIN role gate.
+// ------------------------------------------------------------
+export async function GetIncomingViewingRequests(req: Request, res: Response) {
+  const userId = req.user?.userId;
+  if (!userId) {
+    res.status(401).json({ message: "Not authenticated" });
+    return;
+  }
+
+  try {
+    const requests = await getIncomingViewingRequestsForLandlord(userId);
     res.status(200).json({ requests });
   } catch (error) {
     res.status(500).json({ message: "Internal server error" });

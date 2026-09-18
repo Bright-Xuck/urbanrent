@@ -123,6 +123,13 @@ function ViewingDetail() {
     }
   }
 
+  // Role-aware back link: tenants go back to their own requests,
+  // landlords/admins back to the incoming inbox on their dashboard.
+  // Declared before the early returns below so they can use it too.
+  const isLandlordView = user?.role === "LANDLORD" || user?.role === "ADMIN";
+  const backHref = isLandlordView ? "/dashboard/viewings" : "/viewings";
+  const backLabel = isLandlordView ? "Viewing requests" : "My viewings";
+
   if (loading) {
     return (
       <div className="rp-container rp-section">
@@ -136,8 +143,8 @@ function ViewingDetail() {
       <div className="rp-container rp-section">
         <PageHeader
           title="Viewing request"
-          backHref="/viewings"
-          backLabel="My viewings"
+          backHref={backHref}
+          backLabel={backLabel}
         />
         <div className="mt-6">
           <Alert variant="error">
@@ -155,8 +162,8 @@ function ViewingDetail() {
       <PageHeader
         title="Viewing request"
         subtitle={`Requested ${formatDate(request.createdAt)}`}
-        backHref="/viewings"
-        backLabel="My viewings"
+        backHref={backHref}
+        backLabel={backLabel}
       />
 
       <div className="mt-6 flex items-center gap-3">

@@ -67,6 +67,27 @@ export async function getMyViewingRequests(): Promise<ViewingRequest[]> {
 }
 
 // ------------------------------------------------------------
+// INCOMING — GET /api/viewing-requests/incoming (landlord/admin only)
+// ------------------------------------------------------------
+// Every viewing request submitted to ANY property the caller owns, with
+// the requesting tenant included. A tenant calling this gets a 403.
+export async function getIncomingViewingRequests(): Promise<ViewingRequest[]> {
+  const token = useAuthStore.getState().accessToken;
+
+  const response = await fetch(`${API_URL}/viewing-requests/incoming`, {
+    headers: { Authorization: `Bearer ${token}` },
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.message || "Could not load viewing requests");
+  }
+
+  return data.requests;
+}
+
+// ------------------------------------------------------------
 // SINGLE — GET /api/viewing-requests/:id
 // ------------------------------------------------------------
 export async function getViewingRequestById(id: string): Promise<ViewingRequest> {

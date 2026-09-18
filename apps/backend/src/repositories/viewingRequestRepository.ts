@@ -59,6 +59,23 @@ export async function findViewingRequestsByTenant(tenantId: string) {
 }
 
 // ------------------------------------------------------------
+// FIND VIEWING REQUESTS BY PROPERTY OWNER (landlord inbox)
+// ------------------------------------------------------------
+// Every viewing request against ANY property the owner owns, with the
+// requesting tenant included so the landlord knows who asked.
+// ------------------------------------------------------------
+export async function findViewingRequestsByOwner(ownerId: string) {
+  return prisma.viewingRequest.findMany({
+    where: { property: { ownerId } },
+    include: {
+      property: true,
+      tenant: { select: { id: true, email: true } },
+    },
+    orderBy: { createdAt: "desc" },
+  });
+}
+
+// ------------------------------------------------------------
 // UPDATE VIEWING REQUEST STATUS
 // ------------------------------------------------------------
 // Also lets us set confirmedTime when a request becomes CONFIRMED.

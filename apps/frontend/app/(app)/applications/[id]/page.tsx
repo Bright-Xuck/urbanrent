@@ -123,6 +123,13 @@ function ApplicationDetail() {
     }
   }
 
+  // Role-aware back link: tenants go back to their own submissions,
+  // landlords/admins back to the incoming inbox on their dashboard.
+  // Declared before the early returns below so they can use it too.
+  const isLandlordView = user?.role === "LANDLORD" || user?.role === "ADMIN";
+  const backHref = isLandlordView ? "/dashboard/applications" : "/applications";
+  const backLabel = isLandlordView ? "Applications" : "My applications";
+
   if (loading) {
     return (
       <div className="rp-container rp-section">
@@ -136,8 +143,8 @@ function ApplicationDetail() {
       <div className="rp-container rp-section">
         <PageHeader
           title="Application"
-          backHref="/applications"
-          backLabel="My applications"
+          backHref={backHref}
+          backLabel={backLabel}
         />
         <div className="mt-6">
           <Alert variant="error">
@@ -155,8 +162,8 @@ function ApplicationDetail() {
       <PageHeader
         title="Application"
         subtitle={`Submitted ${formatDate(application.createdAt)}`}
-        backHref="/applications"
-        backLabel="My applications"
+        backHref={backHref}
+        backLabel={backLabel}
       />
 
       <div className="mt-6 flex items-center gap-3">

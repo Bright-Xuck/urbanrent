@@ -79,6 +79,23 @@ export async function findApplicationsByTenant(tenantId: string) {
 }
 
 // ------------------------------------------------------------
+// FIND APPLICATIONS BY PROPERTY OWNER (landlord inbox)
+// ------------------------------------------------------------
+// Every application against ANY property the owner owns, with the
+// applicant (tenant) included so the landlord can see who applied.
+// ------------------------------------------------------------
+export async function findApplicationsByOwner(ownerId: string) {
+  return prisma.application.findMany({
+    where: { property: { ownerId } },
+    include: {
+      property: true,
+      tenant: { select: { id: true, email: true } },
+    },
+    orderBy: { createdAt: "desc" },
+  });
+}
+
+// ------------------------------------------------------------
 // UPDATE APPLICATION STATUS
 // ------------------------------------------------------------
 export async function updateApplicationStatus(

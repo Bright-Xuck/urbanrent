@@ -8,8 +8,9 @@
 // each one with the property it was made against already included.
 //
 // Applications are a TENANT concern (the backend sets every new account to
-// TENANT and gates the create route behind requireTenant), but any
-// signed-in user can call this safely — a landlord just gets an empty list.
+// TENANT and gates the create route behind requireTenant). This page is the
+// TENANT inbox — what I submitted — so it's TENANT-only. Landlords have
+// their own inbox at /dashboard/applications (applications they RECEIVED).
 // ============================================================
 
 import { useEffect, useState } from "react";
@@ -26,7 +27,7 @@ import { EmptyState, Loading } from "../../../components/ui/States";
 
 export default function ApplicationsPage() {
   return (
-    <RequireAuth title="Your applications">
+    <RequireAuth roles={["TENANT"]} title="Your applications">
       <MyApplications />
     </RequireAuth>
   );

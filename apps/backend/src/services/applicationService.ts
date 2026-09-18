@@ -5,6 +5,7 @@ import {
   findActiveApplication,
   findApplicationById,
   findApplicationsByTenant,
+  findApplicationsByOwner,
   updateApplicationStatus,
 } from "../repositories/applicationRepository.js";
 
@@ -86,6 +87,17 @@ export async function createApplicationByTenant(
 // ------------------------------------------------------------
 export async function getMyApplicationsByTenant(tenantId: string) {
   return findApplicationsByTenant(tenantId);
+}
+
+// ------------------------------------------------------------
+// GET INCOMING APPLICATIONS (landlord inbox)
+// ------------------------------------------------------------
+// All applications across the caller's OWN properties. The route is
+// role-gated to LANDLORD/ADMIN; this scopes every row to ownerId so a
+// landlord can never see another landlord's applications.
+// ------------------------------------------------------------
+export async function getIncomingApplicationsForLandlord(ownerId: string) {
+  return findApplicationsByOwner(ownerId);
 }
 
 // ------------------------------------------------------------

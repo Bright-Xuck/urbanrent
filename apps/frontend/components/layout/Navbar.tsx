@@ -1,22 +1,24 @@
 "use client";
 
 // ============================================================
-// NAVBAR
+// NAVBAR — public / marketing site
 // ============================================================
 // Reads the session from the store, so what it shows depends on who is
 // logged in:
-//   nobody      → Log in / Sign up
-//   TENANT      → "My viewings" + "My applications"
-//   LANDLORD    → "My listings" (the dashboard)
-//   ADMIN       → dashboard too
-// The round button goes to /my-profile; the small "Log out" button calls
-// POST /api/auth/logout (revoking the refresh cookie on the server) and
-// then clears the store.
+//   nobody      → Log in icon + "Sign up" button
+//   signed in   → avatar, "Log out" + ONE role-appropriate primary CTA.
+//                 No Log in, no Sign up — you're already in.
+//
+// The signed-in area has its own bar (DashboardNavbar): once you're in,
+// the marketing pages show just a light "you're logged in" state, and
+// the dashboards carry the role-specific links (listings, applications,
+// viewings). Blog is gone — it was a dead dropdown pointing at
+// /properties; the tenant "Features" dropdown was the same clutter.
 // ============================================================
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { CalendarDays, ChevronDown, LogIn, LogOut, Plus, SquarePen, UserRound } from "lucide-react";
+import { ChevronDown, LogIn, LogOut, Plus, UserRound } from "lucide-react";
 import { logout } from "../../api/userApi";
 import { useAuthStore } from "../../Store/useUserStore";
 
@@ -37,6 +39,20 @@ export default function Navbar() {
     clearSession();
     router.push("/");
   }
+
+  // One primary CTA per state, no duplicates:
+  //   logged out → "Sign up"  |  TENANT → "My applications"
+  //   LANDLORD/ADMIN → "My listings" (the dashboard)
+  const primaryHref = !user
+    ? "/register"
+    : user.role === "TENANT"
+      ? "/applications"
+      : "/dashboard";
+  const primaryLabel = !user
+    ? "Sign up"
+    : user.role === "TENANT"
+      ? "My applications"
+      : "My listings";
 
   return (
     <header className="site-header">
@@ -60,22 +76,13 @@ export default function Navbar() {
           </div>
           <Link href="/property/demo">Property</Link>
           <div className="nav-dropdown">
-            <Link href={user?.role === "TENANT" ? "/applications" : "/dashboard"}>Features <ChevronDown aria-hidden /></Link>
+            <Link href="/properties">Features <ChevronDown aria-hidden /></Link>
             <div className="dropdown-menu compact">
               <Link href="/properties">Find a home</Link>
-              <Link href="/applications">Applications</Link>
-              <Link href="/viewings">Viewings</Link>
-            </div>
-          </div>
-          <div className="nav-dropdown">
-            <Link href="/properties">Blog <ChevronDown aria-hidden /></Link>
-            <div className="dropdown-menu compact">
-              <Link href="/properties">Market insights</Link>
               <Link href="/properties">Rental guide</Link>
             </div>
           </div>
           {user && user.role !== "TENANT" ? <Link href="/dashboard">Dashboard</Link> : null}
-          {user?.role === "TENANT" ? <Link href="/applications">Applications</Link> : null}
         </nav>
 
         <div className="header-actions">
@@ -98,25 +105,13 @@ export default function Navbar() {
                 <LogOut className="h-4 w-4" aria-hidden /> Log out
               </button>
 
-              {user.role === "TENANT" && (
-                <Link
-                  href="/viewings"
-                  className="inline-flex items-center gap-1.5 text-sm text-ink-soft underline hover:text-ink"
-                >
-                  <CalendarDays className="h-4 w-4" aria-hidden /> My viewings
-                </Link>
-              )}
-
-              <Link
-                className="create-listing"
-                href={user.role === "TENANT" ? "/applications" : "/dashboard"}
-              >
+              <Link className="create-listing" href={primaryHref}>
                 {user.role === "TENANT" ? (
-                  <SquarePen className="h-5 w-5" aria-hidden />
+                  <UserRound className="h-5 w-5" aria-hidden />
                 ) : (
                   <Plus className="h-5 w-5" aria-hidden />
                 )}
-                {user.role === "TENANT" ? "My applications" : "My listings"}
+                {primaryLabel}
               </Link>
             </>
           ) : (

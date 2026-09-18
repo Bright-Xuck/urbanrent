@@ -1,7 +1,9 @@
 import express from "express";
 import { authenticate } from "../middleware/authenticate.js";
+import { requireLandordadmin } from "../middleware/RBAC.js";
 import {
   GetMyApplications,
+  GetIncomingApplications,
   GetApplicationById,
   ChangeApplicationStatus,
 } from "../controllers/applicationController.js";
@@ -18,6 +20,10 @@ const router: express.Router = express.Router();
 
 // A tenant's own applications.
 router.get("/mine", authenticate, GetMyApplications);
+
+// Applications submitted TO the caller's listings (landlord/admin only).
+// Mounted before "/:id" so "incoming" is never read as an id.
+router.get("/incoming", authenticate, requireLandordadmin, GetIncomingApplications);
 
 // View one application (applicant or property owner/admin).
 router.get("/:id", authenticate, GetApplicationById);

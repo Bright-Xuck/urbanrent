@@ -1,7 +1,9 @@
 import express from "express";
 import { authenticate } from "../middleware/authenticate.js";
+import { requireLandordadmin } from "../middleware/RBAC.js";
 import {
   GetMyViewingRequests,
+  GetIncomingViewingRequests,
   GetViewingRequestById,
   ChangeViewingRequestStatus,
 } from "../controllers/viewingRequestController.js";
@@ -18,6 +20,10 @@ const router: express.Router = express.Router();
 
 // A tenant's own viewing requests.
 router.get("/mine", authenticate, GetMyViewingRequests);
+
+// Viewing requests submitted TO the caller's listings (landlord/admin only).
+// Mounted before "/:id" so "incoming" is never read as an id.
+router.get("/incoming", authenticate, requireLandordadmin, GetIncomingViewingRequests);
 
 // View one viewing request (tenant or property owner/admin).
 router.get("/:id", authenticate, GetViewingRequestById);

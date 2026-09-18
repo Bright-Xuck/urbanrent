@@ -1,40 +1,41 @@
 "use client";
 
 // ============================================================
-// MY VIEWINGS — /viewings
+// LANDLORD INBOX — VIEWING REQUESTS — /dashboard/viewings
 // ============================================================
-// GET /api/viewing-requests/mine, with the target property included.
-// TENANT-only: this is the tenant's own requests. Landlords have their
-// incoming inbox at /dashboard/viewings.
+// GET /api/viewing-requests/incoming returns every viewing request
+// submitted to ANY property the caller owns, with the requester included.
 //
-// This is the tenant half of the viewing model: the times you proposed and
-// whatever the landlord decided (confirmed one of them, declined, or — after
-// the fact — completed / no-show). Nothing is actionable from here, because
-// the backend only lets the property owner drive the status, so the rows
-// link through to the detail page to read the whole thing.
+// LANDLORD/ADMIN only: gated here with <RequireAuth roles>, and the
+// backend backs it up with requireLandordadmin + an ownerId scope on
+// every row. This is the landlord side of viewings — tenants track
+// their own requests at /viewings.
+//
+// Confirming/declining happens on the detail page, which already shows
+// the landlord's action buttons (components/viewings/ViewingActions).
 // ============================================================
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { CalendarDays, MapPin } from "lucide-react";
-import { getMyViewingRequests } from "../../../api/viewingRequestApi";
-import type { ViewingRequest } from "../../../api/types";
-import { formatDateTime, formatTimes } from "../../../lib/format";
-import RequireAuth from "../../../components/layout/RequireAuth";
-import PageHeader from "../../../components/layout/PageHeader";
-import Alert from "../../../components/ui/Alert";
-import StatusBadge from "../../../components/ui/StatusBadge";
-import { EmptyState, Loading } from "../../../components/ui/States";
+import { getIncomingViewingRequests } from "../../../../api/viewingRequestApi";
+import type { ViewingRequest } from "../../../../api/types";
+import { formatDateTime, formatTimes } from "../../../../lib/format";
+import RequireAuth from "../../../../components/layout/RequireAuth";
+import PageHeader from "../../../../components/layout/PageHeader";
+import Alert from "../../../../components/ui/Alert";
+import StatusBadge from "../../../../components/ui/StatusBadge";
+import { EmptyState, Loading } from "../../../../components/ui/States";
 
-export default function ViewingsPage() {
+export default function IncomingViewingsPage() {
   return (
-    <RequireAuth roles={["TENANT"]} title="Your viewings">
-      <MyViewings />
+    <RequireAuth roles={["LANDLORD", "ADMIN"]} title="Viewing requests on your listings">
+      <IncomingViewings />
     </RequireAuth>
   );
 }
 
-function MyViewings() {
+function IncomingViewings() {
   const [requests, setRequests] = useState<ViewingRequest[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -42,14 +43,14 @@ function MyViewings() {
   useEffect(() => {
     let active = true;
 
-    getMyViewingRequests()
+    getIncomingViewingRequests()
       .then((data) => {
         if (active) setRequests(data);
       })
       .catch((err: unknown) => {
         if (active) {
           setError(
-            err instanceof Error ? err.message : "Could not load your viewing requests"
+            err instanceof Error ? err.message : "Could not load viewing requests"
           );
         }
       })
@@ -63,10 +64,10 @@ function MyViewings() {
   }, []);
 
   return (
-    <div className="rp-container rp-section">
+    <div>
       <PageHeader
-        title="My viewings"
-        subtitle="The times you proposed, and what the landlord decided."
+        title="Viewing requests"
+        subtitle="People who asked to view your listings, newest first."
       />
 
       {error && (
@@ -77,7 +78,7 @@ function MyViewings() {
 
       {loading && (
         <div className="mt-6">
-          <Loading text="Loading your viewings…" />
+          <Loading text="Loading viewing requests…" />
         </div>
       )}
 
@@ -86,8 +87,7 @@ function MyViewings() {
           <EmptyState
             icon={CalendarDays}
             title="No viewing requests yet"
-            description="Open a listing and propose a couple of times — the landlord confirms one."
-            link={{ label: "Browse properties", href: "/properties" }}
+            description="When a tenant proposes times to view one of your published listings, they show up here."
           />
         </div>
       )}
@@ -107,8 +107,9 @@ function MyViewings() {
                 <StatusBadge status={request.status} />
               </div>
 
-              {request.property && (
-                <div className="record-meta">
+              <div className="record-meta">
+                <span>Requested by {request.tenant?.email ?? request.tenantId}</span>
+                {request.property && (
                   <span className="inline-flex items-center gap-1.5">
                     <MapPin className="h-3.5 w-3.5" aria-hidden />
                     {request.property.neighborhood
@@ -116,8 +117,8 @@ function MyViewings() {
                       : ""}
                     {request.property.city}
                   </span>
-                </div>
-              )}
+                )}
+              </div>
 
               <p className="record-note">
                 {request.status === "CONFIRMED" && request.confirmedTime ? (
