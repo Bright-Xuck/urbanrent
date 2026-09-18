@@ -13,6 +13,7 @@
 
 import { useState, type ChangeEvent } from "react";
 import { ImagePlus } from "lucide-react";
+import Alert from "../ui/Alert";
 
 type ImageUploaderProps = {
   onUpload: (files: File[]) => void | Promise<void>;
@@ -42,27 +43,27 @@ export default function ImageUploader({
         accept="image/jpeg,image/png,image/webp"
         multiple
         onChange={handleFiles}
-        className="block w-full border border-dashed border-line bg-paper px-3 py-5 text-sm text-ink-soft"
+        className="block w-full border border-dashed border-line px-4 py-5 text-sm"
       />
 
       {files.length > 0 && (
-        <p className="mt-2 text-xs text-ink-soft">
+        <p className="panel-note">
           {files.length} file{files.length > 1 ? "s" : ""} selected:{" "}
           {files.map((file) => file.name).join(", ")}
         </p>
       )}
 
       {error && (
-        <p role="alert" className="mt-2 text-sm text-danger">
-          {error}
-        </p>
+        <div className="mt-3">
+          <Alert variant="error">{error}</Alert>
+        </div>
       )}
 
       <button
         type="button"
         onClick={() => onUpload(files)}
         disabled={uploading || files.length === 0}
-        className="mt-3 inline-flex items-center gap-2 border border-line px-4 py-2 text-sm text-ink hover:border-ink disabled:cursor-not-allowed disabled:opacity-40"
+        className="btn btn-light btn-sm mt-4"
       >
         <ImagePlus className="h-4 w-4" aria-hidden />
         {uploading ? "Uploading…" : `Upload ${files.length || ""}`.trim()}

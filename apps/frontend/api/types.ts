@@ -106,6 +106,19 @@ export type PropertyAmenityLink = {
   createdAt: string;
 };
 
+// What the amenity LIST route actually returns. It is NOT an array of
+// Amenity objects: the repository runs
+// `prisma.propertyAmenity.findMany({ include: { amenity: true } })`, so each
+// item is the JOIN row with the amenity nested inside it.
+//
+// Both directions matter to callers:
+//   - the name is at `row.amenity.name`, not `row.name`
+//   - DELETE wants the AMENITY id (`row.amenity.id`). `row.id` is the link
+//     row's own id and would not delete anything.
+export type PropertyAmenityRow = PropertyAmenityLink & {
+  amenity: Amenity;
+};
+
 // ------------------------------------------------------------
 // Application
 // ------------------------------------------------------------

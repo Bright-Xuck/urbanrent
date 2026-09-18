@@ -2,7 +2,8 @@
 // EMPTY STATE + LOADING
 // ============================================================
 // The "nothing here yet" box and the "Loading…" line that every data page
-// used to build by hand.
+// used to build by hand. Looks live in globals.css (.empty-state,
+// .loading-line).
 // ============================================================
 
 import Link from "next/link";
@@ -17,19 +18,15 @@ type EmptyStateProps = {
 
 export function EmptyState({ icon: Icon, title, description, link }: EmptyStateProps) {
   return (
-    <div className="border border-line p-8 text-center">
-      {Icon && <Icon className="mx-auto h-8 w-8 text-ink-soft" aria-hidden />}
-      <p className="mt-3 font-display text-lg text-ink">{title}</p>
-      {description && <p className="mt-1 text-sm text-ink-soft">{description}</p>}
-      {link && (
-        <Link href={link.href} className="mt-4 inline-block text-sm text-navy underline">
-          {link.label}
-        </Link>
-      )}
+    <div className="empty-state">
+      {Icon && <Icon className="mx-auto h-9 w-9 text-ink-soft" aria-hidden />}
+      <h3>{title}</h3>
+      {description && <p>{description}</p>}
+      {link && <Link href={link.href}>{link.label}</Link>}
     </div>
   );
 }
 
 export function Loading({ text = "Loading…" }: { text?: string }) {
-  return <p className="text-sm text-ink-soft">{text}</p>;
+  return <p className="loading-line">{text}</p>;
 }

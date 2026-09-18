@@ -3,6 +3,7 @@
 // ============================================================
 // The coloured note used for feedback everywhere: "Changes saved.",
 // API errors, the "amenities can't be listed yet" warning, etc.
+// Looks come from the `.alert*` rules in globals.css.
 // ============================================================
 
 import type { ReactNode } from "react";
@@ -13,15 +14,15 @@ type AlertProps = {
 };
 
 const VARIANTS = {
-  success: "border-verified text-verified",
-  error: "border-danger text-danger",
-  warning: "border-ochre text-ochre-dark",
-  info: "border-line text-ink-soft",
+  success: "alert alert-success",
+  error: "alert alert-error",
+  warning: "alert alert-warning",
+  info: "alert alert-info",
 };
 
 export default function Alert({ variant = "info", children }: AlertProps) {
   return (
-    <p role={variant === "error" ? "alert" : "status"} className={`px-3 py-2 text-sm ${VARIANTS[variant]}`}>
+    <p role={variant === "error" ? "alert" : "status"} className={VARIANTS[variant]}>
       {children}
     </p>
   );

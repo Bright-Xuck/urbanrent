@@ -6,7 +6,7 @@
 // Reads the session from the store, so what it shows depends on who is
 // logged in:
 //   nobody      → Log in / Sign up
-//   TENANT      → "My applications"
+//   TENANT      → "My viewings" + "My applications"
 //   LANDLORD    → "My listings" (the dashboard)
 //   ADMIN       → dashboard too
 // The round button goes to /my-profile; the small "Log out" button calls
@@ -16,7 +16,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { LogIn, LogOut, Plus, SquarePen, UserRound } from "lucide-react";
+import { CalendarDays, LogIn, LogOut, Plus, SquarePen, UserRound } from "lucide-react";
 import { logout } from "../../api/userApi";
 import { useAuthStore } from "../../Store/useUserStore";
 
@@ -77,6 +77,15 @@ export default function Navbar() {
               >
                 <LogOut className="h-4 w-4" aria-hidden /> Log out
               </button>
+
+              {user.role === "TENANT" && (
+                <Link
+                  href="/viewings"
+                  className="inline-flex items-center gap-1.5 text-sm text-ink-soft underline hover:text-ink"
+                >
+                  <CalendarDays className="h-4 w-4" aria-hidden /> My viewings
+                </Link>
+              )}
 
               <Link
                 className="create-listing"

@@ -21,6 +21,7 @@
 // ============================================================
 
 import { useState, type FormEvent, type ReactNode } from "react";
+import Alert from "../ui/Alert";
 import { Input, Select, Textarea } from "../ui/Fields";
 import { titleCase } from "../../lib/format";
 import type { CreatePropertyInput } from "../../api/propertyApi";
@@ -118,18 +119,19 @@ export default function PropertyForm({
 
   return (
     <form onSubmit={handleSubmit}>
-      <div className="space-y-8">
-        <section className="border border-line p-6">
-          <h2 className="font-display text-lg text-ink">Basic details</h2>
+      <div>
+        <section className="panel">
+          <h2 className="panel-title">Basic details</h2>
 
-          <Input
-            label="Title"
-            required
-            value={form.title}
-            onChange={(event) => update("title", event.target.value)}
-            placeholder="e.g. 2-bedroom apartment, Molyko"
-            className="mt-4"
-          />
+          <div className="mt-5">
+            <Input
+              label="Title"
+              required
+              value={form.title}
+              onChange={(event) => update("title", event.target.value)}
+              placeholder="e.g. 2-bedroom apartment, Molyko"
+            />
+          </div>
 
           <Textarea
             label="Description"
@@ -137,10 +139,9 @@ export default function PropertyForm({
             value={form.description}
             onChange={(event) => update("description", event.target.value)}
             placeholder="Describe the property, its condition, and what's nearby."
-            className="mt-4"
           />
 
-          <div className="mt-4 grid grid-cols-2 gap-4 sm:grid-cols-4">
+          <div className="form-grid-4">
             <Select
               label="Type"
               value={form.propertyType}
@@ -176,10 +177,10 @@ export default function PropertyForm({
           </div>
         </section>
 
-        <section className="border border-line p-6">
-          <h2 className="font-display text-lg text-ink">Location &amp; pricing</h2>
+        <section className="panel">
+          <h2 className="panel-title">Location &amp; pricing</h2>
 
-          <div className="mt-4 grid grid-cols-2 gap-4">
+          <div className="form-grid mt-5">
             <Input
               label="City"
               required
@@ -218,18 +219,10 @@ export default function PropertyForm({
           </div>
         </section>
 
-        {error && (
-          <p role="alert" className="text-sm text-danger">
-            {error}
-          </p>
-        )}
+        {error && <Alert variant="error">{error}</Alert>}
 
-        <div className="flex items-center gap-3 border-t border-line pt-6">
-          <button
-            type="submit"
-            disabled={pending}
-            className="border border-navy bg-navy px-5 py-2.5 text-sm text-paper hover:bg-navy-dark disabled:cursor-not-allowed disabled:opacity-60"
-          >
+        <div className="form-actions">
+          <button type="submit" disabled={pending} className="btn">
             {pending ? "Saving…" : submitLabel}
           </button>
 
@@ -238,7 +231,7 @@ export default function PropertyForm({
               type="button"
               disabled={pending}
               onClick={() => secondary.onAction(buildBody())}
-              className="border border-line px-5 py-2.5 text-sm text-ink hover:border-ink disabled:cursor-not-allowed disabled:opacity-60"
+              className="btn btn-light"
             >
               {secondary.label}
             </button>

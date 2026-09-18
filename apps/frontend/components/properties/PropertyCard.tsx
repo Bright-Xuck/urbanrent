@@ -1,17 +1,21 @@
 // ============================================================
 // PROPERTY CARD
 // ============================================================
-// One row in a property list (browse page, featured section). Purely
-// presentational — the page decides where it links and what data to pass.
+// One card in a property grid (the home page's featured strip, the listing
+// page). Purely presentational — the page decides where it links and what
+// data to pass.
+//
+// Layout follows the demo card: photo on top with a status pill over it,
+// then price, title, address and a beds/baths/area meta row. The list
+// endpoints don't return photo URLs, so the image well shows a placeholder
+// here — real photos appear on the detail page, which fetches them.
 // ============================================================
 
 import Link from "next/link";
 import { Bath, BedDouble, MapPin, Ruler } from "lucide-react";
-import StatusBadge from "../ui/StatusBadge";
 import { formatXAF } from "../../lib/format";
 
 type PropertyCardProps = {
-  index?: number;
   title: string;
   city: string;
   neighborhood?: string;
@@ -19,14 +23,27 @@ type PropertyCardProps = {
   bathrooms: number;
   sizeSqm?: number | null;
   monthlyRent: number;
+  /** A property status. Omitted on public browse, where every row is published. */
   status?: string;
-  /** The photo placeholder text (listings don't carry images in the API). */
-  imageLabel?: string;
   href: string;
 };
 
+// The pill over the photo. The marketplace is rent-only, so a published
+// listing reads "For rent" — the demo's "For Rent" badge.
+function badgeFor(status?: string): { label: string; muted: boolean } {
+  switch (status) {
+    case "DRAFT":
+      return { label: "Draft", muted: true };
+    case "UNPUBLISHED":
+      return { label: "Unpublished", muted: true };
+    case "ARCHIVED":
+      return { label: "Archived", muted: true };
+    default:
+      return { label: "For rent", muted: false };
+  }
+}
+
 export default function PropertyCard({
-  index,
   title,
   city,
   neighborhood,
@@ -35,57 +52,40 @@ export default function PropertyCard({
   sizeSqm,
   monthlyRent,
   status,
-  imageLabel = "Photo",
   href,
 }: PropertyCardProps) {
+  const pill = badgeFor(status);
+
   return (
-    <Link
-      href={href}
-      className="group block border-b border-line py-6 first:pt-0 last:border-b-0"
-    >
-      <div className="flex gap-5">
-        {index !== undefined && (
-          <span className="w-8 shrink-0 pt-1 text-right font-display text-sm text-ink-soft">
-            {String(index).padStart(2, "0")}
+    <Link href={href} className="property-card">
+      <div className="property-image">
+        <span className={pill.muted ? "badge badge-muted" : "badge"}>{pill.label}</span>
+        <div className="property-image-placeholder">No photo yet</div>
+      </div>
+
+      <div className="property-info">
+        <p className="price">
+          {formatXAF(monthlyRent)} <small>/ month</small>
+        </p>
+        <h3>{title}</h3>
+        <p className="property-address">
+          <MapPin className="h-3.5 w-3.5" aria-hidden />
+          {neighborhood ? `${neighborhood}, ` : ""}
+          {city}
+        </p>
+
+        <div className="meta">
+          <span>
+            <BedDouble className="h-3.5 w-3.5" aria-hidden /> {bedrooms} Beds
           </span>
-        )}
-
-        <div className="flex aspect-[4/3] w-36 shrink-0 items-center justify-center bg-paper-dim text-xs text-ink-soft sm:w-44">
-          {imageLabel}
-        </div>
-
-        <div className="min-w-0 flex-1">
-          <div className="flex items-start justify-between gap-4">
-            <h3 className="font-display text-lg text-ink group-hover:text-navy">
-              {title}
-            </h3>
-            {status && <StatusBadge status={status} />}
-          </div>
-
-          <p className="mt-1 flex items-center gap-1 text-sm text-ink-soft">
-            <MapPin className="h-3.5 w-3.5" aria-hidden />
-            {neighborhood ? `${neighborhood}, ` : ""}
-            {city}
-          </p>
-
-          <p className="mt-2 flex items-center gap-4 text-sm text-ink-soft">
-            <span className="inline-flex items-center gap-1">
-              <BedDouble className="h-3.5 w-3.5" aria-hidden /> {bedrooms} bed
+          <span>
+            <Bath className="h-3.5 w-3.5" aria-hidden /> {bathrooms} Baths
+          </span>
+          {sizeSqm ? (
+            <span>
+              <Ruler className="h-3.5 w-3.5" aria-hidden /> {sizeSqm} m²
             </span>
-            <span className="inline-flex items-center gap-1">
-              <Bath className="h-3.5 w-3.5" aria-hidden /> {bathrooms} bath
-            </span>
-            {sizeSqm ? (
-              <span className="inline-flex items-center gap-1">
-                <Ruler className="h-3.5 w-3.5" aria-hidden /> {sizeSqm} m²
-              </span>
-            ) : null}
-          </p>
-
-          <p className="mt-3 font-display text-base text-ink">
-            {formatXAF(monthlyRent)}{" "}
-            <span className="text-sm font-sans text-ink-soft">/ month</span>
-          </p>
+          ) : null}
         </div>
       </div>
     </Link>

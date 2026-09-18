@@ -1,8 +1,13 @@
 // ============================================================
 // BUTTON
 // ============================================================
-// The four looks used across the app, defined once. Sizes/spacing are
-// still passed through `className` when a page needs something special.
+// The button looks live in globals.css (.btn + modifiers) so a plain
+// <button> or <a> elsewhere can wear the same style; this component is
+// just the typed wrapper.
+//
+// Size modifiers are theme classes too ("btn-sm", "btn-block") rather
+// than Tailwind padding — the theme layer is unlayered, so it outranks a
+// utility of equal specificity.
 // ============================================================
 
 import type { ButtonHTMLAttributes } from "react";
@@ -12,11 +17,11 @@ type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
 };
 
 const VARIANTS: Record<NonNullable<ButtonProps["variant"]>, string> = {
-  primary: "border border-navy bg-navy text-paper hover:bg-navy-dark",
-  outline: "border border-line text-ink hover:border-ink",
-  success: "border border-verified bg-verified text-paper",
-  "danger-outline": "border border-danger text-danger hover:border-danger",
-  ghost: "text-ink-soft underline hover:text-ink",
+  primary: "btn",
+  outline: "btn btn-light",
+  success: "btn btn-success",
+  "danger-outline": "btn btn-danger",
+  ghost: "btn btn-ghost",
 };
 
 export default function Button({
@@ -29,7 +34,7 @@ export default function Button({
     <button
       {...props}
       type={type}
-      className={`${VARIANTS[variant]} disabled:cursor-not-allowed disabled:opacity-50 ${className}`}
+      className={`${VARIANTS[variant]} ${className}`}
     />
   );
 }

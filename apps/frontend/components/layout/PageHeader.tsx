@@ -1,12 +1,15 @@
 // ============================================================
 // PAGE HEADER
 // ============================================================
-// The "← Back to …" link + big title + one-line subtitle that sits at the
-// top of most pages. One component instead of the same six lines again.
+// The breadcrumb + big title + one-line subtitle that sits at the top of
+// most pages, matching the demo's "Home / Property Listing" pattern.
+//
+// `backHref`/`backLabel` feed the middle crumb (the demo's "Home / Villa /
+// Individual Houses"), so callers keep passing the same props they always
+// did — only the rendering changed.
 // ============================================================
 
 import Link from "next/link";
-import { ArrowLeft } from "lucide-react";
 
 type PageHeaderProps = {
   title: string;
@@ -23,17 +26,24 @@ export default function PageHeader({
 }: PageHeaderProps) {
   return (
     <div>
-      {backHref && (
-        <Link
-          href={backHref}
-          className="inline-flex items-center gap-1 text-sm text-ink-soft hover:text-ink"
-        >
-          <ArrowLeft className="h-4 w-4" aria-hidden /> {backLabel}
-        </Link>
-      )}
+      <nav className="breadcrumb" aria-label="Breadcrumb">
+        <Link href="/">Home</Link>
+        {backHref && (
+          <>
+            <span className="sep" aria-hidden>
+              /
+            </span>
+            <Link href={backHref}>{backLabel}</Link>
+          </>
+        )}
+        <span className="sep" aria-hidden>
+          /
+        </span>
+        <span>{title}</span>
+      </nav>
 
-      <h1 className="mt-2 font-display text-3xl text-ink">{title}</h1>
-      {subtitle && <p className="mt-1 text-sm text-ink-soft">{subtitle}</p>}
+      <h1 className="page-title">{title}</h1>
+      {subtitle && <p className="page-sub">{subtitle}</p>}
     </div>
   );
 }

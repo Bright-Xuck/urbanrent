@@ -21,7 +21,7 @@ export default function DashboardSidebar() {
   const pathname = usePathname();
 
   return (
-    <aside className="h-max border border-line p-4">
+    <aside className="panel h-max">
       <nav className="flex flex-col gap-1">
         {LINKS.map((link) => {
           const active = pathname === link.href;
@@ -31,9 +31,7 @@ export default function DashboardSidebar() {
             <Link
               key={link.href}
               href={link.href}
-              className={`flex items-center gap-2 px-3 py-2.5 text-sm ${
-                active ? "bg-paper-dim text-ink" : "text-ink-soft hover:text-ink"
-              }`}
+              className={active ? "side-link is-active" : "side-link"}
             >
               <Icon className="h-4 w-4" aria-hidden />
               {link.label}

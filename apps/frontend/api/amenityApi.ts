@@ -1,5 +1,5 @@
 import { useAuthStore } from "../Store/useUserStore";
-import type { Amenity, PropertyAmenityLink } from "./types";
+import type { Amenity, PropertyAmenityLink, PropertyAmenityRow } from "./types";
 
 // ============================================================
 // AMENITY API
@@ -22,6 +22,11 @@ import type { Amenity, PropertyAmenityLink } from "./types";
 //   2. The amenity router has no `authenticate` middleware, so anybody can
 //      create or delete an amenity. It needs one, plus a check that you
 //      own the property.
+//
+// Note also the SHAPE the list will have once issue 1 is fixed: the
+// repository selects join rows with the amenity nested, i.e.
+// [{ id, propertyId, amenityId, createdAt, amenity: { … } }] — not a plain
+// Amenity[]. See PropertyAmenityRow in types.ts.
 // ============================================================
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
@@ -29,7 +34,9 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL;
 // ------------------------------------------------------------
 // LIST — GET /api/properties/:propid
 // ------------------------------------------------------------
-export async function getPropertyAmenities(propertyId: string): Promise<Amenity[]> {
+export async function getPropertyAmenities(
+  propertyId: string
+): Promise<PropertyAmenityRow[]> {
   const token = useAuthStore.getState().accessToken;
 
   const response = await fetch(`${API_URL}/properties/${propertyId}`, {
@@ -42,9 +49,9 @@ export async function getPropertyAmenities(propertyId: string): Promise<Amenity[
     throw new Error(data.message || "Could not load the amenities");
   }
 
-  // This endpoint is supposed to send an array. It currently sends a single
-  // Property object because of problem 1 above. Checking here stops a
-  // broken response from quietly breaking the page that called us.
+  // This endpoint is supposed to send an array of join rows. It currently
+  // sends a single Property object because of problem 1 above. Checking here
+  // stops a broken response from quietly breaking the page that called us.
   if (!Array.isArray(data)) {
     throw new Error(
       "Got a Property back instead of a list of amenities. The backend amenity route needs fixing."

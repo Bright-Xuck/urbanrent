@@ -32,3 +32,18 @@ export function formatTimes(times: string[] | null): string {
 export function titleCase(value: string): string {
   return value.charAt(0) + value.slice(1).toLowerCase();
 }
+
+// ISO date string → "2026-09-18T10:00", the exact shape an
+// <input type="datetime-local"> wants for its `value`.
+//
+// getHours()/getMonth() etc. are LOCAL, which is what we want: the value
+// is going back into an input the visitor reads in their own timezone.
+// (toISOString() would convert to UTC and shift the displayed time.)
+export function toDateTimeLocal(iso: string): string {
+  const date = new Date(iso);
+  const pad = (value: number) => String(value).padStart(2, "0");
+
+  return `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(
+    date.getDate()
+  )}T${pad(date.getHours())}:${pad(date.getMinutes())}`;
+}

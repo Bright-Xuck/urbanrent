@@ -46,55 +46,39 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="min-h-screen bg-paper px-6 py-16">
-      <div className="mx-auto max-w-md">
-        <Link href="/" className="flex items-center gap-2">
-          <span className="flex h-8 w-8 items-center justify-center rounded-full border border-navy font-display text-xs text-navy">
-            UR
-          </span>
-          <span className="font-display text-base text-ink">UrbanRent</span>
-        </Link>
+    <div className="auth-wrap">
+      <div className="auth-card">
+        <div className="auth-brand">
+          <span className="mark">UR</span>
+          <span className="font-display text-lg text-ink">UrbanRent</span>
+        </div>
 
-        <h1 className="mt-10 font-display text-3xl text-ink">
-          Create your account
-        </h1>
-        <p className="mt-2 text-sm text-ink-soft">
+        <h1>Create your account</h1>
+        <p className="muted">
           Already have one?{" "}
-          <Link href="/login" className="text-navy underline">
+          <Link href="/login" className="link">
             Log in
           </Link>
         </p>
 
-        <div className="mt-8">
-          <p className="text-sm text-ink">I am a</p>
-          <div className="mt-2 grid grid-cols-2 gap-3">
+        <div className="mt-6">
+          <p>I am a</p>
+          <div className="role-picker mt-2">
             <button
               type="button"
               onClick={() => setRole("TENANT")}
-              className={`px-4 py-3 text-left ${
-                role === "TENANT"
-                  ? "border-2 border-navy bg-paper-dim"
-                  : "border border-line hover:border-ink"
-              }`}
+              className={role === "TENANT" ? "role-option is-active" : "role-option"}
             >
-              <span className="block font-display text-base text-ink">
-                Tenant
-              </span>
-              <span className="text-xs text-ink-soft">Looking for a place</span>
+              <strong>Tenant</strong>
+              <span>Looking for a place</span>
             </button>
             <button
               type="button"
               onClick={() => setRole("LANDLORD")}
-              className={`px-4 py-3 text-left ${
-                role === "LANDLORD"
-                  ? "border-2 border-navy bg-paper-dim"
-                  : "border border-line hover:border-ink"
-              }`}
+              className={role === "LANDLORD" ? "role-option is-active" : "role-option"}
             >
-              <span className="block font-display text-base text-ink">
-                Landlord
-              </span>
-              <span className="text-xs text-ink-soft">Listing a property</span>
+              <strong>Landlord</strong>
+              <span>Listing a property</span>
             </button>
           </div>
 
@@ -114,7 +98,7 @@ export default function RegisterPage() {
           )}
         </div>
 
-        <form className="mt-6 space-y-5" onSubmit={handleSubmit}>
+        <form className="mt-6" onSubmit={handleSubmit}>
           <Input
             label="Email"
             type="email"
@@ -138,16 +122,12 @@ export default function RegisterPage() {
 
           {error && <Alert variant="error">{error}</Alert>}
 
-          <button
-            type="submit"
-            disabled={pending}
-            className="inline-flex w-full items-center justify-center gap-2 bg-navy px-4 py-3 text-sm text-paper hover:bg-navy-dark disabled:cursor-not-allowed disabled:opacity-60"
-          >
+          <button type="submit" disabled={pending} className="btn btn-block">
             <UserRoundPlus className="h-4 w-4" aria-hidden />
             {pending ? "Creating account…" : "Create account"}
           </button>
 
-          <p className="text-xs leading-relaxed text-ink-soft">
+          <p className="mt-4 text-xs leading-relaxed text-ink-soft">
             By creating an account you agree to UrbanRent's terms and confirm
             the information above is accurate.
           </p>

@@ -60,7 +60,7 @@ export default function ApplicationActions({
 }: ApplicationActionsProps) {
   if (isApplicationClosed(application)) {
     return (
-      <p className="mt-8 border border-line px-4 py-3 text-sm text-ink-soft">
+      <p className="alert alert-info mt-8">
         This application is closed — no further changes are possible.
       </p>
     );

@@ -7,6 +7,9 @@
 
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
+// The bar is `.pagination` + `.page-btn` in globals.css — the same look the
+// demo uses under its listing grid.
+
 type PaginationProps = {
   page: number;
   totalPages: number;
@@ -23,28 +26,18 @@ export default function Pagination({
   if (totalPages <= 1) return null;
 
   return (
-    <div className="mt-8 flex items-center justify-between border-t border-line pt-6 text-sm">
-      <button
-        type="button"
-        disabled={page <= 1}
-        onClick={onPrevious}
-        className="inline-flex items-center gap-1 border border-line px-4 py-2 text-ink hover:border-ink disabled:cursor-not-allowed disabled:opacity-40"
-      >
+    <nav className="pagination" aria-label="Pagination">
+      <button type="button" disabled={page <= 1} onClick={onPrevious} className="page-btn">
         <ChevronLeft className="h-4 w-4" aria-hidden /> Previous
       </button>
 
-      <span className="text-ink-soft">
+      <span>
         Page {page} of {totalPages}
       </span>
 
-      <button
-        type="button"
-        disabled={page >= totalPages}
-        onClick={onNext}
-        className="inline-flex items-center gap-1 border border-line px-4 py-2 text-ink hover:border-ink disabled:cursor-not-allowed disabled:opacity-40"
-      >
+      <button type="button" disabled={page >= totalPages} onClick={onNext} className="page-btn">
         Next <ChevronRight className="h-4 w-4" aria-hidden />
       </button>
-    </div>
+    </nav>
   );
 }
