@@ -6,16 +6,10 @@
 // The amenities recorded against one listing (WiFi, Parking, …), plus an
 // add form for the owner.
 //
-// KNOWN BACKEND LIMITATION (same one documented in api/amenityApi.ts):
-// the amenity router is mounted on /api/properties/:propid, which the
-// property router already answers with GET /:id. So the LIST call is
-// shadowed and comes back as a single Property object instead of an
-// array; amenityApi turns that into a clear error, and we surface it as a
-// plain warning rather than an empty-looking section.
-//
-// POST (add) and DELETE (remove) are not shadowed and do work — so an
-// amenity the owner just added is appended locally, and the list starts
-// rendering for real the moment the backend route is fixed.
+// The backend serves these on /api/properties/:id/amenities (see
+// api/amenityApi.ts). Adding or removing is owner-only; the backend returns
+// 403 for anyone else, so `canManage` only decides whether the form is
+// shown at all.
 //
 // SHAPE NOTE: the list items are PropertyAmenity JOIN rows with the amenity
 // nested (`row.amenity`), and DELETE takes the AMENITY id — not the link
@@ -89,10 +83,10 @@ export default function AmenityPanel({ propertyId, canManage }: AmenityPanelProp
         name.trim(),
         pictureurl.trim() || undefined
       );
-      // Append locally: the list endpoint can't be re-read while the route
-      // shadowing is still there, and the POST already told us it worked.
-      // The POST returns the amenity and the link row separately, so they
-      // are stitched back into the shape the list uses.
+      // Append locally: the POST already told us it worked, so there is no
+      // need to re-read the whole list. The POST returns the amenity and the
+      // link row separately, so they are stitched back into the shape the
+      // list uses.
       setRows((current) => [...current, { ...link, amenity }]);
       setName("");
       setPictureurl("");
@@ -129,12 +123,7 @@ export default function AmenityPanel({ propertyId, canManage }: AmenityPanelProp
 
       {loadError && (
         <div className="mt-3">
-          <Alert variant="warning">
-            Amenities can&apos;t be listed on this page yet — the backend
-            amenity route is shadowed by the property route. You can still add
-            or remove one below.
-          </Alert>
-          <p className="mt-1 text-xs text-ink-soft">{loadError}</p>
+          <Alert variant="error">{loadError}</Alert>
         </div>
       )}
 

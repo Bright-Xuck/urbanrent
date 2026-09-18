@@ -4,29 +4,24 @@ import type { Amenity, PropertyAmenityLink, PropertyAmenityRow } from "./types";
 // ============================================================
 // AMENITY API
 // ============================================================
-// The backend mounts amenity routes under a property:
-//   GET    /api/properties/:propid
-//   POST   /api/properties/:propid
-//   DELETE /api/properties/:propid/:id
+// The backend mounts amenity routes under a property, on an explicit
+// /amenities sub-path:
+//   GET    /api/properties/:propid/amenities
+//   POST   /api/properties/:propid/amenities
+//   DELETE /api/properties/:propid/amenities/:id
 //
-// WARNING: the GET below does not actually work right now. It is a backend
-// problem, not a frontend one. Two separate issues:
+// The sub-path matters: mounted on / they would collide with the property
+// router's GET /:id, which would answer first and never hand the request on.
 //
-//   1. The amenity router is mounted on /api/properties/:propid in app.ts,
-//      but AFTER propertyRoutes, which already handles GET /:id. So a
-//      request to GET /api/properties/<id> is answered by the property
-//      controller first and never reaches the amenity router. That is why
-//      the GET below gets a Property object back instead of a list.
-//      Fix: give the router its own sub-path (/amenities, /amenities/:id).
+// All three routes require a token, and POST/DELETE additionally require you
+// to own the property (or be an ADMIN).
 //
-//   2. The amenity router has no `authenticate` middleware, so anybody can
-//      create or delete an amenity. It needs one, plus a check that you
-//      own the property.
-//
-// Note also the SHAPE the list will have once issue 1 is fixed: the
-// repository selects join rows with the amenity nested, i.e.
-// [{ id, propertyId, amenityId, createdAt, amenity: { … } }] — not a plain
-// Amenity[]. See PropertyAmenityRow in types.ts.
+// SHAPE: the LIST returns PropertyAmenity JOIN rows with the amenity nested,
+// i.e. [{ id, propertyId, amenityId, createdAt, amenity: { … } }] — not a
+// plain Amenity[]. See PropertyAmenityRow in types.ts. Two things follow:
+//   - a name is at `row.amenity.name`, not `row.name`
+//   - DELETE wants the AMENITY id (`row.amenity.id`); `row.id` is the link
+//     row's own id
 // ============================================================
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
@@ -39,7 +34,7 @@ export async function getPropertyAmenities(
 ): Promise<PropertyAmenityRow[]> {
   const token = useAuthStore.getState().accessToken;
 
-  const response = await fetch(`${API_URL}/properties/${propertyId}`, {
+  const response = await fetch(`${API_URL}/properties/${propertyId}/amenities`, {
     headers: { Authorization: `Bearer ${token}` },
   });
 
@@ -49,13 +44,10 @@ export async function getPropertyAmenities(
     throw new Error(data.message || "Could not load the amenities");
   }
 
-  // This endpoint is supposed to send an array of join rows. It currently
-  // sends a single Property object because of problem 1 above. Checking here
-  // stops a broken response from quietly breaking the page that called us.
+  // Defensive: the route is supposed to send an array of join rows. If the
+  // shape ever changes, fail loudly here instead of rendering blank chips.
   if (!Array.isArray(data)) {
-    throw new Error(
-      "Got a Property back instead of a list of amenities. The backend amenity route needs fixing."
-    );
+    throw new Error("Expected a list of amenities from the server.");
   }
 
   return data;
@@ -73,7 +65,7 @@ export async function createAmenity(
 ): Promise<{ amenity: Amenity; link: PropertyAmenityLink }> {
   const token = useAuthStore.getState().accessToken;
 
-  const response = await fetch(`${API_URL}/properties/${propertyId}`, {
+  const response = await fetch(`${API_URL}/properties/${propertyId}/amenities`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
@@ -104,7 +96,7 @@ export async function deleteAmenity(
 ): Promise<Amenity> {
   const token = useAuthStore.getState().accessToken;
 
-  const response = await fetch(`${API_URL}/properties/${propertyId}/${amenityId}`, {
+  const response = await fetch(`${API_URL}/properties/${propertyId}/amenities/${amenityId}`, {
     method: "DELETE",
     headers: { Authorization: `Bearer ${token}` },
   });

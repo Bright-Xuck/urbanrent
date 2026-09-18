@@ -20,7 +20,12 @@ import type {
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
-async function readJson(response: Response): Promise<Record<string, any>> {
+// Returns the parsed body with no declared shape. The backend wraps most
+// responses in an envelope ({ property }, { images }, …) while the browse
+// endpoints return the envelope directly, so callers destructure what they
+// need and the return type of each function above documents the contract
+// they promise to their callers.
+async function readJson(response: Response): Promise<any> {
   const text = await response.text();
   if (!text) return {};
   try {

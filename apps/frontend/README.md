@@ -46,17 +46,16 @@ code where it bites.
   (`PATCH /api/viewing-requests/:id/status`) but has no way to discover the
   ids — there is no reader keyed on `property.ownerId`, so `/applications/[id]`
   and `/viewings/[id]` are reachable only by typing the id.
-- **Amenity listing is shadowed.** The amenity router is mounted on
-  `/api/properties/:propid`, a path the property router already answers with
-  `GET /:id`, so the list call returns a single Property instead of an array.
-  Adding and removing still work (those verbs aren't shadowed). The list's own
-  shape is worth knowing either way: the repository selects `PropertyAmenity`
-  join rows with the amenity nested, so names live at `row.amenity.name` and
-  DELETE takes `row.amenity.id`. See `api/amenityApi.ts` and
+- **Amenity writes delete the shared catalog row.** The routes now live on
+  `/api/properties/:id/amenities`, require a token, and gate create/delete on
+  owning the property (or being an ADMIN) — the shadowing and missing-auth
+  problems are fixed. What remains is semantics: DELETE removes the
+  `amenities` row itself, so removing "WiFi" from one property unlinks it from
+  every other property too. Unlinking one property would mean deleting the
+  `PropertyAmenity` join row instead. Note also that the list returns join rows
+  with the amenity nested — names are at `row.amenity.name` and DELETE takes
+  `row.amenity.id`. See `api/amenityApi.ts` and
   `components/properties/AmenityPanel.tsx`.
-- **The amenity routes have no `authenticate` at all.** Any anonymous caller
-  can create or delete amenities — and DELETE removes the shared `amenities`
-  row, so removing "WiFi" from one property unlinks it everywhere.
 - **Single-listing reads require a token.** `GET /api/properties/:id` and
   `GET /api/properties/:id/images` both run `authenticate`, so
   `/property/[id]` sits behind `<RequireAuth>` even though the browse list is
@@ -74,6 +73,21 @@ code where it bites.
 - **No profile endpoint.** The navbar's avatar links to `/my-profile`, which
   does not exist — `authRoutes` has register/login/refresh/logout and no
   `GET /me`.
+
+## Demo data
+
+The backend ships an additive seed (`apps/backend/prisma/seed.ts`) with seven
+demo accounts (password `Password123!`), an amenity catalog, 14 listings across
+Buea, Douala, Yaoundé, Limbe and Bamenda in mixed statuses, plus applications
+and viewing requests covering every state.
+
+```bash
+pnpm --filter backend db:seed
+```
+
+It never deletes: users and amenities are upserted, and the listings are only
+created when the properties table is empty. Log in as `landlord1@urbanrent.cm`
+for the dashboard, or `tenant1@urbanrent.cm` to apply and request viewings.
 
 ## Design tokens
 
