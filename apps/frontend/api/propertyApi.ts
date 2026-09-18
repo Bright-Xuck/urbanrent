@@ -20,6 +20,16 @@ import type {
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
+async function readJson(response: Response): Promise<Record<string, any>> {
+  const text = await response.text();
+  if (!text) return {};
+  try {
+    return JSON.parse(text) as Record<string, any>;
+  } catch {
+    return { message: `Listings service unavailable (${response.status})` };
+  }
+}
+
 // The query options GET /api/properties understands.
 export type PropertyFilters = {
   propertyType?: PropertyType;
@@ -87,7 +97,7 @@ export async function getProperties(
 ): Promise<PaginatedProperties> {
   const response = await fetch(`${API_URL}/properties${buildQuery(filters, pagination)}`);
 
-  const data = await response.json();
+  const data = await readJson(response);
 
   if (!response.ok) {
     throw new Error(data.message || "Could not load properties");
@@ -112,7 +122,7 @@ export async function getMyProperties(
     headers: { Authorization: `Bearer ${token}` },
   });
 
-  const data = await response.json();
+  const data = await readJson(response);
 
   if (!response.ok) {
     throw new Error(data.message || "Could not load your properties");
@@ -131,7 +141,7 @@ export async function getPropertyById(id: string): Promise<Property> {
     headers: { Authorization: `Bearer ${token}` },
   });
 
-  const data = await response.json();
+  const data = await readJson(response);
 
   if (!response.ok) {
     throw new Error(data.message || "Could not load this property");
@@ -156,7 +166,7 @@ export async function createProperty(input: CreatePropertyInput): Promise<Proper
     body: JSON.stringify(input),
   });
 
-  const data = await response.json();
+  const data = await readJson(response);
 
   if (!response.ok) {
     throw new Error(data.message || "Could not create the property");
@@ -183,7 +193,7 @@ export async function updateProperty(
     body: JSON.stringify(input),
   });
 
-  const data = await response.json();
+  const data = await readJson(response);
 
   if (!response.ok) {
     throw new Error(data.message || "Could not update the property");
@@ -226,7 +236,7 @@ export async function deleteProperty(id: string): Promise<void> {
   });
 
   if (!response.ok) {
-    const data = await response.json();
+    const data = await readJson(response);
     throw new Error(data.message || "Could not delete the property");
   }
 }
@@ -252,7 +262,7 @@ export async function uploadPropertyImages(id: string, images: File[]): Promise<
     body: formData,
   });
 
-  const data = await response.json();
+  const data = await readJson(response);
 
   if (!response.ok) {
     throw new Error(data.message || "Could not upload the images");
@@ -271,7 +281,7 @@ export async function getPropertyImages(id: string): Promise<PropertyImage[]> {
     headers: { Authorization: `Bearer ${token}` },
   });
 
-  const data = await response.json();
+  const data = await readJson(response);
 
   if (!response.ok) {
     throw new Error(data.message || "Could not load the images");

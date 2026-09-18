@@ -55,12 +55,13 @@ export default function PropertyCard({
   href,
 }: PropertyCardProps) {
   const pill = badgeFor(status);
+  const image = `https://images.unsplash.com/photo-${["1600585154340-be6161a56a0c", "1600607687939-ce8a6c25118c", "1600566753190-17f0baa2a6c3", "1600047509807-ba8f99d2cdde"][title.length % 4]}?auto=format&fit=crop&w=900&q=82`;
 
   return (
     <Link href={href} className="property-card">
       <div className="property-image">
         <span className={pill.muted ? "badge badge-muted" : "badge"}>{pill.label}</span>
-        <div className="property-image-placeholder">No photo yet</div>
+        <img src={image} alt="" />
       </div>
 
       <div className="property-info">

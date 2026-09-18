@@ -16,7 +16,7 @@
 
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { CalendarDays, LogIn, LogOut, Plus, SquarePen, UserRound } from "lucide-react";
+import { CalendarDays, ChevronDown, LogIn, LogOut, Plus, SquarePen, UserRound } from "lucide-react";
 import { logout } from "../../api/userApi";
 import { useAuthStore } from "../../Store/useUserStore";
 
@@ -49,13 +49,33 @@ export default function Navbar() {
         </Link>
 
         <nav className="main-nav">
-          <Link className="active" href="/">
-            Home
-          </Link>
-          <Link href="/properties">Properties</Link>
-          <Link href="/about-us">About us</Link>
-          <Link href="/faqs">FAQs</Link>
-          <Link href="/contact-us">Contact us</Link>
+          <Link className="active" href="/">Home</Link>
+          <div className="nav-dropdown">
+            <Link href="/properties">Properties <ChevronDown aria-hidden /></Link>
+            <div className="dropdown-menu">
+              <Link href="/properties">All properties</Link>
+              <Link href="/properties?propertyType=HOUSE">Houses</Link>
+              <Link href="/properties?propertyType=APARTMENT">Apartments</Link>
+            </div>
+          </div>
+          <Link href="/property/demo">Property</Link>
+          <div className="nav-dropdown">
+            <Link href={user?.role === "TENANT" ? "/applications" : "/dashboard"}>Features <ChevronDown aria-hidden /></Link>
+            <div className="dropdown-menu compact">
+              <Link href="/properties">Find a home</Link>
+              <Link href="/applications">Applications</Link>
+              <Link href="/viewings">Viewings</Link>
+            </div>
+          </div>
+          <div className="nav-dropdown">
+            <Link href="/properties">Blog <ChevronDown aria-hidden /></Link>
+            <div className="dropdown-menu compact">
+              <Link href="/properties">Market insights</Link>
+              <Link href="/properties">Rental guide</Link>
+            </div>
+          </div>
+          {user && user.role !== "TENANT" ? <Link href="/dashboard">Dashboard</Link> : null}
+          {user?.role === "TENANT" ? <Link href="/applications">Applications</Link> : null}
         </nav>
 
         <div className="header-actions">

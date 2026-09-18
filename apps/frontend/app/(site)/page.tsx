@@ -148,6 +148,34 @@ export default function HomePage() {
           <FeaturedProperties />
         </div>
       </section>
+
+      <section className="rp-section home-trust">
+        <div className="rp-container trust-layout">
+          <div className="trust-copy">
+            <span className="eyebrow">A better way to rent</span>
+            <h2>Make every move feel considered.</h2>
+            <p>UrbanRent brings the calm, clarity and confidence of a well-managed home search to every part of your journey.</p>
+            <a className="btn" href="/properties">Explore all homes <span aria-hidden>→</span></a>
+          </div>
+          <div className="trust-stats">
+            <div><strong>100%</strong><span>Transparent records</span></div>
+            <div><strong>24/7</strong><span>Application visibility</span></div>
+            <div><strong>1 place</strong><span>For every next step</span></div>
+            <div><strong>Buea</strong><span>Built for local living</span></div>
+          </div>
+        </div>
+      </section>
+
+      <section className="rp-section rp-section-soft home-cta">
+        <div className="rp-container cta-panel">
+          <div>
+            <span className="eyebrow">For property owners</span>
+            <h2>Have a home people will love?</h2>
+            <p>Publish it beautifully, manage interest in one place and keep every decision moving.</p>
+          </div>
+          <a className="btn btn-light" href="/register">List your property <span aria-hidden>→</span></a>
+        </div>
+      </section>
     </div>
   );
 }
