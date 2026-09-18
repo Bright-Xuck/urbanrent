@@ -53,9 +53,8 @@ export default function Navbar() {
             Home
           </Link>
           <Link href="/properties">Properties</Link>
-          <Link href="/about-us">About us</Link>
-          <Link href="/faqs">FAQs</Link>
-          <Link href="/contact-us">Contact us</Link>
+          {user && user.role !== "TENANT" ? <Link href="/dashboard">Dashboard</Link> : null}
+          {user?.role === "TENANT" ? <Link href="/applications">Applications</Link> : null}
         </nav>
 
         <div className="header-actions">

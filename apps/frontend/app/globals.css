@@ -305,6 +305,14 @@ h1,h2,h3,h4{color:var(--rp-ink);font-weight:700;letter-spacing:-.2px;line-height
   .rp-section{padding:56px 0}
 }
 @media(max-width:768px){
+  .site-header{height:auto;min-height:76px}
+  .header-inner{padding:14px 20px;gap:18px;flex-wrap:wrap}
+  .brand{margin-right:auto}
+  .site-header nav{order:3;width:100%;justify-content:space-between;gap:12px;font-size:14px}
+  .header-actions{gap:8px}
+  .user-icon{width:40px;height:40px}
+  .create-listing{height:40px;padding:0 14px;font-size:13px}
+  .header-actions > a:not(.user-icon):not(.create-listing),.header-actions > button{display:none}
   .detail-gallery{grid-template-columns:minmax(0,1fr);height:auto}
   .detail-gallery .detail-main-image{height:300px}
   .detail-thumbs{display:none}
@@ -313,10 +321,24 @@ h1,h2,h3,h4{color:var(--rp-ink);font-weight:700;letter-spacing:-.2px;line-height
   .hero h1{font-size:34px;letter-spacing:-1px}
   .search-box{display:block;padding:14px}
   .search-field{border-right:0;border-bottom:1px solid var(--rp-line);padding:12px 4px}
-  .search-submit{width:100%;margin-top:14px;padding:15px}
+  .search-box .search-submit{width:100%;margin-top:14px;padding:15px;justify-content:center}
   .form-grid,.form-grid-4{grid-template-columns:minmax(0,1fr)}
   .form-grid .span-2,.form-grid-4 .span-2{grid-column:auto}
   .section-head h2,.page-title,.listing-toolbar h1,.listing-toolbar h2,.detail-title{font-size:26px}
   .detail-overview{grid-template-columns:minmax(0,1fr)}
+  .rp-container{padding-left:18px;padding-right:18px}
+  .listing-page,.detail-page{padding-top:30px;padding-bottom:60px}
+  .auth-wrap{padding:28px 16px}
+  .auth-card{padding:26px 20px;border-radius:10px}
+  .role-picker{grid-template-columns:minmax(0,1fr)}
 }
+
+/* The demo uses generous white space, quiet borders and a dark editorial footer. */
+footer{background:#101b2d;color:#9ba8ba;padding:70px max(24px,calc((100% - 1272px)/2)) 0}
+footer h4{color:#fff;font-size:15px;margin:0 0 18px}
+footer a{display:block;color:#9ba8ba;font-size:14px;margin:0 0 10px}
+footer a:hover{color:#fff}
+footer p{font-size:14px;line-height:1.7;margin:0}
+.footer-bottom{display:flex;justify-content:space-between;gap:20px;border-top:1px solid #2c394f;margin-top:52px;padding:20px 0}
+@media(max-width:768px){.footer-grid{gap:30px}.footer-bottom{display:block}.footer-bottom p + p{margin-top:8px}}
 
