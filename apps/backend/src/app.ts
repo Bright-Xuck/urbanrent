@@ -13,7 +13,19 @@ import cookieParser from 'cookie-parser'
 const app: Express = express();
 
 app.use(express.json());
-app.use(cors({ credentials: true, origin: true }))
+// In production, restrict cross-origin requests to the deployed frontend
+// origin(s) (comma-separated in FRONTEND_ORIGIN). Unset (local dev), any
+// origin is allowed.
+const frontendOrigins = process.env.FRONTEND_ORIGIN
+  ?.split(",")
+  .map((o) => o.trim())
+  .filter(Boolean);
+app.use(
+  cors({
+    credentials: true,
+    origin: frontendOrigins && frontendOrigins.length > 0 ? frontendOrigins : true,
+  }),
+)
 app.use(cookieParser())
 
 app.get('/health', (_req, res) => {

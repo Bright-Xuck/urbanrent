@@ -1,6 +1,21 @@
 import type { Request, Response } from "express";
 import { registerUser, loginUser, refreshAccessToken, logoutUser } from "../services/userService.js";
 
+// ------------------------------------------------------------
+// REFRESH COOKIE ATTRIBUTES
+// ------------------------------------------------------------
+// In production the frontend (Vercel) and this API (Render) sit on
+// different domains, so the browser only sends this cookie on cross-site
+// requests if it is SameSite=None + Secure. Local dev keeps the default
+// Lax behaviour; set COOKIE_SAMESITE=none on the deployed backend.
+// ------------------------------------------------------------
+const refreshCookieOptions = {
+    httpOnly: true,
+    secure: true,
+    sameSite: (process.env.COOKIE_SAMESITE as "lax" | "strict" | "none") || "lax",
+    path: "/api/auth",
+} as const;
+
 // ============================================================
 // AUTH CONTROLLER
 // ============================================================
@@ -61,9 +76,7 @@ export async function Login(req: Request, res: Response) {
         // Set the cookie BEFORE res.json() — once the response body is
         // flushed, the Set-Cookie header can no longer be added.
         res.cookie("RefreshToken", refreshToken, {
-            httpOnly: true,
-            secure: true,
-            path: "/api/auth",
+            ...refreshCookieOptions,
             maxAge: 7 * 24 * 60 * 60 * 1000,
         });
 
@@ -143,12 +156,9 @@ export async function Logout(req: Request, res: Response) {
 
         // Clear the cookie BEFORE res.json() — clearCookie sets a header,
         // and once json() flushes the response that header is dropped.
-        // path + secure must match how the cookie was set, or the browser
+        // Attributes must match how the cookie was set, or the browser
         // ignores the deletion.
-        res.clearCookie("RefreshToken", {
-            path: "/api/auth",
-            secure: true,
-        });
+        res.clearCookie("RefreshToken", { ...refreshCookieOptions });
         res.status(200).json({ message: "Logged out successfully" });
     } catch (error) {
         if (error instanceof Error && error.message === "Invalid refresh token") {

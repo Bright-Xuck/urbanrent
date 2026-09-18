@@ -1,0 +1,38 @@
+# Render Blueprint — UrbanRent backend
+# Deploy via Render Dashboard → New → Blueprint → pick this repo.
+# The frontend is a separate Next.js service deployed on Vercel
+# (Root Directory: apps/frontend).
+services:
+  - type: web
+    name: urbanrent-api
+    runtime: node
+    plan: free
+    rootDir: apps/backend
+    buildCommand: npm install && npm run build
+    # Migrations run on boot so the free plan (no pre-deploy command) still applies them.
+    startCommand: npx prisma migrate deploy && npm start
+    healthCheckPath: /health
+    autoDeploy: true
+    envVars:
+      - key: NODE_VERSION
+        value: 22
+      - key: DATABASE_URL
+        sync: false # Supabase Postgres connection string (pooled, port 6543)
+      - key: SUPABASE_URL
+        sync: false
+      - key: SUPABASE_SERIVICE_ROLE_KEY # (sic) matches the code's env name
+        sync: false
+      - key: STORAGE_BUCKET
+        value: property_images
+      - key: ACCESS_TOKEN_SECRET
+        generateValue: true # auto-generated secret
+      - key: REFRESH_TOKEN_SECRET
+        generateValue: true # auto-generated secret
+      # Frontend (Vercel) and API (Render) are different domains, so the
+      # refresh cookie must be SameSite=None to survive cross-site requests.
+      - key: COOKIE_SAMESITE
+        value: none
+      # Comma-separated list of allowed frontend origins, e.g.
+      # https://urbanrent.vercel.app,https://urbanrent-*.vercel.app
+      - key: FRONTEND_ORIGIN
+        sync: false
