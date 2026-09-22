@@ -25,6 +25,10 @@ const TONES: Record<string, "ok" | "warn" | "bad" | "muted"> = {
   draft: "muted",
   unpublished: "muted",
   archived: "muted",
+  // roles (used on the profile page)
+  tenant: "muted",
+  landlord: "ok",
+  admin: "warn",
 };
 
 const LABELS: Record<string, string> = {
@@ -42,6 +46,10 @@ const LABELS: Record<string, string> = {
   draft: "Draft",
   unpublished: "Unpublished",
   archived: "Archived",
+  // roles (used on the profile page)
+  tenant: "Tenant",
+  landlord: "Landlord",
+  admin: "Admin",
 };
 
 export default function StatusBadge({ status }: { status?: string }) {
