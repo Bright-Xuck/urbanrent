@@ -5,10 +5,11 @@
 // ============================================================
 // The photos for one listing, from GET /api/properties/:id/images.
 //
-// That route sits behind `authenticate` like every other property route,
-// so the call can legitimately fail (401, network) — a listing with no
-// readable photos must not look like a broken page. Failures therefore
-// fall back to the same neutral placeholder wall as "no photos yet".
+// That route is public (published listings only), so the call normally
+// succeeds for a logged-out visitor — but it can still fail (404 for a
+// hidden listing, network), and a listing with no readable photos must not
+// look like a broken page. Failures therefore fall back to the same
+// neutral placeholder wall as "no photos yet".
 //
 // Plain <img> rather than next/image on purpose: the URLs come from
 // Supabase Storage, and next/image would need a remotePatterns entry in

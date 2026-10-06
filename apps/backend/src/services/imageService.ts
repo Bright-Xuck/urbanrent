@@ -1,6 +1,7 @@
 import supabase from "../config/supabase.js";
 import { randomUUID } from "node:crypto";
 import { findPropertyById } from "../repositories/propertyRepository.js";
+import { getPropertyById } from "./propertyService.js";
 import {
   createImagesForProperty,
   findImagesByProperty,
@@ -71,6 +72,14 @@ export async function uploadPropertyImages(
 // ------------------------------------------------------------
 // GET ALL IMAGES FOR A PROPERTY
 // ------------------------------------------------------------
-export async function getImagesForProperty(propertyId: string) {
+// Public like the listing itself, so it applies the same visibility rule
+// (see `getPropertyById` in propertyService): a guest may read the photos
+// of a PUBLISHED property, while a draft's photos stay private to its
+// owner/admin. A hidden property throws "Property not found".
+export async function getImagesForProperty(
+  propertyId: string,
+  viewer?: { userId: string; role: string } | null
+) {
+  await getPropertyById(propertyId, viewer ?? null);
   return findImagesByProperty(propertyId);
 }

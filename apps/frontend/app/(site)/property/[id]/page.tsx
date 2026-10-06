@@ -7,13 +7,16 @@
 // looking — either the owner's controls or the tenant's apply /
 // request-a-viewing panels.
 //
-// WHY THIS PAGE IS BEHIND <RequireAuth>:
-// every property route on the backend runs `authenticate`, including
-// GET /api/properties/:id and GET /api/properties/:id/images. The browse
-// LIST is public, but a single listing is not readable without a token.
-// Rather than render an empty page that fails with a 401, this page asks
-// the visitor to log in. (Clicking through to a listing while logged out
-// shows the log-in wall, not a crash.)
+// WHY THIS PAGE IS PUBLIC:
+// a logged-out visitor can open any PUBLISHED listing. It used to sit behind
+// <RequireAuth> on the belief that every property route required a token, but
+// GET /api/properties/:id and GET /api/properties/:id/images are public — they
+// run `optionalAuthenticate` on the backend, so no token is fine and a token
+// only lets the service recognise the OWNER (who may also see their own draft).
+//
+// WHAT STILL NEEDS AN ACCOUNT lives in the sidebar, not the page: applying and
+// requesting a viewing are tenant actions, and editing/publishing is for the
+// owner. A guest gets a "log in to continue" prompt there instead.
 //
 // Ownership is compared on `property.ownerId` — the backend's findPropertyById
 // returns the raw row with no owner relation, so there is no owner email here.
@@ -22,12 +25,11 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { MapPin } from "lucide-react";
+import { LogIn, MapPin } from "lucide-react";
 import { getPropertyById } from "../../../../api/propertyApi";
 import type { Property } from "../../../../api/types";
 import { useAuthStore } from "../../../../Store/useUserStore";
 import { formatDate, formatXAF, titleCase } from "../../../../lib/format";
-import RequireAuth from "../../../../components/layout/RequireAuth";
 import PageHeader from "../../../../components/layout/PageHeader";
 import PropertyGallery from "../../../../components/properties/PropertyGallery";
 import AmenityPanel from "../../../../components/properties/AmenityPanel";
@@ -50,14 +52,6 @@ const TABS = [
 type TabId = (typeof TABS)[number]["id"];
 
 export default function PropertyDetailPage() {
-  return (
-    <RequireAuth title="This listing">
-      <PropertyDetail />
-    </RequireAuth>
-  );
-}
-
-function PropertyDetail() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const user = useAuthStore((state) => state.user);
@@ -303,6 +297,24 @@ function PropertyDetail() {
             </div>
           )}
 
+          {/* A logged-out visitor: the listing itself is readable, the ACTIONS
+              are not. This is the only gate the page still has, and it lives
+              here in the sidebar rather than over the whole page. Guests can
+              only ever load a PUBLISHED listing (the backend hides the rest),
+              so no status check is needed. */}
+          {!user && (
+            <div className="agent-card">
+              <h3>Like this property?</h3>
+              <p className="agent-role">
+                Log in to apply for it or request a viewing.
+              </p>
+
+              <Link href="/login" className="btn btn-block mt-5">
+                <LogIn className="h-4 w-4" aria-hidden /> Log in
+              </Link>
+            </div>
+          )}
+
           {!isOwner && isTenant && acceptsRequests && (
             <>
               <ApplyForm propertyId={property.id} />
@@ -310,6 +322,9 @@ function PropertyDetail() {
             </>
           )}
 
+          {/* A signed-in tenant on a listing that is not taking requests.
+              `isTenant` is already false for a guest, so no extra `!user`
+              guard is needed here. */}
           {!isOwner && isTenant && !acceptsRequests && (
             <Alert variant="info">
               This listing isn&apos;t published right now, so it isn&apos;t
@@ -318,7 +333,10 @@ function PropertyDetail() {
             </Alert>
           )}
 
-          {!isOwner && !isTenant && (
+          {/* A signed-in user who is neither the owner nor a tenant. `!user`
+              is required so a guest falls through to nothing here — they get
+              the "log in" card above, not a message about another landlord. */}
+          {!user && !isOwner && !isTenant && (
             <Alert variant="info">
               You&apos;re viewing a listing owned by another landlord. Only the
               owner can change it, and only tenants can apply for or view it.

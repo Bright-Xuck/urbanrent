@@ -176,8 +176,11 @@ export async function GetPropertyById(req: Request, res: Response) {
     return;
   }
 
+  // req.user is set by `optionalAuthenticate` when the caller sent a valid
+  // token, and is undefined for a guest. The service uses it purely to
+  // decide whether an unpublished listing is visible to this caller.
   try {
-    const property = await getPropertyById(id);
+    const property = await getPropertyById(id, req.user ?? null);
     res.status(200).json({ property });
   } catch (error) {
     if (error instanceof Error && error.message === "Property not found") {

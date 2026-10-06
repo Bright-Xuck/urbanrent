@@ -13,7 +13,8 @@ import type { Amenity, PropertyAmenityLink, PropertyAmenityRow } from "./types";
 // The sub-path matters: mounted on / they would collide with the property
 // router's GET /:id, which would answer first and never hand the request on.
 //
-// All three routes require a token, and POST/DELETE additionally require you
+// Reading the LIST is public — it powers the amenities chips on the public
+// listing page — while POST/DELETE require a token and additionally require you
 // to own the property (or be an ADMIN).
 //
 // SHAPE: the LIST returns PropertyAmenity JOIN rows with the amenity nested,
@@ -32,10 +33,13 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL;
 export async function getPropertyAmenities(
   propertyId: string
 ): Promise<PropertyAmenityRow[]> {
+  // The token is sent when we have one, but this read is public — a logged-out
+  // visitor gets the chips too, so we send no header at all rather than
+  // `Bearer null`.
   const token = useAuthStore.getState().accessToken;
 
   const response = await fetch(`${API_URL}/properties/${propertyId}/amenities`, {
-    headers: { Authorization: `Bearer ${token}` },
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
   });
 
   const data = await response.json();

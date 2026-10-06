@@ -37,10 +37,32 @@ export async function createPropertyForOwner(ownerId: string, data: Omit<CreateP
 // GET PROPERTY BY ID
 // ------------------------------------------------------------
 // Returns a single property, or throws if not found.
-// ------------------------------------------------------------
-export async function getPropertyById(id: string) {
+//
+// `viewer` is whoever is asking, when the route could identify them
+// (the route uses `optionalAuthenticate`, so it is null for a guest).
+// It is null/omitted for logged-out visitors.
+//
+// VISIBILITY RULE: a listing is readable by anyone while it is
+// PUBLISHED — that is the marketplace. DRAFT / UNPUBLISHED / ARCHIVED
+// rows are private to the landlord who owns them (and to an ADMIN),
+// so a draft id in a URL cannot be read by strangers. Without this
+// check the public detail route leaked unpublished listings.
+export async function getPropertyById(
+  id: string,
+  viewer?: { userId: string; role: string } | null
+) {
   const property = await findPropertyById(id);
   if (!property) throw new Error("Property not found");
+
+  const isOwner = viewer?.userId === property.ownerId;
+  const isAdmin = viewer?.role === "ADMIN";
+
+  if (property.status !== "PUBLISHED" && !isOwner && !isAdmin) {
+    // Same message as a row that does not exist, so a guest cannot use
+    // the error to discover which ids are real-but-hidden listings.
+    throw new Error("Property not found");
+  }
+
   return property;
 }
 

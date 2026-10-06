@@ -21,7 +21,7 @@ import { getAmenities, postAmenity, deletebyId } from '../controllers/amenityCon
 const router: express.Router = express.Router({ mergeParams: true })
 
 // List the amenities linked to this property.
-router.get("/amenities", authenticate, getAmenities)
+router.get("/amenities", getAmenities)
 
 // Create an amenity and link it to this property (owner only).
 router.post("/amenities", authenticate, postAmenity)

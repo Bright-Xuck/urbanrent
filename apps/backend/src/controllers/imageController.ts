@@ -55,10 +55,19 @@ export async function GetPropertyImages(req: Request, res: Response) {
     return;
   }
 
+  // req.user is set by `optionalAuthenticate` when the caller sent a valid
+  // token, and is undefined for a guest.
   try {
-    const images = await getImagesForProperty(id);
+    const images = await getImagesForProperty(id, req.user ?? null);
     res.status(200).json({ images });
   } catch (error) {
+    // The property is missing, or it is not published and the caller is
+    // not its owner — same 404 either way, so a guest cannot probe for
+    // the existence of private listings.
+    if (error instanceof Error && error.message === "Property not found") {
+      res.status(404).json({ message: error.message });
+      return;
+    }
     res.status(500).json({ message: "Internal server error" });
   }
 }

@@ -7,24 +7,11 @@ import type {
   PropertyType,
 } from "./types";
 
-// ============================================================
-// PROPERTY API
-// ============================================================
-// Each function calls the backend with fetch, checks response.ok, and
-// returns plain data (never a Response object).
-//
-// REMEMBER: fetch only throws when the network fails. A 404 or a 500 is a
-// normal response, so every function below checks response.ok and throws
-// its own Error using the message the backend sent.
-// ============================================================
+
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
-// Returns the parsed body with no declared shape. The backend wraps most
-// responses in an envelope ({ property }, { images }, …) while the browse
-// endpoints return the envelope directly, so callers destructure what they
-// need and the return type of each function above documents the contract
-// they promise to their callers.
+
 async function readJson(response: Response): Promise<any> {
   const text = await response.text();
   if (!text) return {};
@@ -33,6 +20,20 @@ async function readJson(response: Response): Promise<any> {
   } catch {
     return { message: `Listings service unavailable (${response.status})` };
   }
+}
+
+// ------------------------------------------------------------
+// AUTH HEADERS
+// ------------------------------------------------------------
+// The Authorization header for a signed-in caller, or an empty object for a
+// guest. This module's public routes (GET /properties/:id and its images)
+// accept either: with no header a visitor reads the published listing, and
+// with a token the backend can also recognise the OWNER (so they still see
+// their own draft). Note we send NO header when logged out — never a
+// literal `Bearer null`.
+function authHeaders(): Record<string, string> {
+  const token = useAuthStore.getState().accessToken;
+  return token ? { Authorization: `Bearer ${token}` } : {};
 }
 
 // The query options GET /api/properties understands.
@@ -113,8 +114,7 @@ export async function getProperties(
 
 // ------------------------------------------------------------
 // MY LISTINGS — GET /api/properties/mine
-// ------------------------------------------------------------
-// Returns YOUR properties in every status, drafts included.
+
 export async function getMyProperties(
   pagination: Pagination = {}
 ): Promise<PaginatedProperties> {
@@ -139,11 +139,13 @@ export async function getMyProperties(
 // ------------------------------------------------------------
 // SINGLE — GET /api/properties/:id
 // ------------------------------------------------------------
+// Public: a logged-out visitor can read a published listing. The token is
+// sent when we have one, because the backend uses it to tell whether the
+// caller is the OWNER (who may also view their own draft/unpublished
+// listing) or just another visitor.
 export async function getPropertyById(id: string): Promise<Property> {
-  const token = useAuthStore.getState().accessToken;
-
   const response = await fetch(`${API_URL}/properties/${id}`, {
-    headers: { Authorization: `Bearer ${token}` },
+    headers: authHeaders(),
   });
 
   const data = await readJson(response);
@@ -279,11 +281,10 @@ export async function uploadPropertyImages(id: string, images: File[]): Promise<
 // ------------------------------------------------------------
 // IMAGES — GET /api/properties/:id/images
 // ------------------------------------------------------------
+// Public, same as the listing itself — see getPropertyById above.
 export async function getPropertyImages(id: string): Promise<PropertyImage[]> {
-  const token = useAuthStore.getState().accessToken;
-
   const response = await fetch(`${API_URL}/properties/${id}/images`, {
-    headers: { Authorization: `Bearer ${token}` },
+    headers: authHeaders(),
   });
 
   const data = await readJson(response);
