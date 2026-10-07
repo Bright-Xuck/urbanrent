@@ -7,6 +7,7 @@ import applicationRoutes from './routes/applicationRoutes.js'
 import propertyApplicationRoutes from './routes/propertyApplicationRoutes.js'
 import viewingRequestRoutes from './routes/viewingRequestRoutes.js'
 import propertyViewingRequestRoutes from './routes/propertyViewingRequestRoutes.js'
+import adminRoutes from "./routes/adminRoutes.js"
 import cors from 'cors'
 import cookieParser from 'cookie-parser'
 
@@ -39,6 +40,7 @@ app.use('/api/properties/:propertyId/applications', propertyApplicationRoutes)
 app.use('/api/applications', applicationRoutes)
 app.use('/api/properties/:propertyId/viewing-requests', propertyViewingRequestRoutes)
 app.use('/api/viewing-requests', viewingRequestRoutes)
+app.use('/api/admin', adminRoutes)
 
 // ------------------------------------------------------------
 // Error handler
