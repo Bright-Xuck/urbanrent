@@ -12,8 +12,10 @@
 // The signed-in area has its own bar (DashboardNavbar): once you're in,
 // the marketing pages show just a light "you're logged in" state, and
 // the dashboards carry the role-specific links (listings, applications,
-// viewings). Blog is gone — it was a dead dropdown pointing at
-// /properties; the tenant "Features" dropdown was the same clutter.
+// viewings).
+//
+// Blog and the "Features" dropdown were removed — they were duplicate
+// clutter pointing at /properties.
 // ============================================================
 
 import Link from "next/link";
@@ -41,24 +43,20 @@ export default function Navbar() {
   }
 
   // One primary CTA per state, no duplicates:
-  //   logged out → "Sign up"  |  TENANT → "My applications"
-  //   LANDLORD/ADMIN → "My listings" (the dashboard)
-  const primaryHref = !user
-    ? "/register"
-    : user.role === "TENANT"
-      ? "/applications"
-      : "/dashboard";
-  const primaryLabel = !user
-    ? "Sign up"
-    : user.role === "TENANT"
-      ? "My applications"
-      : "My listings";
+  //   logged out  → "Sign up"     /register
+  //   TENANT      → "My applications"  /applications
+  //   LANDLORD / ADMIN → "My listings"  /dashboard
+  const isTenant = user?.role === "TENANT";
+  const primaryHref = !user ? "/register" : isTenant ? "/applications" : "/dashboard";
+  const primaryLabel = !user ? "Sign up" : isTenant ? "My applications" : "My listings";
 
   return (
     <header className="site-header">
       <div className="header-inner">
         <Link href="/" className="brand">
-          <span className="flex h-9 w-9 items-center justify-center rounded-full border border-navy font-display text-xs text-navy">
+          <span
+            className="flex h-9 w-9 items-center justify-center rounded-full border border-navy font-display text-xs text-navy"
+          >
             UR
           </span>
           <span className="font-display text-lg text-ink">UrbanRent</span>
@@ -66,6 +64,7 @@ export default function Navbar() {
 
         <nav className="main-nav">
           <Link className="active" href="/">Home</Link>
+
           <div className="nav-dropdown">
             <Link href="/properties">Properties <ChevronDown aria-hidden /></Link>
             <div className="dropdown-menu">
@@ -74,7 +73,9 @@ export default function Navbar() {
               <Link href="/properties?propertyType=APARTMENT">Apartments</Link>
             </div>
           </div>
-          <Link href="/property/demo">Property</Link>
+
+          <Link href="/properties?propertyType=HOUSE">Property</Link>
+
           <div className="nav-dropdown">
             <Link href="/properties">Features <ChevronDown aria-hidden /></Link>
             <div className="dropdown-menu compact">
@@ -82,7 +83,10 @@ export default function Navbar() {
               <Link href="/properties">Rental guide</Link>
             </div>
           </div>
-          {user && user.role !== "TENANT" ? <Link href="/dashboard">Dashboard</Link> : null}
+
+          {user && user.role !== "TENANT" ? (
+            <Link href="/dashboard">Dashboard</Link>
+          ) : null}
         </nav>
 
         <div className="header-actions">
@@ -106,7 +110,7 @@ export default function Navbar() {
               </button>
 
               <Link className="create-listing" href={primaryHref}>
-                {user.role === "TENANT" ? (
+                {isTenant ? (
                   <UserRound className="h-5 w-5" aria-hidden />
                 ) : (
                   <Plus className="h-5 w-5" aria-hidden />
@@ -116,7 +120,12 @@ export default function Navbar() {
             </>
           ) : (
             <>
-              <Link href="/login" className="user-icon" aria-label="Log in" title="Log in">
+              <Link
+                href="/login"
+                className="user-icon"
+                aria-label="Log in"
+                title="Log in"
+              >
                 <LogIn className="h-5 w-5" aria-hidden />
               </Link>
               <Link className="create-listing" href="/register">

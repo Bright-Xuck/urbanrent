@@ -1,22 +1,23 @@
 // ============================================================
 // BUTTON
 // ============================================================
-// The button looks live in globals.css (.btn + modifiers) so a plain
-// <button> or <a> elsewhere can wear the same style; this component is
-// just the typed wrapper.
+// Styled wrapper around a real <button>. The look comes from
+// globals.css (.btn + the variant/size classes), so a plain button
+// elsewhere can wear the same style.
 //
-// Size modifiers are theme classes too ("btn-sm", "btn-block") rather
-// than Tailwind padding — the theme layer is unlayered, so it outranks a
-// utility of equal specificity.
+// Size/layout modifiers are theme classes ("btn-sm", "btn-block") so
+// they keep winning over equal-specificity utilities.
 // ============================================================
 
 import type { ButtonHTMLAttributes } from "react";
 
+type Variant = "primary" | "outline" | "success" | "danger-outline" | "ghost";
+
 type ButtonProps = ButtonHTMLAttributes<HTMLButtonElement> & {
-  variant?: "primary" | "outline" | "success" | "danger-outline" | "ghost";
+  variant?: Variant;
 };
 
-const VARIANTS: Record<NonNullable<ButtonProps["variant"]>, string> = {
+const VARIANT_CLASS: Record<Variant, string> = {
   primary: "btn",
   outline: "btn btn-light",
   success: "btn btn-success",
@@ -32,9 +33,9 @@ export default function Button({
 }: ButtonProps) {
   return (
     <button
-      {...props}
       type={type}
-      className={`${VARIANTS[variant]} ${className}`}
+      className={`${VARIANT_CLASS[variant]} ${className}`}
+      {...props}
     />
   );
 }

@@ -43,20 +43,22 @@ function IncomingViewings() {
   useEffect(() => {
     let active = true;
 
-    getIncomingViewingRequests()
-      .then((data) => {
+    const load = async () => {
+      try {
+        const data = await getIncomingViewingRequests();
         if (active) setRequests(data);
-      })
-      .catch((err: unknown) => {
+      } catch (err: unknown) {
         if (active) {
           setError(
             err instanceof Error ? err.message : "Could not load viewing requests"
           );
         }
-      })
-      .finally(() => {
+      } finally {
         if (active) setLoading(false);
-      });
+      }
+    };
+
+    load();
 
     return () => {
       active = false;

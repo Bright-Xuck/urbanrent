@@ -3,10 +3,10 @@
 // ============================================================
 // DASHBOARD NAVBAR
 // ============================================================
-// The slim top bar for the signed-in area — (app)/dashboard/*, plus the
-// tenant pages /applications and /viewings. It replaces the marketing
-// Navbar once you're logged in: no Blog, no Features dropdown, no
-// "Sign up" — just the things each role actually uses.
+// Slim top bar for the signed-in area: (app)/dashboard/*, plus the tenant
+// pages /applications and /viewings. It replaces the marketing Navbar once
+// you're logged in — no Blog, no Features dropdown, no "Sign up", just the
+// things each role actually uses.
 //
 // What each role sees:
 //   TENANT   → Browse, My applications, My viewings | Log out
@@ -119,7 +119,9 @@ export default function DashboardNavbar() {
     <header className="site-header">
       <div className="header-inner">
         <Link href="/" className="brand">
-          <span className="flex h-9 w-9 items-center justify-center rounded-full border border-navy font-display text-xs text-navy">
+          <span
+            className="flex h-9 w-9 items-center justify-center rounded-full border border-navy font-display text-xs text-navy"
+          >
             UR
           </span>
           <span className="font-display text-lg text-ink">UrbanRent</span>

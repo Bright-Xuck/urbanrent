@@ -41,20 +41,22 @@ function MyApplications() {
   useEffect(() => {
     let active = true;
 
-    getMyApplications()
-      .then((data) => {
+    const load = async () => {
+      try {
+        const data = await getMyApplications();
         if (active) setApplications(data);
-      })
-      .catch((err: unknown) => {
+      } catch (err: unknown) {
         if (active) {
           setError(
             err instanceof Error ? err.message : "Could not load your applications"
           );
         }
-      })
-      .finally(() => {
+      } finally {
         if (active) setLoading(false);
-      });
+      }
+    };
+
+    load();
 
     return () => {
       active = false;

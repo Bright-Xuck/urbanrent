@@ -19,9 +19,16 @@ export default function FeaturedProperties() {
   const [failed, setFailed] = useState(false);
 
   useEffect(() => {
-    getProperties({}, { limit: 6 })
-      .then((data) => setProperties(data.properties))
-      .catch(() => setFailed(true));
+    const load = async () => {
+      try {
+        const data = await getProperties({}, { limit: 6 });
+        setProperties(data.properties);
+      } catch {
+        setFailed(true);
+      }
+    };
+
+    load();
   }, []);
 
   if (failed) return null;

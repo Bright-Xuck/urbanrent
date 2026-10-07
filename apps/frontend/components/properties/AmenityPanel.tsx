@@ -36,13 +36,16 @@ type AmenityPanelProps = {
   canManage: boolean;
 };
 
-export default function AmenityPanel({ propertyId, canManage }: AmenityPanelProps) {
+export default function AmenityPanel({
+  propertyId,
+  canManage,
+}: AmenityPanelProps) {
   const [rows, setRows] = useState<PropertyAmenityRow[]>([]);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [loaded, setLoaded] = useState(false);
 
   const [name, setName] = useState("");
-  const [pictureurl, setPictureurl] = useState("");
+  const [pictureUrl, setPictureUrl] = useState("");
   const [adding, setAdding] = useState(false);
   const [formError, setFormError] = useState<string | null>(null);
   const [notice, setNotice] = useState<string | null>(null);
@@ -51,20 +54,22 @@ export default function AmenityPanel({ propertyId, canManage }: AmenityPanelProp
     let active = true;
     setLoadError(null);
 
-    getPropertyAmenities(propertyId)
-      .then((data) => {
+    const load = async () => {
+      try {
+        const data = await getPropertyAmenities(propertyId);
         if (active) setRows(data);
-      })
-      .catch((err: unknown) => {
+      } catch (err: unknown) {
         if (active) {
           setLoadError(
             err instanceof Error ? err.message : "Could not load the amenities"
           );
         }
-      })
-      .finally(() => {
+      } finally {
         if (active) setLoaded(true);
-      });
+      }
+    };
+
+    load();
 
     return () => {
       active = false;
@@ -77,11 +82,24 @@ export default function AmenityPanel({ propertyId, canManage }: AmenityPanelProp
     setFormError(null);
     setNotice(null);
 
+    const form = new FormData(event.currentTarget);
+    const rawName = form.get("name") as string | null;
+    const rawPicture = form.get("pictureUrl") as string | null;
+
+    const trimmedName = rawName?.trim();
+    const trimmedPicture = rawPicture?.trim() || undefined;
+
+    if (!trimmedName) {
+      setFormError("Please give the amenity a name.");
+      setAdding(false);
+      return;
+    }
+
     try {
       const { amenity, link } = await createAmenity(
         propertyId,
-        name.trim(),
-        pictureurl.trim() || undefined
+        trimmedName,
+        trimmedPicture
       );
       // Append locally: the POST already told us it worked, so there is no
       // need to re-read the whole list. The POST returns the amenity and the
@@ -89,10 +107,12 @@ export default function AmenityPanel({ propertyId, canManage }: AmenityPanelProp
       // list uses.
       setRows((current) => [...current, { ...link, amenity }]);
       setName("");
-      setPictureurl("");
+      setPictureUrl("");
       setNotice(`"${amenity.name}" added to this listing.`);
     } catch (err) {
-      setFormError(err instanceof Error ? err.message : "Could not add the amenity");
+      setFormError(
+        err instanceof Error ? err.message : "Could not add the amenity"
+      );
     } finally {
       setAdding(false);
     }
@@ -158,11 +178,15 @@ export default function AmenityPanel({ propertyId, canManage }: AmenityPanelProp
       )}
 
       {canManage && (
-        <form onSubmit={handleAdd} className="mt-6 border-t border-line pt-6">
+        <form
+          onSubmit={handleAdd}
+          className="mt-6 border-t border-line pt-6"
+        >
           <p className="text-sm text-ink">Add an amenity</p>
 
           <div className="mt-3 grid gap-4 sm:grid-cols-2">
             <Input
+              name="name"
               label="Name"
               required
               value={name}
@@ -170,9 +194,10 @@ export default function AmenityPanel({ propertyId, canManage }: AmenityPanelProp
               placeholder="e.g. Borehole water"
             />
             <Input
+              name="pictureUrl"
               label="Picture URL"
-              value={pictureurl}
-              onChange={(event) => setPictureurl(event.target.value)}
+              value={pictureUrl}
+              onChange={(event) => setPictureUrl(event.target.value)}
               placeholder="Optional"
             />
           </div>
@@ -183,7 +208,12 @@ export default function AmenityPanel({ propertyId, canManage }: AmenityPanelProp
             </div>
           )}
 
-          <Button type="submit" variant="outline" disabled={adding} className="mt-4">
+          <Button
+            type="submit"
+            variant="outline"
+            disabled={adding}
+            className="mt-4"
+          >
             <Plus className="h-4 w-4" aria-hidden />
             {adding ? "Adding…" : "Add amenity"}
           </Button>

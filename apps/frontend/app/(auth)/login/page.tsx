@@ -10,7 +10,6 @@
 // ============================================================
 
 import { useState, type FormEvent } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { LogIn } from "lucide-react";
 import { login } from "../../../api/userApi";
@@ -22,8 +21,6 @@ export default function LoginPage() {
   const router = useRouter();
   const setSession = useAuthStore((state) => state.login);
 
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
 
@@ -32,8 +29,15 @@ export default function LoginPage() {
     setError(null);
     setPending(true);
 
+    const data = Object.fromEntries(
+      new FormData(event.currentTarget).entries(),
+    );
+
     try {
-      const { user, accessToken } = await login(email.trim(), password);
+      const { user, accessToken } = await login(
+        (data.email as string).trim(),
+        data.password as string,
+      );
       setSession(user, accessToken);
       router.push(user.role === "TENANT" ? "/applications" : "/dashboard");
     } catch (err) {
@@ -54,38 +58,36 @@ export default function LoginPage() {
         <h1>Log in to your account</h1>
         <p className="muted">
           New here?{" "}
-          <Link href="/register" className="link">
+          <a href="/register" className="link">
             Create an account
-          </Link>
+          </a>
         </p>
 
         <form className="mt-6" onSubmit={handleSubmit}>
-            <Input
-              label="Email"
-              type="email"
-              required
-              autoComplete="email"
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
-              placeholder="you@example.com"
-            />
+          <Input
+            name="email"
+            label="Email"
+            type="email"
+            required
+            autoComplete="email"
+            placeholder="you@example.com"
+          />
 
-            <Input
-              label="Password"
-              type="password"
-              required
-              autoComplete="current-password"
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
-              placeholder="••••••••"
-            />
+          <Input
+            name="password"
+            label="Password"
+            type="password"
+            required
+            autoComplete="current-password"
+            placeholder="••••••••"
+          />
 
-            {error && <Alert variant="error">{error}</Alert>}
+          {error && <Alert variant="error">{error}</Alert>}
 
-            <button type="submit" disabled={pending} className="btn btn-block">
-              <LogIn className="h-4 w-4" aria-hidden />
-              {pending ? "Logging in…" : "Log in"}
-            </button>
+          <button type="submit" disabled={pending} className="btn btn-block">
+            <LogIn className="h-4 w-4" aria-hidden />
+            {pending ? "Logging in…" : "Log in"}
+          </button>
         </form>
       </div>
     </div>

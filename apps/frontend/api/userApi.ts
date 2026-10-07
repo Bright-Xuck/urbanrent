@@ -1,51 +1,29 @@
 import type { User } from "../Store/useUserStore";
 
-// ============================================================
-// AUTH API
-// ============================================================
-// These four functions talk to /api/auth.
-//
-// They deliberately do NOT send an access token. They are how you get a
-// session or end one, so there is nothing to send and nothing to refresh.
-//
-// The refresh token is never handled in JavaScript. The backend puts it in
-// an httpOnly cookie, so the browser stores it and attaches it
-// automatically. We only have to pass credentials: "include" to allow it.
-// ============================================================
-
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
-// What POST /api/auth/login sends back.
+
 export type AuthResponse = {
   message: string;
   user: User;
   accessToken: string;
 };
 
-// What POST /api/auth/register sends back.
-// NOTE: no accessToken — registering does NOT log you in. Send the person
-// to the login page afterwards.
 export type RegisterResponse = {
   message: string;
   user: User;
 };
 
-// What POST /api/auth/refresh sends back.
-// NOTE: no user — just a fresh access token.
 export type RefreshResponse = {
   message: string;
   accessToken: string;
 };
 
-// ------------------------------------------------------------
-// POST /api/auth/login
-// ------------------------------------------------------------
 export async function login(email: string, password: string): Promise<AuthResponse> {
   const response = await fetch(`${API_URL}/auth/login`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ email, password }),
-    // Allows the browser to save the httpOnly refresh cookie the backend sets.
     credentials: "include",
   });
 
@@ -62,11 +40,11 @@ export async function login(email: string, password: string): Promise<AuthRespon
 // ------------------------------------------------------------
 // POST /api/auth/register
 // ------------------------------------------------------------
-export async function register(email: string, password: string): Promise<RegisterResponse> {
+export async function register(email: string, password: string, role:"TENANT"| "LANDLORD" ): Promise<RegisterResponse> {
   const response = await fetch(`${API_URL}/auth/register`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ email, password }),
+    body: JSON.stringify({ email, password, role }),
     credentials: "include",
   });
 

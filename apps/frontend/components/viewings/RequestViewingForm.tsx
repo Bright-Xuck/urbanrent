@@ -12,9 +12,14 @@
 // in the visitor's LOCAL time ("2026-09-18T10:00"), and
 // new Date(value).toISOString() converts exactly that moment to UTC —
 // which is what the landlord on the other side needs to compare against.
+//
+// The backend wants JSON, so we still send JSON. The form is a real
+// <form> so we can read the times from the DOM instead of juggling a grow/
+// shrink state array; the list itself is still controlled because the number
+// of rows is the part that React needs to own, not each value.
 // ============================================================
 
-import { useState, type FormEvent } from "react";
+import { useRef, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { CalendarPlus, Plus, X } from "lucide-react";
 import { createViewingRequest } from "../../api/viewingRequestApi";
@@ -23,34 +28,43 @@ import Button from "../ui/Button";
 import Card from "../ui/Card";
 import { Input } from "../ui/Fields";
 
-export default function RequestViewingForm({ propertyId }: { propertyId: string }) {
-  const [times, setTimes] = useState<string[]>([""]);
+export default function RequestViewingForm({
+  propertyId,
+}: {
+  propertyId: string;
+}) {
+  const [rowIds, setRowIds] = useState<string[]>(["r0"]);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [sent, setSent] = useState(false);
-
-  function updateTime(index: number, value: string) {
-    setTimes((current) =>
-      current.map((time, position) => (position === index ? value : time))
-    );
-  }
+  const nextId = useRef(1);
 
   function addRow() {
-    setTimes((current) => [...current, ""]);
+    setRowIds((current) => [...current, `r${nextId.current++}`]);
   }
 
-  function removeRow(index: number) {
-    setTimes((current) => current.filter((_, position) => position !== index));
+  function removeRow(id: string) {
+    setRowIds((current) => current.filter((rowId) => rowId !== id));
   }
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
 
-    // Skip the boxes the visitor left empty; the backend rejects an empty
-    // array with "At least one proposed time is required".
-    const proposed = times.filter((time) => time !== "");
-    if (proposed.length === 0) {
+    const data = Object.fromEntries(new FormData(event.currentTarget).entries());
+
+    // Collect the non-empty proposed times and convert them to ISO so the backend
+    // receives UTC instants (the inputs are local datetime-local values).
+    const proposedIso: string[] = [];
+
+    for (const [name, value] of Object.entries(data)) {
+      if (!name.startsWith("time-")) continue;
+      const time = String(value).trim();
+      if (!time) continue;
+      proposedIso.push(new Date(time).toISOString());
+    }
+
+    if (proposedIso.length === 0) {
       setError("Propose at least one time.");
       return;
     }
@@ -58,10 +72,7 @@ export default function RequestViewingForm({ propertyId }: { propertyId: string 
     setPending(true);
 
     try {
-      await createViewingRequest(
-        propertyId,
-        proposed.map((time) => new Date(time).toISOString())
-      );
+      await createViewingRequest(propertyId, proposedIso);
       setSent(true);
     } catch (err) {
       setError(
@@ -79,7 +90,7 @@ export default function RequestViewingForm({ propertyId }: { propertyId: string 
         <div className="mt-3">
           <Alert variant="success">
             Request sent. The landlord confirms one of your proposed times —
-            you&apos;ll see the confirmed slot on this page.
+            you'll see the confirmed slot on this page.
           </Alert>
         </div>
         <p className="mt-4">
@@ -96,28 +107,26 @@ export default function RequestViewingForm({ propertyId }: { propertyId: string 
       <h2 className="panel-title">Request a viewing</h2>
       <p className="panel-note">
         Propose the times that suit you. The landlord picks one — a landlord
-        can&apos;t be double-booked, so an overlapping time is refused.
+        can't be double-booked, so an overlapping time is refused.
       </p>
 
       <form onSubmit={handleSubmit} className="mt-4">
         <div className="space-y-3">
-          {times.map((time, index) => (
-            <div key={index} className="flex items-end gap-2">
-              {/* Input renders its own <label> wrapper, so the flex sizing
-                  lives on a div around it — className would land on the
-                  <input> itself. */}
+          {rowIds.map((id, index) => (
+            <div key={id} className="flex items-end gap-2">
               <div className="flex-1">
                 <Input
+                  name={`time-${id}`}
                   label={index === 0 ? "Proposed time" : `Proposed time ${index + 1}`}
                   type="datetime-local"
-                  value={time}
-                  onChange={(event) => updateTime(index, event.target.value)}
+                  defaultValue=""
                 />
               </div>
-              {times.length > 1 && (
+
+              {rowIds.length > 1 && (
                 <button
                   type="button"
-                  onClick={() => removeRow(index)}
+                  onClick={() => removeRow(id)}
                   aria-label={`Remove proposed time ${index + 1}`}
                   className="mb-2 px-2 py-2 text-ink-soft hover:text-danger"
                 >

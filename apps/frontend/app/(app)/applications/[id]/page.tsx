@@ -76,20 +76,22 @@ function ApplicationDetail() {
     setLoading(true);
     setLoadError(null);
 
-    getApplicationById(id)
-      .then((data) => {
+    const load = async () => {
+      try {
+        const data = await getApplicationById(id);
         if (active) setApplication(data);
-      })
-      .catch((err: unknown) => {
+      } catch (err: unknown) {
         if (active) {
           setLoadError(
             err instanceof Error ? err.message : "Could not load this application"
           );
         }
-      })
-      .finally(() => {
+      } finally {
         if (active) setLoading(false);
-      });
+      }
+    };
+
+    load();
 
     return () => {
       active = false;

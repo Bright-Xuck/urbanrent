@@ -1,12 +1,11 @@
 // ============================================================
 // INPUT / SELECT / TEXTAREA
 // ============================================================
-// One shared look for every form control (the `.field` rules in
-// globals.css: label above, rounded control, blue focus ring).
+// Shared look for every form control. The style is `.field` in
+// globals.css: label on top, rounded control, blue focus ring.
 //
-// `className` lands on the WRAPPER <label>, not on the control, because
-// call sites use it for layout ("mt-4", "col-span-2", "max-w-xs") and the
-// grid/flex parent is the wrapper.
+// `className` goes on the wrapping <label> because most callers use it
+// for layout ("mt-4", "col-span-2", "max-w-xs").
 // ============================================================
 
 import type {
@@ -15,9 +14,18 @@ import type {
   TextareaHTMLAttributes,
 } from "react";
 
-type InputProps = InputHTMLAttributes<HTMLInputElement> & { label?: string };
+type BaseFieldProps = {
+  label?: string;
+  className?: string;
+};
 
-export function Input({ label, className = "", ...props }: InputProps) {
+type InputProps = BaseFieldProps & InputHTMLAttributes<HTMLInputElement>;
+
+export function Input({
+  label,
+  className = "",
+  ...props
+}: InputProps) {
   return (
     <label className={`field ${className}`}>
       {label && <span className="label">{label}</span>}
@@ -26,9 +34,14 @@ export function Input({ label, className = "", ...props }: InputProps) {
   );
 }
 
-type SelectProps = SelectHTMLAttributes<HTMLSelectElement> & { label?: string };
+type SelectProps = BaseFieldProps & SelectHTMLAttributes<HTMLSelectElement>;
 
-export function Select({ label, className = "", children, ...props }: SelectProps) {
+export function Select({
+  label,
+  className = "",
+  children,
+  ...props
+}: SelectProps) {
   return (
     <label className={`field ${className}`}>
       {label && <span className="label">{label}</span>}
@@ -37,11 +50,13 @@ export function Select({ label, className = "", children, ...props }: SelectProp
   );
 }
 
-type TextareaProps = TextareaHTMLAttributes<HTMLTextAreaElement> & {
-  label?: string;
-};
+type TextareaProps = BaseFieldProps & TextareaHTMLAttributes<HTMLTextAreaElement>;
 
-export function Textarea({ label, className = "", ...props }: TextareaProps) {
+export function Textarea({
+  label,
+  className = "",
+  ...props
+}: TextareaProps) {
   return (
     <label className={`field ${className}`}>
       {label && <span className="label">{label}</span>}

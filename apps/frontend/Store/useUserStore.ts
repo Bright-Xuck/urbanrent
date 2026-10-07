@@ -1,25 +1,34 @@
 import { create } from "zustand";
 
-type Auth = {
-  user: User | null;
-  accessToken: string | null;
-  login: (user: User, accessToken: string) => void;
-  logout: () => void;
-};
+
+type Role = "TENANT" | "LANDLORD" | "ADMIN";
 
 export type User = {
   id: string;
-  email: string | null
-  role: "TENANT" | "LANDLORD" | "ADMIN";
+  email: string | null;
+  role: Role;
 };
 
-export const useAuthStore = create<Auth>((set) => ({
+type AuthState = {
+  user: User | null;
+  accessToken: string | null;
+  sessionRestoring: boolean;
+  login: (user: User, accessToken: string) => void;
+  logout: () => void;
+  setSessionRestoring: (value: boolean) => void;
+};
+
+export const useAuthStore = create<AuthState>((set) => ({
   user: null,
   accessToken: null,
-  login:({id, email, role}:User, accessToken)=>{
-    set(()=>({user: {id, email, role}, accessToken: accessToken}))
+  sessionRestoring: false,
+  login: (user, accessToken) => {
+    set({ user, accessToken, sessionRestoring: false });
   },
-  logout:()=>{
-    set(()=>({user: null, accessToken: null}))
-  }
+  logout: () => {
+    set({ user: null, accessToken: null, sessionRestoring: false });
+  },
+  setSessionRestoring: (value) => {
+    set({ sessionRestoring: value });
+  },
 }));

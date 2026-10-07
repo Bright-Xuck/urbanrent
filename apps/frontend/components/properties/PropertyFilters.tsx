@@ -3,17 +3,17 @@
 // ============================================================
 // PROPERTY FILTERS
 // ============================================================
-// The sidebar card on the listing page, styled like the demo's filter
-// panel: property-type pills across the top, then the fields, then the
-// action buttons.
+// Sidebar card on the listing page, styled like the demo's filter panel:
+// property-type pills across the top, then the fields, then the action
+// buttons.
 //
 // It owns the raw input strings and only calls `onSearch` with a clean
 // filter object when the form is submitted (or "Clear all" is pressed), so
 // typing never fires requests. The type pills are the one exception — like
 // the demo, choosing one filters straight away.
 //
-// These are exactly the filters GET /api/properties understands:
-// propertyType, city, minRent, maxRent, minBedrooms.
+// These are exactly the filters GET /api/properties understands: propertyType,
+// city, minRent, maxRent, minBedrooms.
 // ============================================================
 
 import { useState, type FormEvent } from "react";
@@ -41,19 +41,24 @@ type PropertyFiltersProps = {
   onSearch: (filters: FiltersInput) => void;
 };
 
-export default function PropertyFilters({ initial, onSearch }: PropertyFiltersProps) {
+export default function PropertyFilters({
+  initial,
+  onSearch,
+}: PropertyFiltersProps) {
   // Inputs only understand strings, so the numeric starting values are
   // stringified once here. `undefined` (no filter) stays an empty box.
   const [city, setCity] = useState(initial?.city ?? "");
-  const [propertyType, setPropertyType] = useState<string>(initial?.propertyType ?? "");
+  const [propertyType, setPropertyType] = useState<string>(
+    initial?.propertyType ?? "",
+  );
   const [minRent, setMinRent] = useState(
-    initial?.minRent !== undefined ? String(initial.minRent) : ""
+    initial?.minRent !== undefined ? String(initial.minRent) : "",
   );
   const [maxRent, setMaxRent] = useState(
-    initial?.maxRent !== undefined ? String(initial.maxRent) : ""
+    initial?.maxRent !== undefined ? String(initial.maxRent) : "",
   );
   const [minBedrooms, setMinBedrooms] = useState(
-    initial?.minBedrooms !== undefined ? String(initial.minBedrooms) : ""
+    initial?.minBedrooms !== undefined ? String(initial.minBedrooms) : "",
   );
 
   // Number("") is 0, which would filter everything away — only the boxes
@@ -70,7 +75,7 @@ export default function PropertyFilters({ initial, onSearch }: PropertyFiltersPr
     return filters;
   }
 
-  function handleSearch(event: FormEvent<HTMLFormElement>) {
+  function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     onSearch(buildFilters());
   }
@@ -80,8 +85,11 @@ export default function PropertyFilters({ initial, onSearch }: PropertyFiltersPr
     setPropertyType(type);
 
     const filters = buildFilters();
-    if (type) filters.propertyType = type as PropertyType;
-    else delete filters.propertyType;
+    if (type) {
+      filters.propertyType = type as PropertyType;
+    } else {
+      delete filters.propertyType;
+    }
 
     onSearch(filters);
   }
@@ -96,7 +104,7 @@ export default function PropertyFilters({ initial, onSearch }: PropertyFiltersPr
   }
 
   return (
-    <form onSubmit={handleSearch} className="filter-card">
+    <form onSubmit={handleSubmit} className="filter-card">
       <h2>Filter properties</h2>
 
       <div className="filter-tabs" role="group" aria-label="Property type">

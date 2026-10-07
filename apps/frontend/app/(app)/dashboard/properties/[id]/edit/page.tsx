@@ -70,18 +70,20 @@ function EditProperty() {
     setLoading(true);
     setLoadError(null);
 
-    getPropertyById(id)
-      .then((data) => {
+    const load = async () => {
+      try {
+        const data = await getPropertyById(id);
         if (active) setProperty(data);
-      })
-      .catch((err: unknown) => {
+      } catch (err: unknown) {
         if (active) {
           setLoadError(err instanceof Error ? err.message : "Could not load this listing");
         }
-      })
-      .finally(() => {
+      } finally {
         if (active) setLoading(false);
-      });
+      }
+    };
+
+    load();
 
     return () => {
       active = false;
@@ -93,13 +95,16 @@ function EditProperty() {
   useEffect(() => {
     let active = true;
 
-    getPropertyImages(id)
-      .then((data) => {
+    const loadImages = async () => {
+      try {
+        const data = await getPropertyImages(id);
         if (active) setImages(data);
-      })
-      .catch(() => {
+      } catch {
         // No readable photos: the empty state below covers it.
-      });
+      }
+    };
+
+    loadImages();
 
     return () => {
       active = false;

@@ -1,12 +1,12 @@
 // ============================================================
 // PAGE HEADER
 // ============================================================
-// The breadcrumb + big title + one-line subtitle that sits at the top of
-// most pages, matching the demo's "Home / Property Listing" pattern.
+// Breadcrumb + big title + one-line subtitle that sits at the top of most
+// pages, matching the demo's "Home / Property Listing" pattern.
 //
-// `backHref`/`backLabel` feed the middle crumb (the demo's "Home / Villa /
-// Individual Houses"), so callers keep passing the same props they always
-// did — only the rendering changed.
+// `backHref` / `backLabel` feed the middle crumb (the demo's "Home / Villa /
+// Individual Houses"), so callers keep passing the same props — only the
+// rendering changed.
 // ============================================================
 
 import Link from "next/link";
@@ -28,6 +28,7 @@ export default function PageHeader({
     <div>
       <nav className="breadcrumb" aria-label="Breadcrumb">
         <Link href="/">Home</Link>
+
         {backHref && (
           <>
             <span className="sep" aria-hidden>
@@ -36,13 +37,16 @@ export default function PageHeader({
             <Link href={backHref}>{backLabel}</Link>
           </>
         )}
+
         <span className="sep" aria-hidden>
           /
         </span>
+
         <span>{title}</span>
       </nav>
 
       <h1 className="page-title">{title}</h1>
+
       {subtitle && <p className="page-sub">{subtitle}</p>}
     </div>
   );

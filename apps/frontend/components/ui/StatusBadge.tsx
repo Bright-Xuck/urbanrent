@@ -2,15 +2,19 @@
 // STATUS BADGE
 // ============================================================
 // Shows an application / viewing / property status as a small coloured
-// pill. The backend sends SCREAMING_SNAKE_CASE ("UNDER_REVIEW"); we
-// lowercase it and look it up, so the component works straight off API
-// data without any mapping in the pages.
+// pill.
 //
-// The pill itself is `.status-pill` from globals.css, tinted by data-tone
-// (ok / warn / bad / muted) so the colour rules stay in the stylesheet.
+// The backend sends SCREAMING_SNAKE_CASE ("UNDER_REVIEW"); we lowercase
+// it and look it up, so the component works straight off API data with no
+// mapping in the pages.
+//
+// The pill is `.status-pill` from globals.css, tinted by data-tone (ok /
+// warn / bad / muted) so the colour rules stay in the stylesheet.
 // ============================================================
 
-const TONES: Record<string, "ok" | "warn" | "bad" | "muted"> = {
+type Tone = "ok" | "warn" | "bad" | "muted";
+
+const TONES: Record<string, Tone> = {
   submitted: "muted",
   under_review: "warn",
   approved: "ok",
@@ -56,7 +60,10 @@ export default function StatusBadge({ status }: { status?: string }) {
   const key = status?.toLowerCase() ?? "";
 
   return (
-    <span className="status-pill" data-tone={TONES[key] ?? "muted"}>
+    <span
+      className="status-pill"
+      data-tone={TONES[key] ?? "muted"}
+    >
       {LABELS[key] ?? status}
     </span>
   );

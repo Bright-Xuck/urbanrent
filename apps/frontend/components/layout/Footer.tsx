@@ -17,7 +17,9 @@ export default function Footer() {
       <div className="footer-grid">
         <div>
           <div className="flex items-center gap-2">
-            <span className="flex h-8 w-8 items-center justify-center rounded-full border border-paper/40 font-display text-xs text-paper">
+            <span
+              className="flex h-8 w-8 items-center justify-center rounded-full border border-paper/40 font-display text-xs text-paper"
+            >
               UR
             </span>
             <span className="font-display text-lg text-paper">UrbanRent</span>

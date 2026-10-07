@@ -65,7 +65,9 @@ function BrowseContent() {
   // filter card's key (remount = the form re-seeds from the URL).
   const paramKey = searchParams.toString();
 
-  const [filters, setFilters] = useState<FilterValues>(() => readFilters(searchParams));
+  const [filters, setFilters] = useState<FilterValues>(() =>
+    readFilters(searchParams),
+  );
   const [page, setPage] = useState(1);
 
   const [properties, setProperties] = useState<Property[]>([]);
@@ -89,26 +91,30 @@ function BrowseContent() {
     setLoading(true);
     setError(null);
 
-    getProperties(filters, {
-      offset: (page - 1) * PAGE_SIZE,
-      limit: PAGE_SIZE,
-    })
-      .then((data) => {
+    const load = async () => {
+      try {
+        const data = await getProperties(filters, {
+          offset: (page - 1) * PAGE_SIZE,
+          limit: PAGE_SIZE,
+        });
         if (!active) return;
         setProperties(data.properties);
         setTotal(data.total);
         setTotalPages(data.totalPages);
-      })
-      .catch((err: unknown) => {
+      } catch (err: unknown) {
         if (!active) return;
         // 400 (minRent > maxRent) and any server error land here with the
         // message the backend sent.
-        setError(err instanceof Error ? err.message : "Could not load properties");
+        setError(
+          err instanceof Error ? err.message : "Could not load properties",
+        );
         setProperties([]);
-      })
-      .finally(() => {
+      } finally {
         if (active) setLoading(false);
-      });
+      }
+    };
+
+    load();
 
     return () => {
       active = false;
@@ -116,8 +122,8 @@ function BrowseContent() {
   }, [filters, page]);
 
   function handleSearch(next: FilterValues) {
-    // A new filter set always starts from the first page, otherwise a
-    // narrow filter could land on a page number that no longer exists.
+    // A new filter set always starts from the first page, otherwise a narrow
+    // filter could land on a page number that no longer exists.
     setPage(1);
     setFilters(next);
   }
@@ -136,7 +142,11 @@ function BrowseContent() {
       <div className="listing-layout mt-8">
         {/* The key re-mounts the card when the URL params change (a second
             hero search), so the inputs always match the results shown. */}
-        <PropertyFilters key={paramKey} initial={filters} onSearch={handleSearch} />
+        <PropertyFilters
+          key={paramKey}
+          initial={filters}
+          onSearch={handleSearch}
+        />
 
         <div>
           {error && <Alert variant="error">{error}</Alert>}

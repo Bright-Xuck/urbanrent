@@ -14,7 +14,7 @@
 //   allowed                 → the children render
 //
 // That first case matters on a reload: the access token lives in memory,
-// and <SessionBootstrap> is exchanging the refresh cookie for a new one at
+// and useSessionRestore() is trading the refresh cookie for a new one at
 // the same moment this component first renders. Without it, a signed-in
 // visitor reloading the page would be told to log in.
 // ============================================================
@@ -24,7 +24,6 @@ import { LogIn } from "lucide-react";
 import type { ReactNode } from "react";
 import type { Role } from "../../api/types";
 import { useAuthStore } from "../../Store/useUserStore";
-import { useSessionRestoring } from "./SessionBootstrap";
 
 type RequireAuthProps = {
   children: ReactNode;
@@ -33,9 +32,13 @@ type RequireAuthProps = {
   title?: string;
 };
 
-export default function RequireAuth({ children, roles, title = "This page" }: RequireAuthProps) {
+export default function RequireAuth({
+  children,
+  roles,
+  title = "This page",
+}: RequireAuthProps) {
   const user = useAuthStore((state) => state.user);
-  const restoring = useSessionRestoring();
+  const restoring = useAuthStore((state) => state.sessionRestoring);
 
   if (!user && restoring) {
     return (
@@ -66,7 +69,7 @@ export default function RequireAuth({ children, roles, title = "This page" }: Re
         <div className="empty-state">
           <h3>{title}</h3>
           <p>
-            Your account ({user.role.toLowerCase()}) doesn&apos;t have access to
+            Your account ({user.role.toLowerCase()}) doesn't have access to
             this page.
           </p>
         </div>

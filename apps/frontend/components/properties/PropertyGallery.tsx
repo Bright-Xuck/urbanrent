@@ -23,7 +23,11 @@ import { useEffect, useState } from "react";
 import { getPropertyImages } from "../../api/propertyApi";
 import type { PropertyImage } from "../../api/types";
 
-export default function PropertyGallery({ propertyId }: { propertyId: string }) {
+export default function PropertyGallery({
+  propertyId,
+}: {
+  propertyId: string;
+}) {
   const [images, setImages] = useState<PropertyImage[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -31,16 +35,18 @@ export default function PropertyGallery({ propertyId }: { propertyId: string }) 
     let active = true;
     setLoading(true);
 
-    getPropertyImages(propertyId)
-      .then((data) => {
+    const load = async () => {
+      try {
+        const data = await getPropertyImages(propertyId);
         if (active) setImages(data);
-      })
-      .catch(() => {
+      } catch {
         // Covered by the placeholder below.
-      })
-      .finally(() => {
+      } finally {
         if (active) setLoading(false);
-      });
+      }
+    };
+
+    load();
 
     return () => {
       active = false;
@@ -52,7 +58,9 @@ export default function PropertyGallery({ propertyId }: { propertyId: string }) 
   }
 
   if (images.length === 0) {
-    return <div className="detail-gallery-empty">No photos on this listing yet</div>;
+    return (
+      <div className="detail-gallery-empty">No photos on this listing yet</div>
+    );
   }
 
   const cover = images[0];
@@ -61,7 +69,11 @@ export default function PropertyGallery({ propertyId }: { propertyId: string }) 
   return (
     <div className="detail-gallery">
       {/* eslint-disable-next-line @next/next/no-img-element */}
-      <img src={cover.url} alt="Listing photo" className="detail-main-image" />
+      <img
+        src={cover.url}
+        alt="Listing photo"
+        className="detail-main-image"
+      />
 
       {thumbs.length > 0 && (
         <div className="detail-thumbs">

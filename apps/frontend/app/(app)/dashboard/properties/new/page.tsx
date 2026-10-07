@@ -42,7 +42,9 @@ export default function NewPropertyPage() {
 
 function NewProperty() {
   const [createdId, setCreatedId] = useState<string | null>(null);
-  const [createdStatus, setCreatedStatus] = useState<PropertyStatus | null>(null);
+  const [createdStatus, setCreatedStatus] = useState<PropertyStatus | null>(
+    null,
+  );
 
   const [pending, setPending] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -60,7 +62,9 @@ function NewProperty() {
       setCreatedId(property.id);
       setCreatedStatus(property.status);
     } catch (err) {
-      setError(err instanceof Error ? err.message : "Could not create the listing");
+      setError(
+        err instanceof Error ? err.message : "Could not create the listing",
+      );
     } finally {
       setPending(false);
     }
@@ -77,7 +81,9 @@ function NewProperty() {
       const message = await uploadPropertyImages(createdId, files);
       setUploadNotice(message);
     } catch (err) {
-      setUploadError(err instanceof Error ? err.message : "Could not upload the images");
+      setUploadError(
+        err instanceof Error ? err.message : "Could not upload the images",
+      );
     } finally {
       setUploading(false);
     }

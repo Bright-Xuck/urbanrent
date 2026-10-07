@@ -41,20 +41,22 @@ function IncomingApplications() {
   useEffect(() => {
     let active = true;
 
-    getIncomingApplications()
-      .then((data) => {
+    const load = async () => {
+      try {
+        const data = await getIncomingApplications();
         if (active) setApplications(data);
-      })
-      .catch((err: unknown) => {
+      } catch (err: unknown) {
         if (active) {
           setError(
             err instanceof Error ? err.message : "Could not load incoming applications"
           );
         }
-      })
-      .finally(() => {
+      } finally {
         if (active) setLoading(false);
-      });
+      }
+    };
+
+    load();
 
     return () => {
       active = false;

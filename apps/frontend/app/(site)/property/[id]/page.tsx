@@ -66,18 +66,20 @@ export default function PropertyDetailPage() {
     setLoading(true);
     setError(null);
 
-    getPropertyById(id)
-      .then((data) => {
+    const load = async () => {
+      try {
+        const data = await getPropertyById(id);
         if (active) setProperty(data);
-      })
-      .catch((err: unknown) => {
+      } catch (err: unknown) {
         if (active) {
           setError(err instanceof Error ? err.message : "Could not load this listing");
         }
-      })
-      .finally(() => {
+      } finally {
         if (active) setLoading(false);
-      });
+      }
+    };
+
+    load();
 
     return () => {
       active = false;

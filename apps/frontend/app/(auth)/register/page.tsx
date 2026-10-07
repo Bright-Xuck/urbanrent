@@ -1,19 +1,6 @@
 "use client";
 
-// ============================================================
-// REGISTER — POST /api/auth/register
-// ============================================================
-// The backend takes { email, password } and always creates a TENANT:
-// the schema has no name column, and role is set server-side. So this
-// page has no name field and no working role selector — a note under the
-// landlord button says exactly that instead of pretending.
-//
-// Registering does NOT log you in (no tokens come back), so success
-// sends you to /login.
-// ============================================================
-
 import { useState, type FormEvent } from "react";
-import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { CircleAlert, UserRoundPlus } from "lucide-react";
 import { register } from "../../../api/userApi";
@@ -23,9 +10,7 @@ import Alert from "../../../components/ui/Alert";
 export default function RegisterPage() {
   const router = useRouter();
 
-  const [role, setRole] = useState<"TENANT" | "LANDLORD">("TENANT");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [role, setRole] = useState<"TENANT"|"LANDLORD">("TENANT");
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
 
@@ -34,8 +19,13 @@ export default function RegisterPage() {
     setError(null);
     setPending(true);
 
+    const data = Object.fromEntries(new FormData(event.currentTarget).entries())
+
     try {
-      await register(email.trim(), password);
+      await register(
+        (data.email as string).trim(),
+        data.password as string, role
+      );
       router.push("/login");
     } catch (err) {
       // 409 comes back here if the email is already taken.
@@ -56,9 +46,9 @@ export default function RegisterPage() {
         <h1>Create your account</h1>
         <p className="muted">
           Already have one?{" "}
-          <Link href="/login" className="link">
+          <a href="/login" className="link">
             Log in
-          </Link>
+          </a>
         </p>
 
         <div className="mt-6">
@@ -81,42 +71,25 @@ export default function RegisterPage() {
               <span>Listing a property</span>
             </button>
           </div>
-
-          {role === "LANDLORD" && (
-            <Alert variant="warning">
-              <span className="inline-flex items-start gap-2">
-                <CircleAlert
-                  className="mt-0.5 h-4 w-4 shrink-0"
-                  aria-hidden
-                />
-                Heads up: landlord sign-up is not wired up on the backend
-                yet — every new account is created as a tenant. You can
-                register now and have an admin switch you to a landlord
-                later.
-              </span>
-            </Alert>
-          )}
         </div>
 
         <form className="mt-6" onSubmit={handleSubmit}>
           <Input
+            name="email"
             label="Email"
             type="email"
             required
             autoComplete="email"
-            value={email}
-            onChange={(event) => setEmail(event.target.value)}
             placeholder="you@example.com"
           />
 
           <Input
+            name="password"
             label="Password"
             type="password"
             required
             autoComplete="new-password"
             minLength={8}
-            value={password}
-            onChange={(event) => setPassword(event.target.value)}
             placeholder="At least 8 characters"
           />
 

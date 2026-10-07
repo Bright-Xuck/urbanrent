@@ -55,23 +55,25 @@ function MyListings() {
     setLoading(true);
     setError(null);
 
-    getMyProperties({ offset: (page - 1) * PAGE_SIZE, limit: PAGE_SIZE })
-      .then((data) => {
+    const load = async () => {
+      try {
+        const data = await getMyProperties({ offset: (page - 1) * PAGE_SIZE, limit: PAGE_SIZE });
         if (!active) return;
         setProperties(data.properties);
         setTotal(data.total);
         setTotalPages(data.totalPages);
-      })
-      .catch((err: unknown) => {
+      } catch (err: unknown) {
         if (!active) return;
         setError(
           err instanceof Error ? err.message : "Could not load your properties"
         );
         setProperties([]);
-      })
-      .finally(() => {
+      } finally {
         if (active) setLoading(false);
-      });
+      }
+    };
+
+    load();
 
     return () => {
       active = false;

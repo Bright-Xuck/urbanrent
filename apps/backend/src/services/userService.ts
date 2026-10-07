@@ -20,7 +20,7 @@ import { signAccessToken, signRefreshToken, verifyRefreshToken, hashRefreshToken
 // ------------------------------------------------------------
 // REGISTER - just creates the user, no tokens yet.
 // ------------------------------------------------------------
-export async function registerUser(data: { email: string; password: string }) {
+export async function registerUser(data: { email: string; password: string, role: "TENANT"|"LANDLORD" }) {
   // 1. Make sure the email isn't already taken
   const existing = await findUserByEmail(data.email);
   if (existing) throw new Error("User with this email already exists");
@@ -32,7 +32,7 @@ export async function registerUser(data: { email: string; password: string }) {
   return createUser({
     email: data.email,
     passwordHash,
-    role: Role.TENANT,
+    role: data.role,
   });
 }
 

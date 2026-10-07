@@ -1,14 +1,6 @@
 import type { Request, Response } from "express";
 import { registerUser, loginUser, refreshAccessToken, logoutUser } from "../services/userService.js";
 
-// ------------------------------------------------------------
-// REFRESH COOKIE ATTRIBUTES
-// ------------------------------------------------------------
-// In production the frontend (Vercel) and this API (Render) sit on
-// different domains, so the browser only sends this cookie on cross-site
-// requests if it is SameSite=None + Secure. Local dev keeps the default
-// Lax behaviour; set COOKIE_SAMESITE=none on the deployed backend.
-// ------------------------------------------------------------
 const refreshCookieOptions = {
     httpOnly: true,
     secure: true,
@@ -16,27 +8,14 @@ const refreshCookieOptions = {
     path: "/api/auth",
 } as const;
 
-// ============================================================
-// AUTH CONTROLLER
-// ============================================================
-// This layer handles HTTP requests/responses.
-// It extracts data from the request, calls the service layer,
-// and formats the response. It does NOT contain business logic.
-// ============================================================
-
-// ============================================================
-// REGISTER
-// ============================================================
-// POST /api/auth/register
-// Body: { email, password }
-// ============================================================
 export async function Register(req: Request, res: Response) {
-    const { email, password } = req.body;
+    const { email, password, role } = req.body;
 
     try {
         const user = await registerUser({
             email,
             password,
+            role
         });
 
         res.status(201).json({
@@ -57,13 +36,6 @@ export async function Register(req: Request, res: Response) {
     }
 }
 
-// ============================================================
-// LOGIN
-// ============================================================
-// POST /api/auth/login
-// Body: { email, password }
-// Returns: { user, accessToken, refreshToken }
-// ============================================================
 export async function Login(req: Request, res: Response) {
     const { email, password } = req.body;
 
@@ -73,8 +45,7 @@ export async function Login(req: Request, res: Response) {
             password,
         });
 
-        // Set the cookie BEFORE res.json() — once the response body is
-        // flushed, the Set-Cookie header can no longer be added.
+    
         res.cookie("RefreshToken", refreshToken, {
             ...refreshCookieOptions,
             maxAge: 7 * 24 * 60 * 60 * 1000,

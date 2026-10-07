@@ -54,13 +54,13 @@ export default function HomePage() {
             onSubmit={(event) => {
               event.preventDefault();
 
-              const data = new FormData(event.currentTarget);
+              const form = new FormData(event.currentTarget);
               const params = new URLSearchParams();
 
               // Only the fields that were filled in travel in the URL, so
               // an empty search behaves exactly like /properties.
               for (const key of ["city", "propertyType", "minBedrooms", "maxRent"]) {
-                const value = data.get(key);
+                const value = form.get(key);
                 if (typeof value === "string" && value.trim() !== "") {
                   params.set(key, value.trim());
                 }

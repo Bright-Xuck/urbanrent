@@ -1,14 +1,13 @@
 // ============================================================
 // PAGINATION
 // ============================================================
-// Prev/Next controls with a "Page x of y" readout. The parent owns the
-// page number; this component only reports the intent.
+// Previous / next controls with a "Page x of y" readout. The parent
+// owns the page number — this component only reports the intent.
+//
+// The look is `.pagination` / `.page-btn` in globals.css.
 // ============================================================
 
 import { ChevronLeft, ChevronRight } from "lucide-react";
-
-// The bar is `.pagination` + `.page-btn` in globals.css — the same look the
-// demo uses under its listing grid.
 
 type PaginationProps = {
   page: number;
@@ -27,15 +26,23 @@ export default function Pagination({
 
   return (
     <nav className="pagination" aria-label="Pagination">
-      <button type="button" disabled={page <= 1} onClick={onPrevious} className="page-btn">
+      <button
+        type="button"
+        disabled={page <= 1}
+        onClick={onPrevious}
+        className="page-btn"
+      >
         <ChevronLeft className="h-4 w-4" aria-hidden /> Previous
       </button>
 
-      <span>
-        Page {page} of {totalPages}
-      </span>
+      <span>Page {page} of {totalPages}</span>
 
-      <button type="button" disabled={page >= totalPages} onClick={onNext} className="page-btn">
+      <button
+        type="button"
+        disabled={page >= totalPages}
+        onClick={onNext}
+        className="page-btn"
+      >
         Next <ChevronRight className="h-4 w-4" aria-hidden />
       </button>
     </nav>

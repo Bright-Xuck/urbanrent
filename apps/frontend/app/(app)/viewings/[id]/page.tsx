@@ -70,20 +70,22 @@ function ViewingDetail() {
     setLoading(true);
     setLoadError(null);
 
-    getViewingRequestById(id)
-      .then((data) => {
+    const load = async () => {
+      try {
+        const data = await getViewingRequestById(id);
         if (active) setRequest(data);
-      })
-      .catch((err: unknown) => {
+      } catch (err: unknown) {
         if (active) {
           setLoadError(
             err instanceof Error ? err.message : "Could not load this viewing request"
           );
         }
-      })
-      .finally(() => {
+      } finally {
         if (active) setLoading(false);
-      });
+      }
+    };
+
+    load();
 
     return () => {
       active = false;

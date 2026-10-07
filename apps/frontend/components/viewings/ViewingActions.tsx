@@ -3,8 +3,8 @@
 // ============================================================
 // VIEWING ACTIONS
 // ============================================================
-// The landlord's controls for one viewing request — the viewing parallel
-// of components/applications/ApplicationActions.tsx.
+// The landlord's controls for one viewing request — the viewing parallel of
+// components/applications/ApplicationActions.tsx.
 //
 // The moves below mirror the backend's transition matrix exactly:
 //
@@ -12,14 +12,14 @@
 //   CONFIRMED → COMPLETED | NO_SHOW
 //   DECLINED / COMPLETED / NO_SHOW are final
 //
-// Confirming requires a time, and the tenant already proposed some, so
-// those are offered as one-click fillers. The datetime input stays editable
-// because a landlord may well agree on a time nobody proposed.
+// Confirming requires a time, and the tenant already proposed some, so those
+// are offered as one-click fillers. The datetime input stays editable because a
+// landlord may well agree on a time nobody proposed.
 //
-// The backend also refuses a time that overlaps another CONFIRMED viewing
-// for the same landlord (409, "…overlaps another confirmed viewing"). That
-// applies across ALL of their properties — a landlord can only be in one
-// place at a time — and the message is shown as-is.
+// The backend also refuses a time that overlaps another CONFIRMED viewing for the
+// same landlord (409, "…overlaps another confirmed viewing"). That applies across
+// ALL of their properties — a landlord can only be in one place at a time — and the
+// message is shown as-is.
 // ============================================================
 
 import { useState } from "react";
@@ -43,7 +43,7 @@ export function viewingIsClosed(request: ViewingRequest): boolean {
 export function landlordCanManageViewing(
   request: ViewingRequest,
   userId: string,
-  role: Role
+  role: Role,
 ): boolean {
   if (role === "ADMIN") return true;
   return !!request.property?.owner?.id && request.property.owner.id === userId;
@@ -66,17 +66,17 @@ export default function ViewingActions({
 }: ViewingActionsProps) {
   const proposed = request.proposedTimes ?? [];
 
-  // Default the confirm box to the first time the tenant proposed, so the
-  // common case ("yes, the first one works") is a single click.
+  // Default the confirm box to the first time the tenant proposed, so the common
+  // case ("yes, the first one works") is a single click.
   const [confirmedTime, setConfirmedTime] = useState(
-    proposed[0] ? toDateTimeLocal(proposed[0]) : ""
+    proposed[0] ? toDateTimeLocal(proposed[0]) : "",
   );
 
   if (viewingIsClosed(request)) {
     return (
       <p className="alert alert-info mt-6">
-        This viewing request is closed — a {request.status.toLowerCase()}{" "}
-        viewing can&apos;t be changed.
+        This viewing request is closed — a {request.status.toLowerCase()} viewing
+        can't be changed.
       </p>
     );
   }
@@ -84,8 +84,8 @@ export default function ViewingActions({
   if (!landlordCanManageViewing(request, userId, role)) {
     return (
       <p className="alert alert-info mt-6">
-        Only the landlord decides whether this viewing goes ahead. You&apos;ll
-        see the confirmed time here once they do.
+        Only the landlord decides whether this viewing goes ahead. You'll see the
+        confirmed time here once they do.
       </p>
     );
   }
@@ -113,6 +113,7 @@ export default function ViewingActions({
           )}
 
           <Input
+            name="confirmedTime"
             label="Confirmed time"
             type="datetime-local"
             required
@@ -145,10 +146,13 @@ export default function ViewingActions({
       {request.status === "CONFIRMED" && (
         <div className="flex flex-wrap gap-3">
           <p className="w-full">
-            After the viewing, record what happened — it&apos;s part of the
-            record.
+            After the viewing, record what happened — it's part of the record.
           </p>
-          <Button variant="success" disabled={busy} onClick={() => onAction("complete")}>
+          <Button
+            variant="success"
+            disabled={busy}
+            onClick={() => onAction("complete")}
+          >
             Mark completed
           </Button>
           <Button

@@ -3,24 +3,29 @@
 // ============================================================
 // PROPERTY FORM
 // ============================================================
-// The listing form shared by BOTH the "new property" page and the "edit"
-// page — before this existed, the same ~100 lines of fields lived in two
-// places and drifted.
+// Listing form shared by BOTH the "new property" page and the "edit" page.
+// Before this existed, the same ~100 lines of fields lived in two places and
+// drifted.
 //
 // The component owns the raw input strings and hands the parent a ready
 // `CreatePropertyInput` body (numbers already converted, empty optional
-// fields left out). It does NOT call the API itself — that's the page's
-// job, because the two pages do different things with the body:
+// fields left out). It does NOT call the API itself — that's the page's job,
+// because the two pages do different things with the body:
 //
 //   new page  → onSubmit(body)            creates a DRAFT
 //               secondary.onAction(body)  creates it PUBLISHED
 //   edit page → onSubmit(body)            PATCHes the property
 //
-// The backend requires title, city, and monthlyRent — those inputs are
-// marked `required` so the browser blocks the submit before we send.
+// The backend requires title, city, and monthlyRent — those inputs are marked
+// `required` so the browser blocks the submit before we send.
+//
+// The backend expects JSON, so we still send JSON. The form is a real <form> so
+// we can read values from the DOM instead of holding every field in state; the
+// shape conversion still happens explicitly because the API wants a typed
+// object, not a flat form dump.
 // ============================================================
 
-import { useState, type FormEvent, type ReactNode } from "react";
+import { useRef, type FormEvent, type ReactNode } from "react";
 import Alert from "../ui/Alert";
 import { Input, Select, Textarea } from "../ui/Fields";
 import { titleCase } from "../../lib/format";
@@ -36,8 +41,8 @@ const TYPES: PropertyType[] = [
   "OTHER",
 ];
 
-// What a page can prefill (the edit page passes the loaded property;
-// everything is a string because inputs work in strings).
+// What a page can prefill (the edit page passes the loaded property; everything
+// is a string because inputs work in strings).
 export type PropertyFormInitial = Partial<{
   title: string;
   description: string;
@@ -76,76 +81,63 @@ export default function PropertyForm({
   secondary,
   children,
 }: PropertyFormProps) {
-  const [form, setForm] = useState({
-    title: initial?.title ?? "",
-    description: initial?.description ?? "",
-    propertyType: initial?.propertyType ?? "APARTMENT",
-    bedrooms: initial?.bedrooms ?? "",
-    bathrooms: initial?.bathrooms ?? "",
-    sizeSqm: initial?.sizeSqm ?? "",
-    city: initial?.city ?? "",
-    neighborhood: initial?.neighborhood ?? "",
-    address: initial?.address ?? "",
-    monthlyRent: initial?.monthlyRent ?? "",
-    cautionFee: initial?.cautionFee ?? "",
-  });
+  const formRef = useRef<HTMLFormElement>(null);
 
-  function update(field: keyof typeof form, value: string) {
-    setForm({ ...form, [field]: value });
-  }
+  /** Reads the current form values from the DOM and converts them to the shape
+   * the API expects. Used by both the submit handler and the secondary action,
+   * so the body always reflects what is actually on screen. */
+  function buildBody(form: HTMLFormElement): CreatePropertyInput {
+    const data = Object.fromEntries(form.entries());
 
-  // Strings → the typed body the API expects. Only filled-in numbers get
-  // converted, because Number("") is 0 and would overwrite a real value.
-  function buildBody(): CreatePropertyInput {
     return {
-      title: form.title,
-      description: form.description || undefined,
-      propertyType: form.propertyType as PropertyType,
-      bedrooms: form.bedrooms ? Number(form.bedrooms) : undefined,
-      bathrooms: form.bathrooms ? Number(form.bathrooms) : undefined,
-      sizeSqm: form.sizeSqm ? Number(form.sizeSqm) : undefined,
-      city: form.city,
-      neighborhood: form.neighborhood || undefined,
-      address: form.address || undefined,
-      monthlyRent: Number(form.monthlyRent),
-      cautionFee: form.cautionFee ? Number(form.cautionFee) : undefined,
+      title: data.title as string,
+      description: data.description ? String(data.description) : undefined,
+      propertyType: (data.propertyType as PropertyType) ?? "APARTMENT",
+      bedrooms: data.bedrooms ? Number(data.bedrooms) : undefined,
+      bathrooms: data.bathrooms ? Number(data.bathrooms) : undefined,
+      sizeSqm: data.sizeSqm ? Number(data.sizeSqm) : undefined,
+      city: data.city as string,
+      neighborhood: data.neighborhood ? String(data.neighborhood) : undefined,
+      address: data.address ? String(data.address) : undefined,
+      monthlyRent: Number(data.monthlyRent),
+      cautionFee: data.cautionFee ? Number(data.cautionFee) : undefined,
     };
   }
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    onSubmit(buildBody());
+    await onSubmit(buildBody(event.currentTarget));
   }
 
   return (
-    <form onSubmit={handleSubmit}>
+    <form ref={formRef} onSubmit={handleSubmit}>
       <div>
         <section className="panel">
           <h2 className="panel-title">Basic details</h2>
 
           <div className="mt-5">
             <Input
+              name="title"
               label="Title"
               required
-              value={form.title}
-              onChange={(event) => update("title", event.target.value)}
+              defaultValue={initial?.title ?? ""}
               placeholder="e.g. 2-bedroom apartment, Molyko"
             />
           </div>
 
           <Textarea
+            name="description"
             label="Description"
             rows={4}
-            value={form.description}
-            onChange={(event) => update("description", event.target.value)}
+            defaultValue={initial?.description ?? ""}
             placeholder="Describe the property, its condition, and what's nearby."
           />
 
           <div className="form-grid-4">
             <Select
+              name="propertyType"
               label="Type"
-              value={form.propertyType}
-              onChange={(event) => update("propertyType", event.target.value)}
+              defaultValue={initial?.propertyType ?? "APARTMENT"}
             >
               {TYPES.map((type) => (
                 <option key={type} value={type}>
@@ -154,25 +146,25 @@ export default function PropertyForm({
               ))}
             </Select>
             <Input
+              name="bedrooms"
               label="Bedrooms"
               type="number"
               min={0}
-              value={form.bedrooms}
-              onChange={(event) => update("bedrooms", event.target.value)}
+              defaultValue={initial?.bedrooms ?? ""}
             />
             <Input
+              name="bathrooms"
               label="Bathrooms"
               type="number"
               min={0}
-              value={form.bathrooms}
-              onChange={(event) => update("bathrooms", event.target.value)}
+              defaultValue={initial?.bathrooms ?? ""}
             />
             <Input
+              name="sizeSqm"
               label="Size (m²)"
               type="number"
               min={0}
-              value={form.sizeSqm}
-              onChange={(event) => update("sizeSqm", event.target.value)}
+              defaultValue={initial?.sizeSqm ?? ""}
             />
           </div>
         </section>
@@ -182,39 +174,39 @@ export default function PropertyForm({
 
           <div className="form-grid mt-5">
             <Input
+              name="city"
               label="City"
               required
-              value={form.city}
-              onChange={(event) => update("city", event.target.value)}
+              defaultValue={initial?.city ?? ""}
               placeholder="e.g. Buea"
             />
             <Input
+              name="neighborhood"
               label="Neighborhood"
-              value={form.neighborhood}
-              onChange={(event) => update("neighborhood", event.target.value)}
+              defaultValue={initial?.neighborhood ?? ""}
               placeholder="e.g. Molyko"
             />
             <Input
+              name="address"
               label="Address"
-              value={form.address}
-              onChange={(event) => update("address", event.target.value)}
+              defaultValue={initial?.address ?? ""}
               className="col-span-2"
             />
             <Input
+              name="monthlyRent"
               label="Monthly rent (XAF)"
               type="number"
               min={0}
               required
-              value={form.monthlyRent}
-              onChange={(event) => update("monthlyRent", event.target.value)}
+              defaultValue={initial?.monthlyRent ?? ""}
             />
             <Input
+              name="cautionFee"
               label="Caution fee (XAF)"
               type="number"
               min={0}
               placeholder="Optional"
-              value={form.cautionFee}
-              onChange={(event) => update("cautionFee", event.target.value)}
+              defaultValue={initial?.cautionFee ?? ""}
             />
           </div>
         </section>
@@ -230,7 +222,7 @@ export default function PropertyForm({
             <button
               type="button"
               disabled={pending}
-              onClick={() => secondary.onAction(buildBody())}
+              onClick={() => secondary.onAction(buildBody(formRef.current!))}
               className="btn btn-light"
             >
               {secondary.label}
