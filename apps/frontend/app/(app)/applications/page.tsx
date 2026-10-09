@@ -11,6 +11,9 @@
 // TENANT and gates the create route behind requireTenant). This page is the
 // TENANT inbox — what I submitted — so it's TENANT-only. Landlords have
 // their own inbox at /dashboard/applications (applications they RECEIVED).
+//
+// RequireAuth is the wall: MyApplications only mounts for a tenant, so its
+// load effect only ever runs with a valid session behind it.
 // ============================================================
 
 import { useEffect, useState } from "react";

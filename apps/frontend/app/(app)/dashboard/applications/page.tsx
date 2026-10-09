@@ -6,12 +6,9 @@
 // GET /api/applications/incoming returns every application submitted to
 // ANY property the caller owns, with the applicant included.
 //
-// LANDLORD/ADMIN only: the page is gated here with <RequireAuth roles>,
-// and the backend backs it up with requireLandordadmin + an ownerId
-// scope on every row, so a tenant can neither see this page nor call
-// the endpoint. This is the landlord side of applications — tenants
-// track their own submissions at /applications.
-// ============================================================
+// RequireAuth is the wall: IncomingApplications only mounts for a
+// landlord/admin, so its load effect only ever runs with a valid session
+// behind it.
 
 import { useEffect, useState } from "react";
 import Link from "next/link";

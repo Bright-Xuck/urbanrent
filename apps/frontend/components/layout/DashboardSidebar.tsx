@@ -15,7 +15,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Building2, CalendarDays, FileText, PlusCircle } from "lucide-react";
+import { Building2, CalendarDays, FileText, PlusCircle, Users } from "lucide-react";
 import { useAuthStore } from "../../Store/useUserStore";
 import type { Role } from "../../api/types";
 
@@ -51,6 +51,12 @@ const LINKS: SidebarLink[] = [
     label: "Add a listing",
     icon: PlusCircle,
     roles: ["LANDLORD", "ADMIN"],
+  },
+  {
+    href: "/admin/users",
+    label: "Users",
+    icon: Users,
+    roles: ["ADMIN"],
   },
 ];
 

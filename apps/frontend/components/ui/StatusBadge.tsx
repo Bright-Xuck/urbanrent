@@ -29,6 +29,11 @@ const TONES: Record<string, Tone> = {
   draft: "muted",
   unpublished: "muted",
   archived: "muted",
+  // account / verification states (admin users page)
+  active: "ok",
+  suspended: "bad",
+  verified: "ok",
+  unverified: "muted",
   // roles (used on the profile page)
   tenant: "muted",
   landlord: "ok",
@@ -50,6 +55,11 @@ const LABELS: Record<string, string> = {
   draft: "Draft",
   unpublished: "Unpublished",
   archived: "Archived",
+  // account / verification states (admin users page)
+  active: "Active",
+  suspended: "Suspended",
+  verified: "Verified",
+  unverified: "Unverified",
   // roles (used on the profile page)
   tenant: "Tenant",
   landlord: "Landlord",

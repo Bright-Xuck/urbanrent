@@ -7,13 +7,8 @@
 // status (drafts and archived included), which is the whole point of this
 // page: the public browse endpoint only ever shows PUBLISHED rows.
 //
-// ownerId comes from the access token on the backend, so there is nothing
-// to pass in and no way to request someone else's rows.
-//
-// Publish / unpublish / archive / delete all live in
-// PropertyAdminActions, which reports back here so the row can be replaced
-// (or dropped) without a full refetch.
-// ============================================================
+// RequireAuth is the wall: MyListings only mounts for a landlord/admin, so
+// its load effect only ever runs with a valid session behind it.
 
 import { useEffect, useState } from "react";
 import Link from "next/link";

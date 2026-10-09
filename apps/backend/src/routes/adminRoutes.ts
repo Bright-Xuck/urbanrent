@@ -1,8 +1,21 @@
-import express from 'express'
-import { getUsers } from '../controllers/adminController.js'
+import express from "express";
+import { authenticate } from "../middleware/authenticate.js";
+import { requireAdmin } from "../middleware/RBAC.js";
+import {
+  GetUsers,
+  GetUserById,
+  SuspendUser,
+  ReinstateUser,
+} from "../controllers/adminController.js";
 
-const router: express.Router = express.Router()
+const router: express.Router = express.Router();
 
-router.get('/users', getUsers)
+router.get("/users", authenticate, requireAdmin, GetUsers);
 
-export default router
+router.get("/users/:id", authenticate, requireAdmin, GetUserById);
+
+router.patch("/users/:id/suspend", authenticate, requireAdmin, SuspendUser);
+
+router.patch("/users/:id/reinstate", authenticate, requireAdmin, ReinstateUser);
+
+export default router;

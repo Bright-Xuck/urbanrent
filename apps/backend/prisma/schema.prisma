@@ -1,8 +1,6 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
   provider = "prisma-client"
   output   = "../generated/prisma"
@@ -64,6 +62,30 @@ enum ViewingRequestStatus {
   NO_SHOW
 }
 
+enum VerificationDocumentType {
+  NATIONAL_ID
+  PROOF_OF_OWNERSHIP
+}
+
+enum VerificationDocumentStatus {
+  PENDING
+  APPROVED
+  REJECTED
+}
+
+enum PropertyReportReason {
+  SCAM_OR_FRAUD
+  MISLEADING_INFORMATION
+  ALREADY_RENTED
+  OTHER
+}
+
+enum PropertyReportStatus {
+  OPEN
+  REVIEWED
+  DISMISSED
+}
+
 // ============================================================
 // Models
 // ============================================================
@@ -78,10 +100,12 @@ model User {
   createdAt         DateTime          @default(now()) @map("created_at")
   updatedAt         DateTime          @updatedAt @map("updated_at")
 
-  sessions   Session[]
-  properties Property[]
-  applications Application[]
-  viewingRequests ViewingRequest[]
+  sessions              Session[]
+  properties            Property[]
+  applications          Application[]
+  viewingRequests       ViewingRequest[]
+  verificationDocuments VerificationDocument[]
+  reportsMade           PropertyReport[]
 
   @@map("users")
 }
@@ -136,6 +160,7 @@ model Property {
   images           PropertyImage[]
   applications     Application[]
   viewingRequests  ViewingRequest[]
+  reports          PropertyReport[]
 
   @@index([ownerId])
   @@map("properties")
@@ -276,4 +301,82 @@ model ViewingRequest {
   @@index([tenantId])
   @@index([propertyId])
   @@map("viewing_requests")
+}
+
+// ============================================================
+// VerificationDocument - ID / proof-of-ownership uploads
+// ============================================================
+// Landlord verification is upload-based: a landlord uploads proof
+// (national ID, proof of ownership), and an admin reviews EACH
+// document. Every document carries its own review state
+// (PENDING → APPROVED | REJECTED) that is independent of the
+// user's aggregate User.verificationState — the service layer
+// flips VerificationState to VERIFIED once the required documents
+// for that user are approved (and can set it back to UNVERIFIED if
+// all approved docs are later revoked/replaced).
+//
+// Multiple documents per user are allowed (re-upload after a
+// REJECTED review), so no unique constraint on userId.
+//
+// storagePath mirrors PropertyImage.publicId: it holds the
+// Supabase Storage object path so the file can be deleted from
+// storage later; url is the publicly readable/fetchable URL.
+//
+// NOTE: the schema does not restrict uploads to LANDLORDs — that
+// role check belongs in the service/RBAC layer, not the DB.
+// ============================================================
+model VerificationDocument {
+  id           String                     @id @default(uuid()) @db.Uuid
+  userId       String                     @db.Uuid
+  url          String
+  storagePath  String                     @map("storage_path")
+  documentType VerificationDocumentType   @map("document_type")
+  status       VerificationDocumentStatus @default(PENDING)
+  createdAt    DateTime                   @default(now()) @map("created_at")
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+  @@index([status])
+  @@map("verification_documents")
+}
+
+// ============================================================
+// PropertyReport - a tenant reports a suspicious/bad listing
+// ============================================================
+// Tenant-facing fraud reporting: any logged-in tenant can flag a
+// listing (scam, misleading info, already rented, other), which
+// lands in an admin review queue. Lifecycle:
+//
+//   OPEN → REVIEWED   (admin acted on the report, e.g. unpublished
+//                      or archived the listing)
+//   OPEN → DISMISSED  (admin checked it, listing is fine)
+//
+// NOTE: we intentionally do NOT put a @@unique([reporterId,
+// propertyId]) constraint here — same reasoning as Application:
+// it would block a tenant from ever re-reporting a property whose
+// earlier report was DISMISSED (e.g. a scam listing gets
+// re-published after being taken down). Instead, "one OPEN report
+// per reporter per property" is enforced in the SERVICE layer.
+//
+// Reports reference (and cascade from) Property rather than being
+// tied to User account state: admin's "delete" of a listing is a
+// soft-delete via ARCHIVED, not a hard row delete, so reports are
+// not destroyed by moderation actions.
+// ============================================================
+model PropertyReport {
+  id         String               @id @default(uuid()) @db.Uuid
+  reporterId String               @db.Uuid
+  propertyId String               @db.Uuid
+  reason     PropertyReportReason
+  status     PropertyReportStatus @default(OPEN)
+  createdAt  DateTime             @default(now()) @map("created_at")
+
+  reporter User     @relation(fields: [reporterId], references: [id], onDelete: Cascade)
+  property Property @relation(fields: [propertyId], references: [id], onDelete: Cascade)
+
+  @@index([reporterId])
+  @@index([propertyId])
+  @@index([status])
+  @@map("property_reports")
 }

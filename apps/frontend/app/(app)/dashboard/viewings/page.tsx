@@ -3,17 +3,8 @@
 // ============================================================
 // LANDLORD INBOX — VIEWING REQUESTS — /dashboard/viewings
 // ============================================================
-// GET /api/viewing-requests/incoming returns every viewing request
-// submitted to ANY property the caller owns, with the requester included.
-//
-// LANDLORD/ADMIN only: gated here with <RequireAuth roles>, and the
-// backend backs it up with requireLandordadmin + an ownerId scope on
-// every row. This is the landlord side of viewings — tenants track
-// their own requests at /viewings.
-//
-// Confirming/declining happens on the detail page, which already shows
-// the landlord's action buttons (components/viewings/ViewingActions).
-// ============================================================
+// RequireAuth is the wall: IncomingViewings only mounts for a landlord/
+// admin, so its load effect only ever runs with a valid session behind it.
 
 import { useEffect, useState } from "react";
 import Link from "next/link";

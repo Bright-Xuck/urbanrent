@@ -12,6 +12,9 @@
 // the fact — completed / no-show). Nothing is actionable from here, because
 // the backend only lets the property owner drive the status, so the rows
 // link through to the detail page to read the whole thing.
+//
+// RequireAuth is the wall: MyViewings only mounts for a tenant, so its
+// load effect only ever runs with a valid session behind it.
 // ============================================================
 
 import { useEffect, useState } from "react";

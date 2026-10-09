@@ -18,6 +18,10 @@
 //
 // A 403 here is a normal answer (someone else's application) and is shown
 // as a message, not as an empty page.
+//
+// RequireAuth is the wall: ApplicationDetail only mounts for a signed-in
+// user, so its load effect only ever runs with a valid session behind it.
+// `user` from the store feeds the role-aware back link and the action row.
 // ============================================================
 
 import { useEffect, useState } from "react";
@@ -127,122 +131,118 @@ function ApplicationDetail() {
 
   // Role-aware back link: tenants go back to their own submissions,
   // landlords/admins back to the incoming inbox on their dashboard.
-  // Declared before the early returns below so they can use it too.
   const isLandlordView = user?.role === "LANDLORD" || user?.role === "ADMIN";
   const backHref = isLandlordView ? "/dashboard/applications" : "/applications";
   const backLabel = isLandlordView ? "Applications" : "My applications";
 
-  if (loading) {
-    return (
-      <div className="rp-container rp-section">
-        <Loading text="Loading application…" />
-      </div>
-    );
-  }
-
-  if (!application || loadError) {
-    return (
-      <div className="rp-container rp-section">
-        <PageHeader
-          title="Application"
-          backHref={backHref}
-          backLabel={backLabel}
-        />
-        <div className="mt-6">
-          <Alert variant="error">
-            {loadError ?? "Could not load this application"}
-          </Alert>
-        </div>
-      </div>
-    );
-  }
-
-  const property = application.property;
-
   return (
     <div className="rp-container rp-section">
-      <PageHeader
-        title="Application"
-        subtitle={`Submitted ${formatDate(application.createdAt)}`}
-        backHref={backHref}
-        backLabel={backLabel}
-      />
+      {loading && <Loading text="Loading application…" />}
 
-      <div className="mt-6 flex items-center gap-3">
-        <StatusBadge status={application.status} />
-        <span className="text-sm text-ink-soft">
-          Last updated {formatDate(application.updatedAt)}
-        </span>
-      </div>
-
-      <Card className="mt-6">
-        <h2 className="panel-title">{property?.title ?? "Listing unavailable"}</h2>
-
-        {property ? (
-          <>
-            <p className="mt-1 flex items-center gap-1 text-sm text-ink-soft">
-              <MapPin className="h-3.5 w-3.5" aria-hidden />
-              {property.neighborhood ? `${property.neighborhood}, ` : ""}
-              {property.city}
-            </p>
-            <dl className="detail-list mt-5">
-              <div>
-                <dt>Monthly rent</dt>
-                <dd>{formatXAF(property.monthlyRent)}</dd>
-              </div>
-              <div>
-                <dt>Type</dt>
-                <dd>{titleCase(property.propertyType)}</dd>
-              </div>
-              {property.owner && (
-                <div>
-                  <dt>Landlord</dt>
-                  <dd>{property.owner.email}</dd>
-                </div>
-              )}
-            </dl>
-            <p className="mt-5">
-              <Link href={`/property/${property.id}`} className="link">
-                Open the listing
-              </Link>
-            </p>
-          </>
-        ) : (
-          <p className="mt-2 text-sm text-ink-soft">
-            The listing this application was made against is no longer available.
-          </p>
-        )}
-      </Card>
-
-      {application.note && (
-        <Card className="mt-6">
-          <h2 className="panel-title">Your note</h2>
-          <p className="mt-2 whitespace-pre-line text-sm leading-relaxed text-ink-soft">
-            {application.note}
-          </p>
-        </Card>
+      {!loading && (loadError || !application) && (
+        <>
+          <PageHeader
+            title="Application"
+            backHref={backHref}
+            backLabel={backLabel}
+          />
+          <div className="mt-6">
+            <Alert variant="error">
+              {loadError ?? "Could not load this application"}
+            </Alert>
+          </div>
+        </>
       )}
 
-      {actionNotice && (
-        <div className="mt-6">
-          <Alert variant="success">{actionNotice}</Alert>
-        </div>
-      )}
+      {!loading && !loadError && application && (
+        <>
+          <PageHeader
+            title="Application"
+            subtitle={`Submitted ${formatDate(application.createdAt)}`}
+            backHref={backHref}
+            backLabel={backLabel}
+          />
 
-      {actionError && (
-        <div className="mt-6">
-          <Alert variant="error">{actionError}</Alert>
-        </div>
-      )}
+          <div className="mt-6 flex items-center gap-3">
+            <StatusBadge status={application.status} />
+            <span className="text-sm text-ink-soft">
+              Last updated {formatDate(application.updatedAt)}
+            </span>
+          </div>
 
-      {user && (
-        <ApplicationActions
-          application={application}
-          userId={user.id}
-          role={user.role}
-          busy={busy}
-          onAction={handleAction}
-        />
+          <Card className="mt-6">
+            <h2 className="panel-title">
+              {application.property?.title ?? "Listing unavailable"}
+            </h2>
+
+            {application.property ? (
+              <>
+                <p className="mt-1 flex items-center gap-1 text-sm text-ink-soft">
+                  <MapPin className="h-3.5 w-3.5" aria-hidden />
+                  {application.property.neighborhood
+                    ? `${application.property.neighborhood}, `
+                    : ""}
+                  {application.property.city}
+                </p>
+                <dl className="detail-list mt-5">
+                  <div>
+                    <dt>Monthly rent</dt>
+                    <dd>{formatXAF(application.property.monthlyRent)}</dd>
+                  </div>
+                  <div>
+                    <dt>Type</dt>
+                    <dd>{titleCase(application.property.propertyType)}</dd>
+                  </div>
+                  {application.property.owner && (
+                    <div>
+                      <dt>Landlord</dt>
+                      <dd>{application.property.owner.email}</dd>
+                    </div>
+                  )}
+                </dl>
+                <p className="mt-5">
+                  <Link href={`/property/${application.property.id}`} className="link">
+                    Open the listing
+                  </Link>
+                </p>
+              </>
+            ) : (
+              <p className="mt-2 text-sm text-ink-soft">
+                The listing this application was made against is no longer available.
+              </p>
+            )}
+          </Card>
+          {application.note && (
+            <Card className="mt-6">
+              <h2 className="panel-title">Your note</h2>
+              <p className="mt-2 whitespace-pre-line text-sm leading-relaxed text-ink-soft">
+                {application.note}
+              </p>
+            </Card>
+          )}
+
+          {actionNotice && (
+            <div className="mt-6">
+              <Alert variant="success">{actionNotice}</Alert>
+            </div>
+          )}
+
+          {actionError && (
+            <div className="mt-6">
+              <Alert variant="error">{actionError}</Alert>
+            </div>
+          )}
+
+          {user && (
+            <ApplicationActions
+              application={application}
+              userId={user.id}
+              role={user.role}
+              busy={busy}
+              onAction={handleAction}
+            />
+          )}
+        </>
       )}
     </div>
   );

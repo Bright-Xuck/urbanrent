@@ -169,3 +169,34 @@ export type PaginatedProperties = {
   limit: number;
   totalPages: number;
 };
+
+// ------------------------------------------------------------
+// Admin / account management
+// ------------------------------------------------------------
+// Account/verification state, mirroring the Prisma enums the same way the
+// unions above do — plain strings, never the backend's generated code.
+export type AccountState = "ACTIVE" | "SUSPENDED";
+
+export type VerificationState = "UNVERIFIED" | "VERIFIED";
+
+// One row of GET /api/admin/users. The backend `select`s exactly these
+// columns — passwordHash is never sent over the wire.
+export type AdminUser = {
+  id: string;
+  email: string;
+  role: Role;
+  verificationState: VerificationState;
+  accountState: AccountState;
+  createdAt: string;
+  updatedAt: string;
+};
+
+// What GET /api/admin/users returns — the same envelope as
+// PaginatedProperties, with `users` inside.
+export type PaginatedUsers = {
+  users: AdminUser[];
+  total: number;
+  offset: number;
+  limit: number;
+  totalPages: number;
+};

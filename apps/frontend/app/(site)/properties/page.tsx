@@ -16,7 +16,8 @@
 // first fetch and the filter card, so the two can never disagree.
 //
 // NOTE: `useSearchParams` needs a Suspense boundary or `next build` refuses
-// to prerender the page — hence the small split at the bottom.
+// to prerender the page — hence the small Suspense wrapper as the default
+// export, with the real component below it.
 // ============================================================
 
 import { Suspense, useEffect, useState } from "react";
@@ -37,6 +38,25 @@ import Pagination from "../../../components/ui/Pagination";
 import { EmptyState, Loading } from "../../../components/ui/States";
 
 const PAGE_SIZE = 10;
+
+// The default export must be the Suspense boundary: `useSearchParams` lives
+// in BrowseContent below, and Next.js refuses to prerender a page that uses
+// it without a Suspense wrapper above it. That's the only reason this file
+// has two components — everything else about it is the usual single
+// component structure.
+export default function BrowsePropertiesPage() {
+  return (
+    <Suspense
+      fallback={
+        <div className="mx-auto max-w-6xl px-6 py-10">
+          <Loading text="Loading properties…" />
+        </div>
+      }
+    >
+      <BrowseContent />
+    </Suspense>
+  );
+}
 
 // Turns the URL params the home search writes into a filter object. Anything
 // missing — or a propertyType that isn't a real enum member — is left out, so
@@ -190,19 +210,5 @@ function BrowseContent() {
         </div>
       </div>
     </div>
-  );
-}
-
-export default function BrowsePropertiesPage() {
-  return (
-    <Suspense
-      fallback={
-        <div className="mx-auto max-w-6xl px-6 py-10">
-          <Loading text="Loading properties…" />
-        </div>
-      }
-    >
-      <BrowseContent />
-    </Suspense>
   );
 }

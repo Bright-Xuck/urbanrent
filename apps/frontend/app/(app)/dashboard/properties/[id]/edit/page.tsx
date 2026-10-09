@@ -3,18 +3,8 @@
 // ============================================================
 // EDIT LISTING — /dashboard/properties/[id]/edit
 // ============================================================
-// PATCH /api/properties/:id via the shared PropertyForm, plus the photo
-// tools and the status controls (publish / unpublish / archive / delete).
-//
-// Only the owner may change anything: the backend checks ownership on
-// PATCH and DELETE and answers 403 otherwise. A 403 here means the id in
-// the URL belongs to someone else, and we say so instead of showing a form
-// that can't save.
-//
-// The form is only mounted once the property has loaded, because
-// PropertyForm seeds its inputs from `initial` on first render — rendering
-// it earlier would lock in empty values.
-// ============================================================
+// RequireAuth is the wall: EditProperty only mounts for a landlord/admin,
+// so its load effects only ever run with a valid session behind them.
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
@@ -146,126 +136,128 @@ function EditProperty() {
     }
   }
 
-  if (loading) {
-    return <Loading text="Loading listing…" />;
-  }
-
-  if (!property) {
-    return (
-      <div>
-        <PageHeader
-          title="Edit listing"
-          backHref="/dashboard"
-          backLabel="My listings"
-        />
-        <div className="mt-6">
-          <Alert variant="error">
-            {loadError ?? "Could not load this listing"}
-          </Alert>
-        </div>
-      </div>
-    );
-  }
-
   // Everything optional is a string for the form; `?? ""` keeps a null
   // column from reaching an input as "null".
-  const initial: PropertyFormInitial = {
-    title: property.title,
-    description: property.description ?? "",
-    propertyType: property.propertyType,
-    bedrooms: property.bedrooms !== null ? String(property.bedrooms) : "",
-    bathrooms: property.bathrooms !== null ? String(property.bathrooms) : "",
-    sizeSqm: property.sizeSqm !== null ? String(property.sizeSqm) : "",
-    city: property.city,
-    neighborhood: property.neighborhood ?? "",
-    address: property.address ?? "",
-    monthlyRent: String(property.monthlyRent),
-    cautionFee: property.cautionFee !== null ? String(property.cautionFee) : "",
-  };
+  const initial: PropertyFormInitial | null = property
+    ? {
+        title: property.title,
+        description: property.description ?? "",
+        propertyType: property.propertyType,
+        bedrooms: property.bedrooms !== null ? String(property.bedrooms) : "",
+        bathrooms: property.bathrooms !== null ? String(property.bathrooms) : "",
+        sizeSqm: property.sizeSqm !== null ? String(property.sizeSqm) : "",
+        city: property.city,
+        neighborhood: property.neighborhood ?? "",
+        address: property.address ?? "",
+        monthlyRent: String(property.monthlyRent),
+        cautionFee: property.cautionFee !== null ? String(property.cautionFee) : "",
+      }
+    : null;
 
   return (
     <div>
-      <PageHeader
-        title="Edit listing"
-        subtitle={property.title}
-        backHref="/dashboard"
-        backLabel="My listings"
-      />
+      {loading && <Loading text="Loading listing…" />}
 
-      <Card className="mt-8">
-        <h2 className="panel-title">Listing status</h2>
-        <p className="panel-note">
-          Currently <span className="text-ink">{property.status.toLowerCase()}</span>.
-          Only published listings appear in the marketplace.
-        </p>
-        <div className="mt-4">
-          <PropertyAdminActions
-            property={property}
-            showEdit={false}
-            onChanged={setProperty}
-            onDeleted={() => router.push("/dashboard")}
+      {!loading && (!property || !initial) && (
+        <>
+          <PageHeader
+            title="Edit listing"
+            backHref="/dashboard"
+            backLabel="My listings"
           />
-        </div>
-      </Card>
+          <div className="mt-6">
+            <Alert variant="error">
+              {loadError ?? "Could not load this listing"}
+            </Alert>
+          </div>
+        </>
+      )}
 
-      <div className="mt-8">
-        <PropertyForm
-          initial={initial}
-          pending={pending}
-          error={saveError}
-          submitLabel="Save changes"
-          onSubmit={handleSave}
-        >
-          <div className="mt-8 border-t border-line pt-8">
-            {saved && (
-              <div className="mb-6">
-                <Alert variant="success">Changes saved.</Alert>
-              </div>
-            )}
+      {!loading && property && initial && (
+        <>
+          <PageHeader
+            title="Edit listing"
+            subtitle={property.title}
+            backHref="/dashboard"
+            backLabel="My listings"
+          />
 
-            <h2 className="panel-title">Photos</h2>
+          <Card className="mt-8">
+            <h2 className="panel-title">Listing status</h2>
             <p className="panel-note">
-              {images.length} photo{images.length === 1 ? "" : "s"} on this
-              listing. Up to 5 new ones at a time, 5 MB each, JPEG/PNG/WEBP.
+              Currently <span className="text-ink">{property.status.toLowerCase()}</span>.
+              Only published listings appear in the marketplace.
             </p>
-
-            {images.length > 0 && (
-              <ul className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
-                {images.map((image) => (
-                  <li key={image.id}>
-                    {/* eslint-disable-next-line @next/next/no-img-element */}
-                    <img
-                      src={image.url}
-                      alt="Listing photo"
-                      className="h-24 w-full bg-paper-dim object-cover"
-                    />
-                  </li>
-                ))}
-              </ul>
-            )}
-
             <div className="mt-4">
-              <ImageUploader
-                onUpload={handleUpload}
-                uploading={uploading}
-                error={uploadError}
+              <PropertyAdminActions
+                property={property}
+                showEdit={false}
+                onChanged={setProperty}
+                onDeleted={() => router.push("/dashboard")}
               />
             </div>
+          </Card>
 
-            {uploadNotice && (
-              <p className="mt-3 text-sm text-verified" role="status">
-                {uploadNotice}
-              </p>
-            )}
+          <div className="mt-8">
+            <PropertyForm
+              initial={initial}
+              pending={pending}
+              error={saveError}
+              submitLabel="Save changes"
+              onSubmit={handleSave}
+            >
+              <div className="mt-8 border-t border-line pt-8">
+                {saved && (
+                  <div className="mb-6">
+                    <Alert variant="success">Changes saved.</Alert>
+                  </div>
+                )}
+
+                <h2 className="panel-title">Photos</h2>
+                <p className="panel-note">
+                  {images.length} photo{images.length === 1 ? "" : "s"} on this
+                  listing. Up to 5 new ones at a time, 5 MB each, JPEG/PNG/WEBP.
+                </p>
+
+                {images.length > 0 && (
+                  <ul className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
+                    {images.map((image) => (
+                      <li key={image.id}>
+                        {/* eslint-disable-next-line @next/next/no-img-element */}
+                        <img
+                          src={image.url}
+                          alt="Listing photo"
+                          className="h-24 w-full bg-paper-dim object-cover"
+                        />
+                      </li>
+                    ))}
+                  </ul>
+                )}
+
+                <div className="mt-4">
+                  <ImageUploader
+                    onUpload={handleUpload}
+                    uploading={uploading}
+                    error={uploadError}
+                  />
+                </div>
+
+                {uploadNotice && (
+                  <p className="mt-3 text-sm text-verified" role="status">
+                    {uploadNotice}
+                  </p>
+                )}
+              </div>
+            </PropertyForm>
           </div>
-        </PropertyForm>
-      </div>
 
-      <p className="mt-8">
-        <Link href={`/property/${property.id}`} className="link inline-flex items-center gap-1">
-          <ArrowLeft className="h-4 w-4" aria-hidden /> Back to the listing
-        </Link>
-      </p>
+          <p className="mt-8">
+            <Link href={`/property/${property.id}`} className="link inline-flex items-center gap-1">
+              <ArrowLeft className="h-4 w-4" aria-hidden /> Back to the listing
+            </Link>
+          </p>
+        </>
+      )}
     </div>
   );
 }

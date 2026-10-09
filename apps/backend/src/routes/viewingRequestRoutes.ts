@@ -1,5 +1,6 @@
 import express from "express";
 import { authenticate } from "../middleware/authenticate.js";
+import { blockIfSuspended } from "../middleware/blockIfSuspended.js";
 import { requireLandordadmin } from "../middleware/RBAC.js";
 import {
   GetMyViewingRequests,
@@ -17,6 +18,6 @@ router.get("/incoming", authenticate, requireLandordadmin, GetIncomingViewingReq
 
 router.get("/:id", authenticate, GetViewingRequestById);
 
-router.patch("/:id/status", authenticate, ChangeViewingRequestStatus);
+router.patch("/:id/status", authenticate, blockIfSuspended, ChangeViewingRequestStatus);
 
 export default router;

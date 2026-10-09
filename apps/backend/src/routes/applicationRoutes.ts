@@ -1,5 +1,6 @@
 import express from "express";
 import { authenticate } from "../middleware/authenticate.js";
+import { blockIfSuspended } from "../middleware/blockIfSuspended.js";
 import { requireLandordadmin } from "../middleware/RBAC.js";
 import {
   GetMyApplications,
@@ -22,6 +23,6 @@ router.get("/incoming", authenticate, requireLandordadmin, GetIncomingApplicatio
 router.get("/:id", authenticate, GetApplicationById);
 
 
-router.patch("/:id/status", authenticate, ChangeApplicationStatus);
+router.patch("/:id/status", authenticate, blockIfSuspended, ChangeApplicationStatus);
 
 export default router;

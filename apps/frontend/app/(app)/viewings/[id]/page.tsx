@@ -15,6 +15,10 @@
 // Confirming can come back as a 409 "…overlaps another confirmed viewing":
 // that is the backend refusing to double-book one landlord across all of
 // their properties, and the message is shown as-is.
+//
+// RequireAuth is the wall: ViewingDetail only mounts for a signed-in user,
+// so its load effect only ever runs with a valid session behind it. `user`
+// from the store feeds the role-aware back link and the action row.
 // ============================================================
 
 import { useEffect, useState } from "react";
@@ -127,133 +131,127 @@ function ViewingDetail() {
 
   // Role-aware back link: tenants go back to their own requests,
   // landlords/admins back to the incoming inbox on their dashboard.
-  // Declared before the early returns below so they can use it too.
   const isLandlordView = user?.role === "LANDLORD" || user?.role === "ADMIN";
   const backHref = isLandlordView ? "/dashboard/viewings" : "/viewings";
   const backLabel = isLandlordView ? "Viewing requests" : "My viewings";
 
-  if (loading) {
-    return (
-      <div className="rp-container rp-section">
-        <Loading text="Loading viewing request…" />
-      </div>
-    );
-  }
-
-  if (!request || loadError) {
-    return (
-      <div className="rp-container rp-section">
-        <PageHeader
-          title="Viewing request"
-          backHref={backHref}
-          backLabel={backLabel}
-        />
-        <div className="mt-6">
-          <Alert variant="error">
-            {loadError ?? "Could not load this viewing request"}
-          </Alert>
-        </div>
-      </div>
-    );
-  }
-
-  const proposed = request.proposedTimes ?? [];
+  const proposed = request?.proposedTimes ?? [];
 
   return (
     <div className="rp-container rp-section">
-      <PageHeader
-        title="Viewing request"
-        subtitle={`Requested ${formatDate(request.createdAt)}`}
-        backHref={backHref}
-        backLabel={backLabel}
-      />
+      {loading && <Loading text="Loading viewing request…" />}
 
-      <div className="mt-6 flex items-center gap-3">
-        <StatusBadge status={request.status} />
-        <span className="text-sm text-ink-soft">
-          Last updated {formatDate(request.updatedAt)}
-        </span>
-      </div>
-
-      <Card className="mt-6">
-        <h2 className="panel-title">{request.property?.title ?? "Listing unavailable"}</h2>
-
-        {request.property && (
-          <>
-            <p className="mt-1 flex items-center gap-1 text-sm text-ink-soft">
-              <MapPin className="h-3.5 w-3.5" aria-hidden />
-              {request.property.neighborhood ? `${request.property.neighborhood}, ` : ""}
-              {request.property.city}
-            </p>
-            {request.property.owner && (
-              <p className="mt-2 text-sm text-ink-soft">
-                Landlord: <span className="text-ink">{request.property.owner.email}</span>
-              </p>
-            )}
-            <p className="mt-4">
-              <Link href={`/property/${request.property.id}`} className="link">
-                Open the listing
-              </Link>
-            </p>
-          </>
-        )}
-      </Card>
-
-      <Card className="mt-6">
-        <h2 className="panel-title">When</h2>
-
-        <div className="mt-3 space-y-3 text-sm">
-          <div>
-            <p className="text-ink-soft">Times proposed</p>
-            {proposed.length > 0 ? (
-              <ul className="mt-1 space-y-1">
-                {proposed.map((time) => (
-                  <li key={time} className="text-ink">
-                    {formatDateTime(time)}
-                  </li>
-                ))}
-              </ul>
-            ) : (
-              <p className="text-ink">No times proposed</p>
-            )}
-          </div>
-
-          <div>
-            <p className="text-ink-soft">Confirmed</p>
-            <p className="text-ink">
-              {request.confirmedTime
-                ? formatDateTime(request.confirmedTime)
-                : "Not confirmed yet"}
-            </p>
-          </div>
-
-          {proposed.length > 0 && !request.confirmedTime && (
-            <p className="text-xs text-ink-soft">In full: {formatTimes(request.proposedTimes)}</p>
-          )}
-        </div>
-
-        {actionNotice && (
-          <div className="mt-5">
-            <Alert variant="success">{actionNotice}</Alert>
-          </div>
-        )}
-
-        {actionError && (
-          <div className="mt-5">
-            <Alert variant="error">{actionError}</Alert>
-          </div>
-        )}
-
-        {user && (
-          <ViewingActions
-            request={request}
-            userId={user.id}
-            role={user.role}
-            busy={busy}
-            onAction={handleAction}
+      {!loading && (loadError || !request) && (
+        <>
+          <PageHeader
+            title="Viewing request"
+            backHref={backHref}
+            backLabel={backLabel}
           />
-        )}
-      </Card>
+          <div className="mt-6">
+            <Alert variant="error">
+              {loadError ?? "Could not load this viewing request"}
+            </Alert>
+          </div>
+        </>
+      )}
+
+      {!loading && !loadError && request && (
+        <>
+          <PageHeader
+            title="Viewing request"
+            subtitle={`Requested ${formatDate(request.createdAt)}`}
+            backHref={backHref}
+            backLabel={backLabel}
+          />
+
+          <div className="mt-6 flex items-center gap-3">
+            <StatusBadge status={request.status} />
+            <span className="text-sm text-ink-soft">
+              Last updated {formatDate(request.updatedAt)}
+            </span>
+          </div>
+
+          <Card className="mt-6">
+            <h2 className="panel-title">{request.property?.title ?? "Listing unavailable"}</h2>
+
+            {request.property && (
+              <>
+                <p className="mt-1 flex items-center gap-1 text-sm text-ink-soft">
+                  <MapPin className="h-3.5 w-3.5" aria-hidden />
+                  {request.property.neighborhood ? `${request.property.neighborhood}, ` : ""}
+                  {request.property.city}
+                </p>
+                {request.property.owner && (
+                  <p className="mt-2 text-sm text-ink-soft">
+                    Landlord: <span className="text-ink">{request.property.owner.email}</span>
+                  </p>
+                )}
+                <p className="mt-4">
+                  <Link href={`/property/${request.property.id}`} className="link">
+                    Open the listing
+                  </Link>
+                </p>
+              </>
+            )}
+          </Card>
+          <Card className="mt-6">
+            <h2 className="panel-title">When</h2>
+
+            <div className="mt-3 space-y-3 text-sm">
+              <div>
+                <p className="text-ink-soft">Times proposed</p>
+                {proposed.length > 0 ? (
+                  <ul className="mt-1 space-y-1">
+                    {proposed.map((time) => (
+                      <li key={time} className="text-ink">
+                        {formatDateTime(time)}
+                      </li>
+                    ))}
+                  </ul>
+                ) : (
+                  <p className="text-ink">No times proposed</p>
+                )}
+              </div>
+
+              <div>
+                <p className="text-ink-soft">Confirmed</p>
+                <p className="text-ink">
+                  {request.confirmedTime
+                    ? formatDateTime(request.confirmedTime)
+                    : "Not confirmed yet"}
+                </p>
+              </div>
+
+              {proposed.length > 0 && !request.confirmedTime && (
+                <p className="text-xs text-ink-soft">In full: {formatTimes(request.proposedTimes)}</p>
+              )}
+            </div>
+
+            {actionNotice && (
+              <div className="mt-5">
+                <Alert variant="success">{actionNotice}</Alert>
+              </div>
+            )}
+
+            {actionError && (
+              <div className="mt-5">
+                <Alert variant="error">{actionError}</Alert>
+              </div>
+            )}
+
+            {user && (
+              <ViewingActions
+                request={request}
+                userId={user.id}
+                role={user.role}
+                busy={busy}
+                onAction={handleAction}
+              />
+            )}
+          </Card>
+        </>
+      )}
     </div>
   );
 }

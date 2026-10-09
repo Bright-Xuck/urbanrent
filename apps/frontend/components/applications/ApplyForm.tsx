@@ -3,23 +3,6 @@
 // ============================================================
 // APPLY FORM
 // ============================================================
-// A tenant's application against one listing: POST
-// /api/properties/:propertyId/applications with an optional note.
-//
-// The backend owns the rules that matter and reports them as status codes:
-//   409 → you already have an active application for this property
-//   400 → the listing is not PUBLISHED, so it takes no applications
-//   404 → the property does not exist
-//
-// This form never re-implements those checks — it shows the message the
-// backend sent. Registering always creates a TENANT on the backend, which
-// is why applying is a tenant-only action (enforced by RBAC middleware).
-//
-// The backend expects JSON (`{ note? }`), so we still post JSON. The form
-// itself is a real <form> so we can read it from the DOM instead of juggling
-// controlled state — but we build the body explicitly, because the API wants
-// a shaped object, not a flat form dump.
-// ============================================================
 
 import { useState, type FormEvent } from "react";
 import Link from "next/link";

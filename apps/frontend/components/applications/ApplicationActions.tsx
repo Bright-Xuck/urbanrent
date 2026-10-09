@@ -25,37 +25,6 @@ type ApplicationActionsProps = {
   onAction: (action: ApplicationAction) => void;
 };
 
-export function isApplicationClosed(application: Application): boolean {
-  return (
-    application.status === "APPROVED" ||
-    application.status === "REJECTED" ||
-    application.status === "WITHDRAWN"
-  );
-}
-
-export function tenantCanWithdraw(
-  application: Application,
-  userId: string,
-): boolean {
-  return (
-    application.tenantId === userId &&
-    !isApplicationClosed(application) &&
-    (application.status === "SUBMITTED" ||
-      application.status === "UNDER_REVIEW")
-  );
-}
-
-export function landlordCanDecide(
-  application: Application,
-  userId: string,
-): boolean {
-  return (
-    !!application.property?.owner?.id &&
-    application.property.owner.id === userId &&
-    !isApplicationClosed(application)
-  );
-}
-
 export default function ApplicationActions({
   application,
   userId,
@@ -63,7 +32,32 @@ export default function ApplicationActions({
   busy,
   onAction,
 }: ApplicationActionsProps) {
-  if (isApplicationClosed(application)) {
+  function isApplicationClosed(): boolean {
+    return (
+      application.status === "APPROVED" ||
+      application.status === "REJECTED" ||
+      application.status === "WITHDRAWN"
+    );
+  }
+
+  function tenantCanWithdraw(): boolean {
+    return (
+      application.tenantId === userId &&
+      !isApplicationClosed() &&
+      (application.status === "SUBMITTED" ||
+        application.status === "UNDER_REVIEW")
+    );
+  }
+
+  function landlordCanDecide(): boolean {
+    return (
+      !!application.property?.owner?.id &&
+      application.property.owner.id === userId &&
+      !isApplicationClosed()
+    );
+  }
+
+  if (isApplicationClosed()) {
     return (
       <p className="alert alert-info mt-8">
         This application is closed — no further changes are possible.
@@ -74,8 +68,8 @@ export default function ApplicationActions({
   const tenant = role === "TENANT";
   const showReview =
     application.status === "SUBMITTED" &&
-    (landlordCanDecide(application, userId) || role === "ADMIN");
-  const showDecide = landlordCanDecide(application, userId) || role === "ADMIN";
+    (landlordCanDecide() || role === "ADMIN");
+  const showDecide = landlordCanDecide() || role === "ADMIN";
 
   return (
     <div className="mt-8 flex flex-wrap gap-3 border-t border-line pt-6 text-sm">
@@ -108,7 +102,7 @@ export default function ApplicationActions({
         </>
       )}
 
-      {tenantCanWithdraw(application, userId) && (
+      {tenantCanWithdraw() && (
         <Button
           variant="ghost"
           disabled={busy}
