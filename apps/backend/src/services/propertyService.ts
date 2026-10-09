@@ -9,6 +9,7 @@ import {
   type UpdatePropertyInput,
   type PropertyFilters,
 } from "../repositories/propertyRepository.js";
+import { requireVerifiedOwner } from "./verificationService.js";
 
 // ============================================================
 // PROPERTY SERVICE - Business Logic Layer
@@ -30,6 +31,12 @@ import {
 // creating a property owned by someone else.
 // ------------------------------------------------------------
 export async function createPropertyForOwner(ownerId: string, data: Omit<CreatePropertyInput, "ownerId">) {
+  // A listing can only be BORN published if its owner is verified.
+  // (The new-listing page's "Publish listing" button POSTs with
+  // status PUBLISHED, so this path needs the same gate as updates.)
+  if (data.status === "PUBLISHED") {
+    await requireVerifiedOwner(ownerId);
+  }
   return createProperty({ ...data, ownerId });
 }
 
@@ -107,7 +114,13 @@ export async function updatePropertyForOwner(id: string, ownerId: string, data: 
     throw new Error("You do not have permission to update this property");
   }
 
-  // 3. Perform the update
+  // 3. Gate: only a VERIFIED owner may move a listing TO published.
+  // Drafts, unpublishing, archiving, and ordinary edits never touch it.
+  if (data.status === "PUBLISHED" && property.status !== "PUBLISHED") {
+    await requireVerifiedOwner(ownerId);
+  }
+
+  // 4. Perform the update
   return updateProperty(id, data);
 }
 

@@ -23,6 +23,8 @@ type PropertyCardProps = {
   bathrooms: number;
   sizeSqm?: number | null;
   monthlyRent: number;
+  /** True when the owner is a verified landlord — shows the trust badge. */
+  verified?: boolean;
   /** A property status. Omitted on public browse, where every row is published. */
   status?: string;
   href: string;
@@ -51,6 +53,7 @@ export default function PropertyCard({
   bathrooms,
   sizeSqm,
   monthlyRent,
+  verified,
   status,
   href,
 }: PropertyCardProps) {
@@ -82,6 +85,14 @@ export default function PropertyCard({
           {neighborhood ? `${neighborhood}, ` : ""}
           {city}
         </p>
+
+        <div className="property-owner">
+          {verified ? (
+            <span className="status-pill" data-tone="ok">
+              Verified landlord
+            </span>
+          ) : null}
+        </div>
 
         <div className="meta">
           <span>

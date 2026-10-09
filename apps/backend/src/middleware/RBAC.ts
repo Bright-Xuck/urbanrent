@@ -10,6 +10,15 @@ export function requireTenant(req: Request, res: Response, next: NextFunction) {
   next();
 }
 
+export function requireLandlord(req: Request, res: Response, next: NextFunction) {
+  const { user } = req;
+  if (user?.role !== "LANDLORD") {
+    res.status(403).json({ message: "not authorized" });
+    return;
+  }
+  next();
+}
+
 export function requireAdmin(req: Request, res: Response, next: NextFunction) {
   const { user } = req;
   if (user?.role !== "ADMIN") {

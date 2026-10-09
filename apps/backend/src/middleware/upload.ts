@@ -21,4 +21,27 @@ const upload = multer({
   fileFilter: imageFilter,
 });
 
+const DOCUMENT_FILE_SIZE = 10 * 1024 * 1024;
+
+const allowedDocumentMimeTypes = [
+  "image/jpeg",
+  "image/png",
+  "image/webp",
+  "application/pdf",
+];
+
+function documentFilter(req: Request, file: Express.Multer.File, cb: multer.FileFilterCallback) {
+  if (allowedDocumentMimeTypes.includes(file.mimetype)) {
+    cb(null, true);
+  } else {
+    cb(new Error("Only image files or PDFs are allowed (JPEG, PNG, WEBP, PDF)"));
+  }
+}
+
+export const documentUpload = multer({
+  storage,
+  limits: { fileSize: DOCUMENT_FILE_SIZE },
+  fileFilter: documentFilter,
+});
+
 export default upload;

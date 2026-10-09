@@ -83,6 +83,7 @@ export async function createProperty(data: CreatePropertyInput) {
 export async function findPropertyById(id: string) {
   return prisma.property.findUnique({
     where: { id },
+    include: { owner: { select: { verificationState: true } } },
   });
 }
 
@@ -172,6 +173,7 @@ export async function findPublishedProperties(
   const [properties, total] = await Promise.all([
     prisma.property.findMany({
       where,
+      include: { owner: { select: { verificationState: true } } },
       orderBy: { createdAt: "desc" },
       skip: offset,
       take: limit,

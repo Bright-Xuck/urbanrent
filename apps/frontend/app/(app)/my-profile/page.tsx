@@ -64,6 +64,13 @@ export default function MyProfilePage() {
               <p className="mt-3 text-xs text-ink-soft">
                 Landlord access is granted by an administrator.
               </p>
+              {user.role === "LANDLORD" && (
+                <p className="mt-3">
+                  <Link href="/dashboard/verification" className="text-navy underline">
+                    Get verified to publish
+                  </Link>
+                </p>
+              )}
             </Card>
           </div>
         )}

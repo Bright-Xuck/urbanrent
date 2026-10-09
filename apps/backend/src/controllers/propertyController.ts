@@ -77,10 +77,13 @@ export async function CreateProperty(req: Request, res: Response) {
       property,
     });
   } catch (error) {
+    if (error instanceof Error && error.message.includes("verified")) {
+      res.status(403).json({ message: error.message });
+      return;
+    }
     res.status(500).json({ message: "Internal server error" });
   }
 }
-
 // ============================================================
 // GET PROPERTIES (public marketplace browse)
 // ============================================================
@@ -127,7 +130,6 @@ export async function GetProperties(req: Request, res: Response) {
     res.status(500).json({ message: "Internal server error" });
   }
 }
-
 // Helper: only accept a `propertyType` value that matches a real enum member.
 function isPropertyType(value: string): boolean {
   return ["APARTMENT", "STUDIO", "HOUSE", "VILLA", "COMMERCIAL", "OTHER"].includes(value);
@@ -163,7 +165,6 @@ export async function GetMyProperties(req: Request, res: Response) {
     res.status(500).json({ message: "Internal server error" });
   }
 }
-
 // ============================================================
 // GET PROPERTY BY ID
 // ============================================================
@@ -258,6 +259,10 @@ export async function UpdateProperty(req: Request, res: Response) {
       res.status(403).json({ message: error.message });
       return;
     }
+    if (error instanceof Error && error.message.includes("verified")) {
+      res.status(403).json({ message: error.message });
+      return;
+    }
     res.status(500).json({ message: "Internal server error" });
   }
 }
@@ -290,6 +295,10 @@ export async function DeleteProperty(req: Request, res: Response) {
       return;
     }
     if (error instanceof Error && error.message.includes("permission")) {
+      res.status(403).json({ message: error.message });
+      return;
+    }
+    if (error instanceof Error && error.message.includes("verified")) {
       res.status(403).json({ message: error.message });
       return;
     }

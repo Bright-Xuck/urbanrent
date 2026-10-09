@@ -193,6 +193,7 @@ function BrowseContent() {
                   bathrooms={property.bathrooms ?? 0}
                   sizeSqm={property.sizeSqm}
                   monthlyRent={property.monthlyRent}
+                  verified={property.owner?.verificationState === "VERIFIED"}
                   href={`/property/${property.id}`}
                 />
               ))}

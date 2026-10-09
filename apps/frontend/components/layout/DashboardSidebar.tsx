@@ -15,7 +15,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Building2, CalendarDays, FileText, PlusCircle, Users } from "lucide-react";
+import { BadgeCheck, Building2, CalendarDays, FileText, PlusCircle, Users } from "lucide-react";
 import { useAuthStore } from "../../Store/useUserStore";
 import type { Role } from "../../api/types";
 
@@ -50,6 +50,12 @@ const LINKS: SidebarLink[] = [
     href: "/dashboard/properties/new",
     label: "Add a listing",
     icon: PlusCircle,
+    roles: ["LANDLORD", "ADMIN"],
+  },
+  {
+    href: "/dashboard/verification",
+    label: "Verification",
+    icon: BadgeCheck,
     roles: ["LANDLORD", "ADMIN"],
   },
   {
