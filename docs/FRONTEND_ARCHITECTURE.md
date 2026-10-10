@@ -14,7 +14,8 @@ app/
     page.tsx                /
     properties/page.tsx     /properties
     property/[id]/page.tsx  /property/:id
-  (auth)/                   Login and registration
+  login/page.tsx            /login
+  register/page.tsx         /register
   (protected)/              Signed-in session gate
     tenant/                 Tenant shell and tenant pages
       profile/page.tsx      /tenant/profile
@@ -26,6 +27,10 @@ app/
     viewings/[id]/          Shared viewing detail
     profile/page.tsx        Shared account summary
 ```
+
+Only public pages and protected pages need route-group layouts. Login and
+registration use the root layout directly; avoid an extra group when it adds
+no layout or behavior.
 
 Role-specific route prefixes keep tenant and landlord workflows distinct. A
 detail route is shared when both parties are allowed to see and act on the same

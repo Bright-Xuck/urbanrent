@@ -174,11 +174,10 @@ dashboard-statistics API.
 
 ### Frontend observations from the Phase 0 review
 
-- The current route groups are `(site)`, `(auth)`, and `(app)`. The app group
-  mixes tenant routes (`/applications`, `/viewings`, `/my-profile`), landlord
-  routes (`/dashboard/...`), and admin routes (`/admin/...`). Admin and
-  landlord have nested layouts, but there is no consistent tenant-specific
-  layout/navigation tree.
+- Frontend routes now use `(public)` and `(protected)` groups for the two
+  distinct layouts. Login and registration live directly under `app/` because
+  they need no separate layout. Tenant, landlord, and admin routes have
+  role-specific paths and layouts.
 - Public property browse/detail pages are Client Components that fetch in
   effects after hydration. This is functional, but does not provide the
   server-rendered listing content needed for strong public-page SEO.

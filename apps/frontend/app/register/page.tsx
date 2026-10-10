@@ -4,10 +4,10 @@ import { useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { UserRoundPlus } from "lucide-react";
-import { register } from "../../../api/userApi";
-import type { RegistrationRole } from "../../../api/types";
-import { Input } from "../../../components/ui/Fields";
-import Alert from "../../../components/ui/Alert";
+import { register } from "../../api/userApi";
+import type { RegistrationRole } from "../../api/types";
+import { Input } from "../../components/ui/Fields";
+import Alert from "../../components/ui/Alert";
 
 export default function RegisterPage() {
   const router = useRouter();

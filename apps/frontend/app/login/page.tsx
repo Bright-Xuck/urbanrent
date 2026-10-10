@@ -4,10 +4,10 @@ import { useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { LogIn } from "lucide-react";
-import { login } from "../../../api/userApi";
-import { useAuthStore } from "../../../Store/useUserStore";
-import { Input } from "../../../components/ui/Fields";
-import Alert from "../../../components/ui/Alert";
+import { login } from "../../api/userApi";
+import { useAuthStore } from "../../Store/useUserStore";
+import { Input } from "../../components/ui/Fields";
+import Alert from "../../components/ui/Alert";
 
 export default function LoginPage() {
   const router = useRouter();
