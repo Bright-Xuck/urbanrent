@@ -1,12 +1,7 @@
 "use client";
 
-import { useAuthStore } from "../Store/useUserStore";
-import { readUserFromAccessToken } from "../features/auth/token";
-
-type ApiFetchOptions = RequestInit & {
-  auth?: "optional" | "none";
-  skipRefresh?: boolean;
-};
+import type { Role } from "../api/types";
+import { useAuthStore, type User } from "../Store/useUserStore";
 
 export class ApiError extends Error {
   constructor(
@@ -14,43 +9,21 @@ export class ApiError extends Error {
     readonly status: number
   ) {
     super(message);
-    this.name = "ApiError";
   }
 }
 
 let refreshInFlight: Promise<string> | null = null;
 
 function apiUrl(path: string): string {
-  const baseUrl = process.env.NEXT_PUBLIC_API_URL?.replace(/\/+$/, "");
-  if (!baseUrl) {
-    throw new Error("NEXT_PUBLIC_API_URL is not configured.");
-  }
-
   if (/^https?:\/\//i.test(path)) return path;
+  const baseUrl = process.env.NEXT_PUBLIC_API_URL?.replace(/\/+$/, "");
+  if (!baseUrl) throw new Error("NEXT_PUBLIC_API_URL is not configured.");
   return `${baseUrl}/${path.replace(/^\/+/, "")}`;
 }
 
-function createHeaders(
-  headers: HeadersInit | undefined,
-  auth: ApiFetchOptions["auth"],
-  accessToken: string | null
-): Headers {
-  const requestHeaders = new Headers(headers);
-  requestHeaders.delete("Authorization");
-
-  if (auth !== "none" && accessToken) {
-    requestHeaders.set("Authorization", `Bearer ${accessToken}`);
-  }
-
-  return requestHeaders;
-}
-
-async function readMessage(response: Response): Promise<string | null> {
-  const text = await response.text();
-  if (!text) return null;
-
+async function responseMessage(response: Response): Promise<string | null> {
   try {
-    const body: unknown = JSON.parse(text);
+    const body: unknown = await response.json();
     if (
       typeof body === "object" &&
       body !== null &&
@@ -66,35 +39,58 @@ async function readMessage(response: Response): Promise<string | null> {
   return null;
 }
 
-async function performRefresh(): Promise<string> {
-  const previousToken = useAuthStore.getState().accessToken;
-  let response: Response;
+function isRole(value: unknown): value is Role {
+  return value === "TENANT" || value === "LANDLORD" || value === "ADMIN";
+}
 
+function readUserFromAccessToken(token: string): User | null {
   try {
-    response = await fetch(apiUrl("/auth/refresh"), {
-      method: "POST",
-      credentials: "include",
-    });
-  } catch (error) {
-    throw new Error("Could not reach the authentication service.", {
-      cause: error,
+    const payload = token.split(".")[1];
+    if (!payload) return null;
+
+    const base64 = payload.replace(/-/g, "+").replace(/_/g, "/");
+    const padded = base64.padEnd(Math.ceil(base64.length / 4) * 4, "=");
+    const claims: unknown = JSON.parse(atob(padded));
+    if (typeof claims !== "object" || claims === null) return null;
+
+    const id = "userId" in claims ? claims.userId : undefined;
+    const email = "email" in claims ? claims.email : undefined;
+    const role = "role" in claims ? claims.role : undefined;
+    if (typeof id !== "string" || !isRole(role)) return null;
+
+    return { id, email: typeof email === "string" ? email : null, role };
+  } catch {
+    return null;
+  }
+}
+
+async function refreshAccessToken(): Promise<string> {
+  if (!refreshInFlight) {
+    refreshInFlight = refreshSession().finally(() => {
+      refreshInFlight = null;
     });
   }
+  return refreshInFlight;
+}
+
+async function refreshSession(): Promise<string> {
+  const previousToken = useAuthStore.getState().accessToken;
+  const response = await fetch(apiUrl("/auth/refresh"), {
+    method: "POST",
+    credentials: "include",
+  });
 
   if (!response.ok) {
-    const message = await readMessage(response);
     const error = new ApiError(
-      message ?? "Could not refresh your session.",
+      (await responseMessage(response)) ?? "Could not refresh your session.",
       response.status
     );
-
     if (
       (response.status === 400 || response.status === 401) &&
       useAuthStore.getState().accessToken === previousToken
     ) {
       useAuthStore.getState().logout();
     }
-
     throw error;
   }
 
@@ -127,76 +123,53 @@ async function performRefresh(): Promise<string> {
   return accessToken;
 }
 
-function refreshAccessToken(): Promise<string> {
-  if (!refreshInFlight) {
-    refreshInFlight = performRefresh().finally(() => {
-      refreshInFlight = null;
-    });
-  }
-
-  return refreshInFlight;
-}
-
 async function send(
-  url: string,
-  options: ApiFetchOptions,
+  path: string,
+  options: RequestInit,
   accessToken: string | null
 ): Promise<Response> {
-  const { auth = "optional", skipRefresh: _skipRefresh, ...init } = options;
-  return fetch(url, {
-    ...init,
-    headers: createHeaders(init.headers, auth, accessToken),
+  const headers = new Headers(options.headers);
+  headers.delete("Authorization");
+  if (accessToken) headers.set("Authorization", ["Bearer", accessToken].join(" "));
+
+  return fetch(apiUrl(path), {
+    ...options,
+    headers,
     credentials: "include",
   });
 }
 
 export async function apiFetch(
   path: string,
-  options: ApiFetchOptions = {}
+  options: RequestInit = {}
 ): Promise<Response> {
-  const url = apiUrl(path);
-  const initialToken = useAuthStore.getState().accessToken;
-  const response = await send(url, options, initialToken);
-
-  if (response.status !== 401 || options.skipRefresh) {
-    return response;
-  }
+  const token = useAuthStore.getState().accessToken;
+  const response = await send(path, options, token);
+  if (response.status !== 401) return response;
 
   const refreshedToken = await refreshAccessToken();
-  const retriedResponse = await send(url, options, refreshedToken);
+  const retry = await send(path, options, refreshedToken);
 
   if (
-    retriedResponse.status === 401 &&
+    retry.status === 401 &&
     useAuthStore.getState().accessToken === refreshedToken
   ) {
     useAuthStore.getState().logout();
   }
 
-  return retriedResponse;
+  return retry;
 }
 
 export async function restoreSession(): Promise<void> {
-  const auth = useAuthStore.getState();
-  if (auth.accessToken) {
-    auth.setSessionStatus("authenticated");
-    return;
-  }
-
-  auth.setSessionStatus("checking");
-
   try {
-    await refreshAccessToken();
+    if (!useAuthStore.getState().accessToken) {
+      await refreshAccessToken();
+    }
   } catch (error) {
-    if (useAuthStore.getState().accessToken) {
-      useAuthStore.getState().setSessionStatus("authenticated");
-      return;
+    if (!(error instanceof ApiError && (error.status === 400 || error.status === 401))) {
+      console.error("Could not restore the UrbanRent session.", error);
     }
-
-    if (error instanceof ApiError && (error.status === 400 || error.status === 401)) {
-      useAuthStore.getState().setSessionStatus("anonymous");
-      return;
-    }
-
-    useAuthStore.getState().setSessionStatus("error");
+  } finally {
+    useAuthStore.getState().finishInitialization();
   }
 }

@@ -36,6 +36,9 @@ const nextConfig = {
       { source: "/applications", destination: "/tenant/applications", permanent: false },
       { source: "/viewings", destination: "/tenant/viewings", permanent: false },
       { source: "/my-profile", destination: "/profile", permanent: false },
+      { source: "/tenant/profile", destination: "/profile", permanent: false },
+      { source: "/landlord/profile", destination: "/profile", permanent: false },
+      { source: "/admin/profile", destination: "/profile", permanent: false },
     ];
   },
 };

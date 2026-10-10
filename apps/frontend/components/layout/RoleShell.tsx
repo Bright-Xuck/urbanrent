@@ -15,7 +15,7 @@ import {
   Users,
   X,
 } from "lucide-react";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { ReactNode } from "react";
 import type { Role } from "../../api/types";
 import { logout } from "../../api/userApi";
@@ -32,7 +32,7 @@ const NAVIGATION: Record<Role, readonly NavigationItem[]> = {
     { href: "/properties", label: "Browse homes", icon: Search },
     { href: "/tenant/applications", label: "My applications", icon: FileText },
     { href: "/tenant/viewings", label: "My viewings", icon: CalendarDays },
-    { href: "/tenant/profile", label: "My profile", icon: Users },
+    { href: "/profile", label: "My profile", icon: Users },
   ],
   LANDLORD: [
     { href: "/landlord/properties", label: "My properties", icon: Building2 },
@@ -40,14 +40,20 @@ const NAVIGATION: Record<Role, readonly NavigationItem[]> = {
     { href: "/landlord/viewings", label: "Viewings", icon: CalendarDays },
     { href: "/landlord/properties/new", label: "Add a property", icon: Plus },
     { href: "/landlord/verification", label: "Verification", icon: BadgeCheck },
-    { href: "/landlord/profile", label: "My profile", icon: Users },
+    { href: "/profile", label: "My profile", icon: Users },
   ],
   ADMIN: [
     { href: "/admin", label: "Overview", icon: LayoutDashboard },
     { href: "/admin/users", label: "Users", icon: Users },
     { href: "/admin/verification", label: "Verification queue", icon: BadgeCheck },
-    { href: "/admin/profile", label: "My profile", icon: Users },
+    { href: "/profile", label: "My profile", icon: Users },
   ],
+};
+
+const ROLE_HOME: Record<Role, string> = {
+  TENANT: "/tenant",
+  LANDLORD: "/landlord",
+  ADMIN: "/admin",
 };
 
 export function RoleShell({
@@ -59,24 +65,50 @@ export function RoleShell({
 }) {
   const pathname = usePathname();
   const router = useRouter();
-  const clearSession = useAuthStore((state) => state.logout);
+  const user = useAuthStore((state) => state.user);
+  const initialized = useAuthStore((state) => state.initialized);
   const [menuOpen, setMenuOpen] = useState(false);
+
+  useEffect(() => {
+    if (initialized && user && user.role !== role) {
+      router.replace(ROLE_HOME[user.role]);
+    }
+  }, [initialized, role, router, user]);
 
   async function handleLogout() {
     try {
       await logout();
     } catch (error) {
-      clearSession(
+      window.alert(
         error instanceof Error
-          ? `You are signed out on this device, but the server did not confirm logout: ${error.message}`
-          : "You are signed out on this device, but the server did not confirm logout."
+          ? `Signed out here, but the server did not confirm logout: ${error.message}`
+          : "Signed out here, but the server did not confirm logout."
       );
-      return;
     }
-
-    clearSession();
     router.replace("/");
   }
+
+  if (!initialized) {
+    return (
+      <main className="mx-auto max-w-7xl px-5 py-12 text-sm text-ink-soft" role="status">
+        Checking your sign-in…
+      </main>
+    );
+  }
+
+  if (!user) {
+    return (
+      <main className="mx-auto flex min-h-[50vh] max-w-7xl flex-col items-start justify-center gap-4 px-5 py-12">
+        <h1 className="font-display text-2xl font-semibold text-ink">Sign in to continue</h1>
+        <p className="text-sm text-ink-soft">This area is for signed-in UrbanRent members.</p>
+        <Link className="rounded-lg bg-navy px-4 py-2.5 text-sm font-semibold text-white" href="/login">
+          Go to sign in
+        </Link>
+      </main>
+    );
+  }
+
+  if (user.role !== role) return null;
 
   const navigation = (
     <nav aria-label={`${role.toLowerCase()} navigation`} className="grid gap-1">
@@ -116,11 +148,7 @@ export function RoleShell({
             onClick={() => setMenuOpen((open) => !open)}
             type="button"
           >
-            {menuOpen ? (
-              <X aria-hidden="true" className="h-5 w-5" />
-            ) : (
-              <Menu aria-hidden="true" className="h-5 w-5" />
-            )}
+            {menuOpen ? <X aria-hidden="true" className="h-5 w-5" /> : <Menu aria-hidden="true" className="h-5 w-5" />}
           </button>
         </header>
 

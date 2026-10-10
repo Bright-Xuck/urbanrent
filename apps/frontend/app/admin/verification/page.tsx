@@ -64,7 +64,6 @@ function ReviewQueue() {
     let active = true;
 
     const load = async () => {
-      await Promise.resolve();
       if (!active) return;
       setLoading(true);
       setError(null);

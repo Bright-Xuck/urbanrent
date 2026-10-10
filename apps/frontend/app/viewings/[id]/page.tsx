@@ -30,7 +30,6 @@ import {
 import type { ViewingRequest, ViewingRequestStatus } from "../../../api/types";
 import { useAuthStore } from "../../../Store/useUserStore";
 import { formatDate, formatDateTime, formatTimes } from "../../../lib/format";
-import { SessionGuard } from "../../../components/auth/SessionGuard";
 import PageHeader from "../../../components/layout/PageHeader";
 import ViewingActions, {
   type ViewingAction,
@@ -49,11 +48,7 @@ const ACTION_STATUS: Record<ViewingAction, ViewingRequestStatus> = {
 };
 
 export default function ViewingDetailPage() {
-  return (
-    <SessionGuard>
-      <ViewingDetail />
-    </SessionGuard>
-  );
+  return <ViewingDetail />;
 }
 
 function ViewingDetail() {
@@ -71,7 +66,6 @@ function ViewingDetail() {
     let active = true;
 
     const load = async () => {
-      await Promise.resolve();
       if (!active) return;
       setLoading(true);
       setLoadError(null);

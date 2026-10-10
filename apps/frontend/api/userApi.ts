@@ -1,6 +1,6 @@
 import type { User } from "../Store/useUserStore";
 import type { RegistrationRole } from "./types";
-import { apiFetch as fetch } from "../lib/api-client";
+import { useAuthStore } from "../Store/useUserStore";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
@@ -16,19 +16,12 @@ export type RegisterResponse = {
   user: User;
 };
 
-export type RefreshResponse = {
-  message: string;
-  accessToken: string;
-};
-
 export async function login(email: string, password: string): Promise<AuthResponse> {
   const response = await fetch(`${API_URL}/auth/login`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ email, password }),
     credentials: "include",
-    auth: "none",
-    skipRefresh: true,
   });
 
   const data = await response.json();
@@ -50,8 +43,6 @@ export async function register(email: string, password: string, role: Registrati
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ email, password, role }),
     credentials: "include",
-    auth: "none",
-    skipRefresh: true,
   });
 
   const data = await response.json();
@@ -64,42 +55,22 @@ export async function register(email: string, password: string, role: Registrati
 }
 
 // ------------------------------------------------------------
-// POST /api/auth/refresh
-// ------------------------------------------------------------
-// Asks for a new access token using the refresh cookie. Throws if the
-// cookie is missing, expired, or was revoked.
-export async function refreshSession(): Promise<RefreshResponse> {
-  const response = await fetch(`${API_URL}/auth/refresh`, {
-    method: "POST",
-    credentials: "include",
-    auth: "none",
-    skipRefresh: true,
-  });
-
-  const data = await response.json();
-
-  if (!response.ok) {
-    throw new Error(data.message || "Could not refresh your session");
-  }
-
-  return data;
-}
-
-// ------------------------------------------------------------
 // POST /api/auth/logout
 // ------------------------------------------------------------
 // Clears the refresh cookie on the server. This clears the token in the
 // database, so it can throw if the session was already dead.
 export async function logout(): Promise<void> {
-  const response = await fetch(`${API_URL}/auth/logout`, {
-    method: "POST",
-    credentials: "include",
-    auth: "none",
-    skipRefresh: true,
-  });
+  try {
+    const response = await fetch(`${API_URL}/auth/logout`, {
+      method: "POST",
+      credentials: "include",
+    });
 
-  if (!response.ok) {
-    const data = await response.json();
-    throw new Error(data.message || "Could not log you out");
+    if (!response.ok) {
+      const data = await response.json();
+      throw new Error(data.message || "Could not log you out");
+    }
+  } finally {
+    useAuthStore.getState().logout();
   }
 }

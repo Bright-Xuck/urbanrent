@@ -36,7 +36,6 @@ import {
 import type { Application } from "../../../api/types";
 import { useAuthStore } from "../../../Store/useUserStore";
 import { formatDate, formatXAF, titleCase } from "../../../lib/format";
-import { SessionGuard } from "../../../components/auth/SessionGuard";
 import PageHeader from "../../../components/layout/PageHeader";
 import ApplicationActions, {
   type ApplicationAction,
@@ -55,11 +54,7 @@ const ACTION_CALLS: Record<ApplicationAction, (id: string) => Promise<Applicatio
 };
 
 export default function ApplicationDetailPage() {
-  return (
-    <SessionGuard>
-      <ApplicationDetail />
-    </SessionGuard>
-  );
+  return <ApplicationDetail />;
 }
 
 function ApplicationDetail() {
@@ -77,7 +72,6 @@ function ApplicationDetail() {
     let active = true;
 
     const load = async () => {
-      await Promise.resolve();
       if (!active) return;
       setLoading(true);
       setLoadError(null);

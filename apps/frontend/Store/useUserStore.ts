@@ -8,40 +8,22 @@ export type User = {
   role: Role;
 };
 
-export type SessionStatus = "checking" | "authenticated" | "anonymous" | "error";
-
 type AuthState = {
   user: User | null;
   accessToken: string | null;
-  sessionStatus: SessionStatus;
-  sessionNotice: string | null;
+  initialized: boolean;
   login: (user: User, accessToken: string) => void;
-  logout: (notice?: string | null) => void;
-  setSessionStatus: (status: SessionStatus) => void;
+  logout: () => void;
+  finishInitialization: () => void;
 };
 
 export const useAuthStore = create<AuthState>((set) => ({
   user: null,
   accessToken: null,
-  sessionStatus: "checking",
-  sessionNotice: null,
+  initialized: false,
   login: (user, accessToken) => {
-    set({
-      user,
-      accessToken,
-      sessionStatus: "authenticated",
-      sessionNotice: null,
-    });
+    set({ user, accessToken, initialized: true });
   },
-  logout: (sessionNotice: string | null = null) => {
-    set({
-      user: null,
-      accessToken: null,
-      sessionStatus: "anonymous",
-      sessionNotice,
-    });
-  },
-  setSessionStatus: (sessionStatus) => {
-    set({ sessionStatus });
-  },
+  logout: () => set({ user: null, accessToken: null, initialized: true }),
+  finishInitialization: () => set({ initialized: true }),
 }));

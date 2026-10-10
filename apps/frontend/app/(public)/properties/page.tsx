@@ -100,7 +100,6 @@ function BrowseContent() {
   // with filters baked in) restarts the search from page 1.
   useEffect(() => {
     const syncFilters = async () => {
-      await Promise.resolve();
       setFilters(readFilters(searchParams));
       setPage(1);
     };
@@ -114,7 +113,6 @@ function BrowseContent() {
     let active = true;
 
     const load = async () => {
-      await Promise.resolve();
       if (!active) return;
       setLoading(true);
       setError(null);

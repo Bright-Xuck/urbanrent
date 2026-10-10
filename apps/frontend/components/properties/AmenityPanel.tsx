@@ -54,7 +54,6 @@ export default function AmenityPanel({
     let active = true;
 
     const load = async () => {
-      await Promise.resolve();
       if (!active) return;
       setLoadError(null);
       try {

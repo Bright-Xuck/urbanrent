@@ -27,19 +27,18 @@ pnpm --filter @urbanrent/frontend build
 - Public: `/`, `/properties`, `/property/[id]`, `/about-us`, `/contact-us`,
   `/faqs`, `/term-conditions`
 - Authentication: `/login`, `/register`
-- Tenant: `/tenant`, `/tenant/applications`, `/tenant/viewings`,
-  `/tenant/profile`
+- Tenant: `/tenant`, `/tenant/applications`, `/tenant/viewings`
 - Landlord: `/landlord`, `/landlord/properties`,
   `/landlord/properties/new`, `/landlord/properties/[id]/edit`,
   `/landlord/applications`, `/landlord/viewings`,
-  `/landlord/verification`, `/landlord/profile`
-- Admin: `/admin`, `/admin/users`, `/admin/verification`, `/admin/profile`
-- Shared signed-in details: `/applications/[id]`, `/viewings/[id]`, `/profile`
+  `/landlord/verification`
+- Admin: `/admin`, `/admin/users`, `/admin/verification`
+- Shared signed-in pages: `/applications/[id]`, `/viewings/[id]`, `/profile`
 
 The public route group applies the site shell. Tenant, landlord, and admin
-layouts enforce their respective roles; shared signed-in pages use the session
-guard. See
+layouts check the signed-in role before showing their pages. Resource-detail
+pages rely on the backend's access checks and display API errors. See
 [`../../docs/FRONTEND_ARCHITECTURE.md`](../../docs/FRONTEND_ARCHITECTURE.md)
-for the auth flow and code placement conventions. The backend API contract and
-known gaps are listed in
+for the auth flow and code placement conventions. The backend API contract
+and known gaps are listed in
 [`../../docs/BACKEND_API_MAP.md`](../../docs/BACKEND_API_MAP.md).

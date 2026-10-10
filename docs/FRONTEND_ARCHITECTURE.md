@@ -1,131 +1,99 @@
-# UrbanRent frontend architecture
+# UrbanRent frontend
 
-This guide describes the frontend foundation and the conventions for the next
-implementation slices. The API contract is documented in
-[BACKEND_API_MAP.md](./BACKEND_API_MAP.md); the backend remains authoritative.
+The frontend is a Next.js App Router app that calls the Express backend
+directly. The backend defines the available data and permissions; do not add
+frontend workflows for endpoints that do not exist. See
+[BACKEND_API_MAP.md](./BACKEND_API_MAP.md) for the API contract.
 
-## Routes and layouts
-
-Next.js route groups organize layouts without adding names to URLs:
+## Routes
 
 ```text
 app/
-  (public)/                 Public navbar + footer
-    page.tsx                /
-    properties/page.tsx     /properties
-    property/[id]/page.tsx  /property/:id
-  login/page.tsx            /login
-  register/page.tsx         /register
-    tenant/                   Tenant shell and tenant pages
-      profile/page.tsx        /tenant/profile
-    landlord/                 Landlord shell and landlord pages
-      profile/page.tsx        /landlord/profile
-    admin/                    Admin shell and admin pages
-      profile/page.tsx        /admin/profile
-    applications/[id]/        Shared application detail
-    viewings/[id]/            Shared viewing detail
-    profile/page.tsx          Shared account summary
+  (public)/                  Public navbar and footer
+    page.tsx                  /
+    properties/               /properties
+    property/[id]/            /property/:id
+    about-us/, contact-us/, faqs/, term-conditions/
+  login/, register/           Sign-in and account creation
+  tenant/                     Tenant layout and pages
+  landlord/                   Landlord layout and pages
+  admin/                      Admin layout and pages
+  applications/[id]/          Shared application detail
+  viewings/[id]/               Shared viewing detail
+  profile/                     Shared account summary
 ```
 
-`(public)` is the only route group; it adds the public navbar and footer without
-changing URLs. Login and registration use the root layout directly. Tenant,
-landlord, and admin folders each have a role layout. Shared account and
-resource-detail pages use `SessionGuard` directly.
+The `(public)` group is the only route group because it gives public pages a
+different layout without changing their URLs. Role folders are ordinary URL
+folders with their own layout and navigation. The profile is one shared URL,
+not three copies under each role. Old entry paths are redirected in
+`apps/frontend/next.config.mjs`.
 
-Role-specific route prefixes keep tenant and landlord workflows distinct. A
-detail route is shared when both parties are allowed to see and act on the same
-backend resource. The role shell is defined once in
-`components/layout/RoleShell.tsx`; its small navigation map contains only
-routes that currently have UI and backend support. Do not add a navigation
-entry for an unimplemented API feature.
+## Where code goes
 
-The former `/dashboard/*`, `/applications`, `/viewings`, and `/my-profile`
-entry points are redirected in `next.config.mjs` where a same-role destination
-is unambiguous. Resource detail URLs remain shared.
+- `app/` holds routes and layouts. Keep pages focused on rendering the view.
+- `api/` holds one wrapper per backend resource and the backend's shared
+  TypeScript types and enums.
+- `components/ui/` holds reusable display controls; `components/layout/` holds
+  the public navigation and signed-in role shell.
+- `Store/useUserStore.ts` holds the signed-in user and access token in memory.
+- `lib/` holds the API request helper and small formatting helpers.
 
-## Where code belongs
+Prefer an existing file or component before creating another layer. Add a
+dependency only when it removes more complexity than it adds. Keep backend
+field names, enum values, and response shapes accurate.
 
-- `app/` contains route files and route-group layouts. Pages should compose
-  feature components instead of owning data or workflow logic.
-- `features/<name>/` contains resource-specific UI, hooks, types, and schemas.
-  Keep a resource's API operations next to that feature as it is migrated.
-- `api/` currently contains the backend-mirroring resource types and API
-  wrappers. Keep each wire resource type in one place; mirror backend enums
-  exactly.
-- `lib/api-client.ts` owns browser requests, credentials, access-token
-  attachment, and refresh/retry behavior. `lib/` also holds formatters.
-- `Store/useUserStore.ts` is only the in-memory identity/session store. Never
-  persist the access token to local storage, cookies, or session storage.
-- `components/ui/` contains reusable primitives; `components/layout/` contains
-  cross-feature shells and layout elements.
-- Keep the codebase small: prefer existing pages, API wrappers, and shared
-  fields over extra layers or one-off files. Add dependencies only when they
-  remove more complexity than they introduce.
+## Data loading
 
-## Rendering and data flow
+The app uses client-side fetching with `useEffect` and the resource wrappers.
+This is straightforward for the current authenticated dashboards because the
+access token exists only in browser memory. Public property pages also fetch
+in the browser today, which is simpler but gives up some server-rendered SEO
+and initial listing content. If SEO becomes a priority, migrate only those
+public reads to server components; keep authenticated reads in the browser.
 
-Public discovery should be server-rendered so search engines and link previews
-receive listing content. Public API reads can use server `fetch` caching and
-revalidation once those pages are moved to Server Components. The current
-public listing/detail pages are still being migrated and should not be used as
-the pattern for new public pages.
+Each data view should show its loading, error, and empty states. Use the
+existing API wrappers and UI controls instead of adding a data-fetching
+library for simple requests.
 
-Protected pages use client-side API wrappers because their bearer token only
-exists in browser memory. Keep page components focused on loading/error/empty
-states and move reusable workflow logic into the owning feature. All requests
-go directly to `NEXT_PUBLIC_API_URL` (which includes `/api`); there is no
-Next.js API proxy.
+## Authentication
 
-Use native form controls and browser validation for simple forms. Add a form
-library or schema dependency only when a workflow's validation complexity
-justifies it; keep labels and errors accessible either way.
+The backend sets an `httpOnly` refresh cookie and returns a short-lived
+access token. The browser keeps that access token only in the Zustand store;
+it is never written to local storage. Next.js middleware cannot read the
+backend-domain cookie, so it cannot reliably guard these routes. Frontend
+checks are for navigation only: the backend still enforces every permission.
 
-## Authentication and route protection
-
-The refresh cookie is `httpOnly` and belongs to the backend domain. Vercel's
-Next.js middleware cannot read it, so middleware cannot correctly determine
-whether a browser has a session. `AuthBootstrap` restores the session in the
-browser. Role layouts and shared protected pages wait for that restore through
-`SessionGuard`, preventing protected content from flashing before the session
-is known. These guards are UX boundaries only; the backend must authorize
-every request.
-
-Only the access token is held in Zustand memory. The user record restored from
-the token's claims is for navigation and display, not proof of identity.
+On page load, `AuthBootstrap` calls the refresh endpoint. The store's
+`initialized` boolean lets public navigation wait until that first check is
+done, and lets a role layout avoid showing protected content during the
+check. The refresh response contains no user object, so the client reads the
+minimal user ID, email, and role from the returned access-token claims. Those
+claims are used for display/navigation only, not as authorization proof.
 
 ### Request, refresh, and retry
 
-1. `apiFetch` reads the latest access token from the store and sends it as a
-   bearer token when available. Browser credentials are included so the backend
-   can receive its refresh cookie on auth requests.
-2. If a request gets `401`, the client starts one refresh request. Concurrent
-   `401`s share that same promise rather than stampeding the refresh endpoint.
-3. Refresh reads the backend-domain cookie, receives a new access token, checks
-   the token claims for the expected user ID and role, and updates the store.
-4. The original request is retried once with that token. A second `401` clears
-   the local session and is returned to the caller as an error response.
-5. An expired/invalid refresh clears local state. A network/service failure
-   produces a protected-route error state with an explicit retry action rather
-   than silently pretending the visitor is logged out.
+1. A resource wrapper calls `apiFetch`; it adds the current in-memory bearer
+   token and includes browser credentials.
+2. If the backend replies `401`, the helper sends one refresh request using
+   the cookie. Concurrent `401` responses share the same refresh request.
+3. The helper reads the user details from the new token and updates the store.
+4. It retries the original request once. A second `401` clears the local
+   session; the page handles the returned response as an API error.
+5. Login, registration, refresh, and logout use direct `fetch` calls so their
+   own `401` responses do not start another refresh.
 
-Login, registration, refresh, and logout opt out of automatic 401 refresh so
-credential errors cannot accidentally trigger a second auth operation.
+Logout clears the local session even if the backend request fails. In that
+case the page reports that server-side logout was not confirmed.
 
-On initial load, `AuthBootstrap` starts a refresh while public content remains
-renderable. Protected layouts remain in the neutral “restoring session” state
-until that request resolves. After a failed network request they show a retry
-state; an absent or expired cookie results in the sign-in gate.
+The deployed frontend and backend have different domains. Cross-site refresh
+cookies require compatible `SameSite` and `Secure` settings; the backend
+currently defaults `COOKIE_SAMESITE` to `lax`. Verify the deployed cookie
+behavior rather than trying to work around it in frontend code.
 
-## Visual and interaction conventions
+## UI conventions
 
-Tailwind v4 tokens live in `app/globals.css`; `font-sans` uses Inter for
-readability and `font-display` uses Fraunces for editorial headings. Deep navy,
-warm ochre, and quiet neutral surfaces communicate reliability without using
-generic dashboard blue as the only identity. Use `cn()` when combining
-conditional Tailwind classes.
-
-New data views need explicit loading, error, and empty states. Use semantic
-headings, native controls, visible keyboard focus, accessible labels, and
-keyboard-operable navigation. Use `next/image` with a known aspect ratio and
-appropriate loading priority for listing media. Keep mobile layouts first and
-avoid loading large client-only libraries for simple interactions.
+Tailwind v4 design tokens and global styles live in `app/globals.css`.
+Prefer semantic HTML, visible focus styles, labeled controls, and keyboard
+operable navigation. Use the existing image aspect ratios and loading
+behavior; avoid adding large client-side libraries for small interactions.
