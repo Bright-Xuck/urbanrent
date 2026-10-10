@@ -9,10 +9,7 @@
 //   signed in   → avatar, "Log out" + ONE role-appropriate primary CTA.
 //                 No Log in, no Sign up — you're already in.
 //
-// The signed-in area has its own bar (DashboardNavbar): once you're in,
-// the marketing pages show just a light "you're logged in" state, and
-// the dashboards carry the role-specific links (listings, applications,
-// viewings).
+// Role-specific navigation lives in the authenticated area shell.
 //
 // Blog and the "Features" dropdown were removed — they were duplicate
 // clutter pointing at /properties.
@@ -27,15 +24,20 @@ import { useAuthStore } from "../../Store/useUserStore";
 export default function Navbar() {
   const router = useRouter();
   const user = useAuthStore((state) => state.user);
+  const sessionStatus = useAuthStore((state) => state.sessionStatus);
   const clearSession = useAuthStore((state) => state.logout);
+  const sessionNotice = useAuthStore((state) => state.sessionNotice);
 
   async function handleLogout() {
-    // If the cookie is already dead this throws — that's fine, we still
-    // want to clear the local session.
     try {
       await logout();
-    } catch {
-      // ignore and continue
+    } catch (error) {
+      clearSession(
+        error instanceof Error
+          ? `You are signed out on this device, but the server did not confirm logout: ${error.message}`
+          : "You are signed out on this device, but the server did not confirm logout."
+      );
+      return;
     }
 
     clearSession();
@@ -47,7 +49,13 @@ export default function Navbar() {
   //   TENANT      → "My applications"  /applications
   //   LANDLORD / ADMIN → "My listings"  /dashboard
   const isTenant = user?.role === "TENANT";
-  const primaryHref = !user ? "/register" : isTenant ? "/applications" : "/dashboard";
+  const primaryHref = !user
+    ? "/register"
+    : isTenant
+      ? "/tenant/applications"
+      : user.role === "ADMIN"
+        ? "/admin"
+        : "/landlord/properties";
   const primaryLabel = !user ? "Sign up" : isTenant ? "My applications" : "My listings";
 
   return (
@@ -85,15 +93,32 @@ export default function Navbar() {
           </div>
 
           {user && user.role !== "TENANT" ? (
-            <Link href="/dashboard">Dashboard</Link>
+            <Link href={user?.role === "ADMIN" ? "/admin" : "/landlord/properties"}>
+              Dashboard
+            </Link>
           ) : null}
         </nav>
 
         <div className="header-actions">
+          {sessionStatus === "checking" ? (
+            <span className="text-sm text-ink-soft" role="status">
+              Checking sign-in…
+            </span>
+          ) : null}
+          {sessionStatus === "error" ? (
+            <span className="max-w-56 text-xs text-danger" role="status">
+              Sign-in status could not be checked.
+            </span>
+          ) : null}
+          {sessionNotice ? (
+            <p className="max-w-56 text-xs text-danger" role="status">
+              {sessionNotice}
+            </p>
+          ) : null}
           {user ? (
             <>
               <Link
-                href="/my-profile"
+                href="/profile"
                 className="user-icon"
                 aria-label="My profile"
                 title="My profile"

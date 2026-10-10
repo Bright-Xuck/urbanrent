@@ -90,11 +90,11 @@ export default function RequestViewingForm({
         <div className="mt-3">
           <Alert variant="success">
             Request sent. The landlord confirms one of your proposed times —
-            you'll see the confirmed slot on this page.
+            you&apos;ll see the confirmed slot on this page.
           </Alert>
         </div>
         <p className="mt-4">
-          <Link href="/viewings" className="link">
+          <Link href="/tenant/viewings" className="link">
             My viewing requests
           </Link>
         </p>
@@ -107,7 +107,7 @@ export default function RequestViewingForm({
       <h2 className="panel-title">Request a viewing</h2>
       <p className="panel-note">
         Propose the times that suit you. The landlord picks one — a landlord
-        can't be double-booked, so an overlapping time is refused.
+        can&apos;t be double-booked, so an overlapping time is refused.
       </p>
 
       <form onSubmit={handleSubmit} className="mt-4">

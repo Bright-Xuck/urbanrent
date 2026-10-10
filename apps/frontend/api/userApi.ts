@@ -1,4 +1,5 @@
 import type { User } from "../Store/useUserStore";
+import { apiFetch as fetch } from "../lib/api-client";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
@@ -25,6 +26,8 @@ export async function login(email: string, password: string): Promise<AuthRespon
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ email, password }),
     credentials: "include",
+    auth: "none",
+    skipRefresh: true,
   });
 
   const data = await response.json();
@@ -46,6 +49,8 @@ export async function register(email: string, password: string, role:"TENANT"| "
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ email, password, role }),
     credentials: "include",
+    auth: "none",
+    skipRefresh: true,
   });
 
   const data = await response.json();
@@ -66,6 +71,8 @@ export async function refreshSession(): Promise<RefreshResponse> {
   const response = await fetch(`${API_URL}/auth/refresh`, {
     method: "POST",
     credentials: "include",
+    auth: "none",
+    skipRefresh: true,
   });
 
   const data = await response.json();
@@ -86,6 +93,8 @@ export async function logout(): Promise<void> {
   const response = await fetch(`${API_URL}/auth/logout`, {
     method: "POST",
     credentials: "include",
+    auth: "none",
+    skipRefresh: true,
   });
 
   if (!response.ok) {

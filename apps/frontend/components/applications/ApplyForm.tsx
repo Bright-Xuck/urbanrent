@@ -54,7 +54,7 @@ export default function ApplyForm({
           </Alert>
         </div>
         <p className="mt-4">
-          <Link href="/applications" className="link">
+          <Link href="/tenant/applications" className="link">
             Track your applications
           </Link>
         </p>
@@ -66,7 +66,7 @@ export default function ApplyForm({
     <Card>
       <h2 className="panel-title">Apply for this place</h2>
       <p className="panel-note">
-        One active application per property. If it's rejected or you
+        One active application per property. If it&apos;s rejected or you
         withdraw it, you can apply again.
       </p>
 

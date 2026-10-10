@@ -6,7 +6,7 @@
 // Sends { email, password }. On success the backend sets an httpOnly
 // refresh cookie AND returns { user, accessToken } — the cookie keeps
 // working after a reload, the access token lives in the store only.
-// Tenants land on /applications, everyone else on /dashboard.
+// Successful sign-in starts at the home of the user's role.
 // ============================================================
 
 import { useState, type FormEvent } from "react";
@@ -39,7 +39,12 @@ export default function LoginPage() {
         data.password as string,
       );
       setSession(user, accessToken);
-      router.push(user.role === "TENANT" ? "/applications" : "/dashboard");
+      const roleHome = {
+        TENANT: "/tenant",
+        LANDLORD: "/landlord",
+        ADMIN: "/admin",
+      }[user.role];
+      router.push(roleHome);
     } catch (err) {
       setError(err instanceof Error ? err.message : "Something went wrong");
     } finally {

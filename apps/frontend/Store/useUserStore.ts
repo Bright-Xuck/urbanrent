@@ -1,7 +1,6 @@
 import { create } from "zustand";
+import type { Role } from "../api/types";
 
-
-type Role = "TENANT" | "LANDLORD" | "ADMIN";
 
 export type User = {
   id: string;
@@ -9,26 +8,40 @@ export type User = {
   role: Role;
 };
 
+export type SessionStatus = "checking" | "authenticated" | "anonymous" | "error";
+
 type AuthState = {
   user: User | null;
   accessToken: string | null;
-  sessionRestoring: boolean;
+  sessionStatus: SessionStatus;
+  sessionNotice: string | null;
   login: (user: User, accessToken: string) => void;
-  logout: () => void;
-  setSessionRestoring: (value: boolean) => void;
+  logout: (notice?: string | null) => void;
+  setSessionStatus: (status: SessionStatus) => void;
 };
 
 export const useAuthStore = create<AuthState>((set) => ({
   user: null,
   accessToken: null,
-  sessionRestoring: false,
+  sessionStatus: "checking",
+  sessionNotice: null,
   login: (user, accessToken) => {
-    set({ user, accessToken, sessionRestoring: false });
+    set({
+      user,
+      accessToken,
+      sessionStatus: "authenticated",
+      sessionNotice: null,
+    });
   },
-  logout: () => {
-    set({ user: null, accessToken: null, sessionRestoring: false });
+  logout: (sessionNotice: string | null = null) => {
+    set({
+      user: null,
+      accessToken: null,
+      sessionStatus: "anonymous",
+      sessionNotice,
+    });
   },
-  setSessionRestoring: (value) => {
-    set({ sessionRestoring: value });
+  setSessionStatus: (sessionStatus) => {
+    set({ sessionStatus });
   },
 }));

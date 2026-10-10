@@ -1,4 +1,5 @@
 import { useAuthStore } from "../Store/useUserStore";
+import { apiFetch as fetch } from "../lib/api-client";
 import type { Amenity, PropertyAmenityLink, PropertyAmenityRow } from "./types";
 
 // ============================================================

@@ -1,4 +1,6 @@
 import { useAuthStore } from "../Store/useUserStore";
+import { apiFetch as fetch } from "../lib/api-client";
+import { readApiJson } from "../lib/api-response";
 import type {
   AccountState,
   AdminUser,
@@ -10,16 +12,6 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 // Same defensive body reader as propertyApi: the backend always sends
 // JSON, but a proxy error page must not crash the parse.
-async function readJson(response: Response): Promise<any> {
-  const text = await response.text();
-  if (!text) return {};
-  try {
-    return JSON.parse(text) as Record<string, any>;
-  } catch {
-    return { message: `Admin service unavailable (${response.status})` };
-  }
-}
-
 function authHeaders(): Record<string, string> {
   const token = useAuthStore.getState().accessToken;
   return token ? { Authorization: `Bearer ${token}` } : {};
@@ -63,7 +55,7 @@ export async function getUsers(
     { headers: authHeaders() }
   );
 
-  const data = await readJson(response);
+  const data = await readApiJson<PaginatedUsers>(response, "Admin service");
 
   if (!response.ok) {
     throw new Error(data.message || "Could not load users");
@@ -83,7 +75,7 @@ export async function suspendUser(id: string): Promise<AdminUser> {
     headers: authHeaders(),
   });
 
-  const data = await readJson(response);
+  const data = await readApiJson<{ user: AdminUser }>(response, "Admin service");
 
   if (!response.ok) {
     throw new Error(data.message || "Could not suspend this user");
@@ -103,7 +95,7 @@ export async function reinstateUser(id: string): Promise<AdminUser> {
     headers: authHeaders(),
   });
 
-  const data = await readJson(response);
+  const data = await readApiJson<{ user: AdminUser }>(response, "Admin service");
 
   if (!response.ok) {
     throw new Error(data.message || "Could not reinstate this user");

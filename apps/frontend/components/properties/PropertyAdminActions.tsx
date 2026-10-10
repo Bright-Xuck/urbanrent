@@ -89,7 +89,7 @@ export default function PropertyAdminActions({
     <div className="flex flex-wrap items-center gap-3">
       {showEdit && (
         <Link
-          href={`/dashboard/properties/${property.id}/edit`}
+          href={`/landlord/properties/${property.id}/edit`}
           className={`btn btn-light ${SMALL}`}
         >
           <Pencil className="h-4 w-4" aria-hidden /> Edit

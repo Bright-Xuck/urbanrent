@@ -33,9 +33,11 @@ export default function PropertyGallery({
 
   useEffect(() => {
     let active = true;
-    setLoading(true);
 
     const load = async () => {
+      await Promise.resolve();
+      if (!active) return;
+      setLoading(true);
       try {
         const data = await getPropertyImages(propertyId);
         if (active) setImages(data);
@@ -46,7 +48,7 @@ export default function PropertyGallery({
       }
     };
 
-    load();
+    void load();
 
     return () => {
       active = false;

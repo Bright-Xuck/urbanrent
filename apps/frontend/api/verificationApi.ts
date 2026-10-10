@@ -1,4 +1,6 @@
 import { useAuthStore } from "../Store/useUserStore";
+import { apiFetch as fetch } from "../lib/api-client";
+import { readApiJson } from "../lib/api-response";
 import type {
   VerificationDocument,
   VerificationDocumentType,
@@ -6,16 +8,6 @@ import type {
 } from "./types";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
-
-async function readJson(response: Response): Promise<any> {
-  const text = await response.text();
-  if (!text) return {};
-  try {
-    return JSON.parse(text) as Record<string, any>;
-  } catch {
-    return { message: `Verification service unavailable (${response.status})` };
-  }
-}
 
 function authHeaders(): Record<string, string> {
   const token = useAuthStore.getState().accessToken;
@@ -58,7 +50,10 @@ export async function uploadVerificationDocument(
     body: formData,
   });
 
-  const data = await readJson(response);
+  const data = await readApiJson<{ document: VerificationDocument }>(
+    response,
+    "Verification service"
+  );
 
   if (!response.ok) {
     throw new Error(data.message || "Could not upload the document");
@@ -75,7 +70,10 @@ export async function getMyVerificationDocuments(): Promise<MyDocumentsResponse>
     headers: authHeaders(),
   });
 
-  const data = await readJson(response);
+  const data = await readApiJson<MyDocumentsResponse>(
+    response,
+    "Verification service"
+  );
 
   if (!response.ok) {
     throw new Error(data.message || "Could not load your documents");
@@ -96,7 +94,10 @@ export async function getPendingDocuments(
     { headers: authHeaders() }
   );
 
-  const data = await readJson(response);
+  const data = await readApiJson<PendingDocumentsResponse>(
+    response,
+    "Verification service"
+  );
 
   if (!response.ok) {
     throw new Error(data.message || "Could not load the review queue");
@@ -119,7 +120,10 @@ export async function reviewVerificationDocument(
     body: JSON.stringify({ decision, reviewNote }),
   });
 
-  const data = await readJson(response);
+  const data = await readApiJson<{ document: VerificationDocument }>(
+    response,
+    "Verification service"
+  );
 
   if (!response.ok) {
     throw new Error(data.message || "Could not review the document");

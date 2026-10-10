@@ -72,7 +72,7 @@ export default function ViewingActions({
     return (
       <p className="alert alert-info mt-6">
         This viewing request is closed — a {request.status.toLowerCase()} viewing
-        can't be changed.
+        can&apos;t be changed.
       </p>
     );
   }
@@ -80,7 +80,7 @@ export default function ViewingActions({
   if (!landlordCanManageViewing()) {
     return (
       <p className="alert alert-info mt-6">
-        Only the landlord decides whether this viewing goes ahead. You'll see the
+        Only the landlord decides whether this viewing goes ahead. You&apos;ll see the
         confirmed time here once they do.
       </p>
     );
@@ -142,7 +142,7 @@ export default function ViewingActions({
       {request.status === "CONFIRMED" && (
         <div className="flex flex-wrap gap-3">
           <p className="w-full">
-            After the viewing, record what happened — it's part of the record.
+            After the viewing, record what happened — it&apos;s part of the record.
           </p>
           <Button
             variant="success"

@@ -12,7 +12,7 @@
 // ============================================================
 
 import Link from "next/link";
-import { Bath, BedDouble, MapPin, Ruler } from "lucide-react";
+import { Bath, BedDouble, Building2, MapPin, Ruler } from "lucide-react";
 import { formatXAF } from "../../lib/format";
 
 type PropertyCardProps = {
@@ -58,21 +58,17 @@ export default function PropertyCard({
   href,
 }: PropertyCardProps) {
   const pill = badgeFor(status);
-  const images = [
-    "1600585154340-be6161a56a0c",
-    "1600607687939-ce8a6c25118c",
-    "1600566753190-17f0baa2a6c3",
-    "1600047509807-ba8f99d2cdde",
-  ];
-  const image = `https://images.unsplash.com/photo-${images[title.length % images.length]}?auto=format&fit=crop&w=900&q=82`;
 
   return (
     <Link href={href} className="property-card">
-      <div className="property-image">
+      <div className="property-image grid place-items-center bg-paper-dim">
         <span className={pill.muted ? "badge badge-muted" : "badge"}>
           {pill.label}
         </span>
-        <img src={image} alt="" />
+        <div className="grid justify-items-center gap-2 text-ink-soft">
+          <Building2 aria-hidden="true" className="h-8 w-8" />
+          <span className="text-xs">View listing for photos</span>
+        </div>
       </div>
 
       <div className="property-info">

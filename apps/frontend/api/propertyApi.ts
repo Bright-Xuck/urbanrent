@@ -1,4 +1,6 @@
 import { useAuthStore } from "../Store/useUserStore";
+import { apiFetch as fetch } from "../lib/api-client";
+import { readApiJson } from "../lib/api-response";
 import type {
   PaginatedProperties,
   Property,
@@ -11,16 +13,6 @@ import type {
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
-
-async function readJson(response: Response): Promise<any> {
-  const text = await response.text();
-  if (!text) return {};
-  try {
-    return JSON.parse(text) as Record<string, any>;
-  } catch {
-    return { message: `Listings service unavailable (${response.status})` };
-  }
-}
 
 // ------------------------------------------------------------
 // AUTH HEADERS
@@ -103,7 +95,7 @@ export async function getProperties(
 ): Promise<PaginatedProperties> {
   const response = await fetch(`${API_URL}/properties${buildQuery(filters, pagination)}`);
 
-  const data = await readJson(response);
+  const data = await readApiJson<PaginatedProperties>(response, "Listings service");
 
   if (!response.ok) {
     throw new Error(data.message || "Could not load properties");
@@ -127,7 +119,7 @@ export async function getMyProperties(
     headers: { Authorization: `Bearer ${token}` },
   });
 
-  const data = await readJson(response);
+  const data = await readApiJson<PaginatedProperties>(response, "Listings service");
 
   if (!response.ok) {
     throw new Error(data.message || "Could not load your properties");
@@ -148,7 +140,10 @@ export async function getPropertyById(id: string): Promise<Property> {
     headers: authHeaders(),
   });
 
-  const data = await readJson(response);
+  const data = await readApiJson<{ property: Property }>(
+    response,
+    "Listings service"
+  );
 
   if (!response.ok) {
     throw new Error(data.message || "Could not load this property");
@@ -173,7 +168,10 @@ export async function createProperty(input: CreatePropertyInput): Promise<Proper
     body: JSON.stringify(input),
   });
 
-  const data = await readJson(response);
+  const data = await readApiJson<{ property: Property }>(
+    response,
+    "Listings service"
+  );
 
   if (!response.ok) {
     throw new Error(data.message || "Could not create the property");
@@ -200,7 +198,10 @@ export async function updateProperty(
     body: JSON.stringify(input),
   });
 
-  const data = await readJson(response);
+  const data = await readApiJson<{ property: Property }>(
+    response,
+    "Listings service"
+  );
 
   if (!response.ok) {
     throw new Error(data.message || "Could not update the property");
@@ -243,7 +244,10 @@ export async function deleteProperty(id: string): Promise<void> {
   });
 
   if (!response.ok) {
-    const data = await readJson(response);
+    const data = await readApiJson<Record<string, unknown>>(
+      response,
+      "Listings service"
+    );
     throw new Error(data.message || "Could not delete the property");
   }
 }
@@ -269,7 +273,10 @@ export async function uploadPropertyImages(id: string, images: File[]): Promise<
     body: formData,
   });
 
-  const data = await readJson(response);
+  const data = await readApiJson<{ message: string }>(
+    response,
+    "Listings service"
+  );
 
   if (!response.ok) {
     throw new Error(data.message || "Could not upload the images");
@@ -287,7 +294,10 @@ export async function getPropertyImages(id: string): Promise<PropertyImage[]> {
     headers: authHeaders(),
   });
 
-  const data = await readJson(response);
+  const data = await readApiJson<{ images: PropertyImage[] }>(
+    response,
+    "Listings service"
+  );
 
   if (!response.ok) {
     throw new Error(data.message || "Could not load the images");

@@ -101,7 +101,7 @@ export default function RegisterPage() {
           </button>
 
           <p className="mt-4 text-xs leading-relaxed text-ink-soft">
-            By creating an account you agree to UrbanRent's terms and confirm
+            By creating an account you agree to UrbanRent&apos;s terms and confirm
             the information above is accurate.
           </p>
         </form>
