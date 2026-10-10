@@ -13,6 +13,8 @@
 "use client";
 
 import { CalendarCheck2, FileCheck2, Search, ShieldCheck } from "lucide-react";
+import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { PROPERTY_TYPES } from "../../components/properties/PropertyFilters";
 import { titleCase } from "../../lib/format";
 import FeaturedProperties from "../../components/properties/FeaturedProperties";
@@ -37,12 +39,14 @@ const STEPS = [
 ];
 
 export default function HomePage() {
+  const router = useRouter();
+
   return (
     <div>
       {/* ---------------- Hero ---------------- */}
       <section className="hero">
         <div className="rp-container">
-          <p className="hero-eyebrow">Rent formally · Buea, Cameroon</p>
+          <p className="hero-eyebrow">Homes across Cameroon</p>
           <h1>Find your next home faster, with everything on record.</h1>
           <p>
             Applications, viewings and landlord decisions — all on record, so
@@ -67,7 +71,7 @@ export default function HomePage() {
               }
 
               const query = params.toString();
-              window.location.href = query ? `/properties?${query}` : "/properties";
+              router.push(query ? `/properties?${query}` : "/properties");
             }}
             className="search-box"
           >
@@ -149,23 +153,6 @@ export default function HomePage() {
         </div>
       </section>
 
-      <section className="rp-section home-trust">
-        <div className="rp-container trust-layout">
-          <div className="trust-copy">
-            <span className="eyebrow">A better way to rent</span>
-            <h2>Make every move feel considered.</h2>
-            <p>UrbanRent brings the calm, clarity and confidence of a well-managed home search to every part of your journey.</p>
-            <a className="btn" href="/properties">Explore all homes <span aria-hidden>→</span></a>
-          </div>
-          <div className="trust-stats">
-            <div><strong>100%</strong><span>Transparent records</span></div>
-            <div><strong>24/7</strong><span>Application visibility</span></div>
-            <div><strong>1 place</strong><span>For every next step</span></div>
-            <div><strong>Buea</strong><span>Built for local living</span></div>
-          </div>
-        </div>
-      </section>
-
       <section className="rp-section rp-section-soft home-cta">
         <div className="rp-container cta-panel">
           <div>
@@ -173,7 +160,9 @@ export default function HomePage() {
             <h2>Have a home people will love?</h2>
             <p>Publish it beautifully, manage interest in one place and keep every decision moving.</p>
           </div>
-          <a className="btn btn-light" href="/register">List your property <span aria-hidden>→</span></a>
+          <Link className="btn btn-light" href="/register">
+            List your property <span aria-hidden>→</span>
+          </Link>
         </div>
       </section>
     </div>

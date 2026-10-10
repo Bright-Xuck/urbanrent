@@ -1,4 +1,3 @@
-import { useAuthStore } from "../Store/useUserStore";
 import { apiFetch as fetch } from "../lib/api-client";
 import { readApiJson } from "../lib/api-response";
 import type {
@@ -8,25 +7,6 @@ import type {
   PropertyStatus,
   PropertyType,
 } from "./types";
-
-
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
-
-
-// ------------------------------------------------------------
-// AUTH HEADERS
-// ------------------------------------------------------------
-// The Authorization header for a signed-in caller, or an empty object for a
-// guest. This module's public routes (GET /properties/:id and its images)
-// accept either: with no header a visitor reads the published listing, and
-// with a token the backend can also recognise the OWNER (so they still see
-// their own draft). Note we send NO header when logged out — never a
-// literal `Bearer null`.
-function authHeaders(): Record<string, string> {
-  const token = useAuthStore.getState().accessToken;
-  return token ? { Authorization: `Bearer ${token}` } : {};
-}
 
 // The query options GET /api/properties understands.
 export type PropertyFilters = {
@@ -93,7 +73,7 @@ export async function getProperties(
   filters: PropertyFilters = {},
   pagination: Pagination = {}
 ): Promise<PaginatedProperties> {
-  const response = await fetch(`${API_URL}/properties${buildQuery(filters, pagination)}`);
+  const response = await fetch(`/properties${buildQuery(filters, pagination)}`);
 
   const data = await readApiJson<PaginatedProperties>(response, "Listings service");
 
@@ -110,14 +90,9 @@ export async function getProperties(
 export async function getMyProperties(
   pagination: Pagination = {}
 ): Promise<PaginatedProperties> {
-  // The token we saved when the user logged in.
-  const token = useAuthStore.getState().accessToken;
-
   const query = buildQuery({}, pagination);
 
-  const response = await fetch(`${API_URL}/properties/mine${query}`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+  const response = await fetch(`/properties/mine${query}`);
 
   const data = await readApiJson<PaginatedProperties>(response, "Listings service");
 
@@ -131,14 +106,9 @@ export async function getMyProperties(
 // ------------------------------------------------------------
 // SINGLE — GET /api/properties/:id
 // ------------------------------------------------------------
-// Public: a logged-out visitor can read a published listing. The token is
-// sent when we have one, because the backend uses it to tell whether the
-// caller is the OWNER (who may also view their own draft/unpublished
-// listing) or just another visitor.
+// Owners can also read their own unpublished listings.
 export async function getPropertyById(id: string): Promise<Property> {
-  const response = await fetch(`${API_URL}/properties/${id}`, {
-    headers: authHeaders(),
-  });
+  const response = await fetch(`/properties/${id}`);
 
   const data = await readApiJson<{ property: Property }>(
     response,
@@ -157,13 +127,10 @@ export async function getPropertyById(id: string): Promise<Property> {
 // CREATE — POST /api/properties (landlord only)
 // ------------------------------------------------------------
 export async function createProperty(input: CreatePropertyInput): Promise<Property> {
-  const token = useAuthStore.getState().accessToken;
-
-  const response = await fetch(`${API_URL}/properties`, {
+  const response = await fetch(`/properties`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
     },
     body: JSON.stringify(input),
   });
@@ -187,13 +154,10 @@ export async function updateProperty(
   id: string,
   input: UpdatePropertyInput
 ): Promise<Property> {
-  const token = useAuthStore.getState().accessToken;
-
-  const response = await fetch(`${API_URL}/properties/${id}`, {
+  const response = await fetch(`/properties/${id}`, {
     method: "PATCH",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
     },
     body: JSON.stringify(input),
   });
@@ -236,11 +200,8 @@ export function archiveProperty(id: string): Promise<Property> {
 // DELETE — DELETE /api/properties/:id (owner only)
 // ------------------------------------------------------------
 export async function deleteProperty(id: string): Promise<void> {
-  const token = useAuthStore.getState().accessToken;
-
-  const response = await fetch(`${API_URL}/properties/${id}`, {
+  const response = await fetch(`/properties/${id}`, {
     method: "DELETE",
-    headers: { Authorization: `Bearer ${token}` },
   });
 
   if (!response.ok) {
@@ -259,17 +220,14 @@ export async function deleteProperty(id: string): Promise<void> {
 // set a Content-Type header: the browser sets multipart/form-data itself,
 // because the value has to include a boundary string.
 export async function uploadPropertyImages(id: string, images: File[]): Promise<string> {
-  const token = useAuthStore.getState().accessToken;
-
   const formData = new FormData();
 
   for (const image of images) {
     formData.append("images", image);
   }
 
-  const response = await fetch(`${API_URL}/properties/${id}/images`, {
+  const response = await fetch(`/properties/${id}/images`, {
     method: "POST",
-    headers: { Authorization: `Bearer ${token}` },
     body: formData,
   });
 
@@ -290,9 +248,7 @@ export async function uploadPropertyImages(id: string, images: File[]): Promise<
 // ------------------------------------------------------------
 // Public, same as the listing itself — see getPropertyById above.
 export async function getPropertyImages(id: string): Promise<PropertyImage[]> {
-  const response = await fetch(`${API_URL}/properties/${id}/images`, {
-    headers: authHeaders(),
-  });
+  const response = await fetch(`/properties/${id}/images`);
 
   const data = await readApiJson<{ images: PropertyImage[] }>(
     response,

@@ -1,4 +1,3 @@
-import { useAuthStore } from "../Store/useUserStore";
 import { apiFetch as fetch } from "../lib/api-client";
 import { readApiJson } from "../lib/api-response";
 import type {
@@ -6,13 +5,6 @@ import type {
   VerificationDocumentType,
   VerificationState,
 } from "./types";
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
-
-function authHeaders(): Record<string, string> {
-  const token = useAuthStore.getState().accessToken;
-  return token ? { Authorization: `Bearer ${token}` } : {};
-}
 
 export type MyDocumentsResponse = {
   documents: VerificationDocument[];
@@ -38,15 +30,12 @@ export async function uploadVerificationDocument(
   file: File,
   documentType: VerificationDocumentType
 ): Promise<VerificationDocument> {
-  const token = useAuthStore.getState().accessToken;
-
   const formData = new FormData();
   formData.append("document", file);
   formData.append("documentType", documentType);
 
-  const response = await fetch(`${API_URL}/verification/documents`, {
+  const response = await fetch(`/verification/documents`, {
     method: "POST",
-    headers: { Authorization: `Bearer ${token}` },
     body: formData,
   });
 
@@ -66,9 +55,7 @@ export async function uploadVerificationDocument(
 // MINE — GET /api/verification/documents (own uploads + my state)
 // ------------------------------------------------------------
 export async function getMyVerificationDocuments(): Promise<MyDocumentsResponse> {
-  const response = await fetch(`${API_URL}/verification/documents`, {
-    headers: authHeaders(),
-  });
+  const response = await fetch(`/verification/documents`);
 
   const data = await readApiJson<MyDocumentsResponse>(
     response,
@@ -90,8 +77,7 @@ export async function getPendingDocuments(
   limit = 10
 ): Promise<PendingDocumentsResponse> {
   const response = await fetch(
-    `${API_URL}/admin/verification/pending?offset=${offset}&limit=${limit}`,
-    { headers: authHeaders() }
+    `/admin/verification/pending?offset=${offset}&limit=${limit}`
   );
 
   const data = await readApiJson<PendingDocumentsResponse>(
@@ -114,9 +100,9 @@ export async function reviewVerificationDocument(
   decision: ReviewDecision,
   reviewNote?: string
 ): Promise<VerificationDocument> {
-  const response = await fetch(`${API_URL}/admin/verification/${id}/review`, {
+  const response = await fetch(`/admin/verification/${id}/review`, {
     method: "PATCH",
-    headers: { ...authHeaders(), "Content-Type": "application/json" },
+    headers: { "Content-Type": "application/json" },
     body: JSON.stringify({ decision, reviewNote }),
   });
 

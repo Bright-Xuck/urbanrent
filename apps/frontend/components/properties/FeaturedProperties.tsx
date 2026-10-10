@@ -12,27 +12,28 @@ import { useEffect, useState } from "react";
 import Link from "next/link";
 import { getProperties } from "../../api/propertyApi";
 import type { Property } from "../../api/types";
+import Alert from "../ui/Alert";
 import PropertyCard from "./PropertyCard";
 
 export default function FeaturedProperties() {
   const [properties, setProperties] = useState<Property[]>([]);
-  const [failed, setFailed] = useState(false);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
-    const load = async () => {
+    async function loadProperties() {
       try {
         const data = await getProperties({}, { limit: 6 });
         setProperties(data.properties);
-      } catch {
-        setFailed(true);
+      } catch (err) {
+        setError(err instanceof Error ? err.message : "Could not load properties.");
+      } finally {
+        setLoading(false);
       }
-    };
+    }
 
-    load();
+    void loadProperties();
   }, []);
-
-  if (failed) return null;
-  if (properties.length === 0) return null;
 
   return (
     <section>
@@ -42,28 +43,42 @@ export default function FeaturedProperties() {
         <p>Homes published by landlords on UrbanRent, newest first.</p>
       </div>
 
-      <div className="property-grid">
-        {properties.map((property) => (
-          <PropertyCard
-            key={property.id}
-            title={property.title}
-            city={property.city}
-            neighborhood={property.neighborhood ?? undefined}
-            bedrooms={property.bedrooms ?? 0}
-            bathrooms={property.bathrooms ?? 0}
-            sizeSqm={property.sizeSqm}
-            monthlyRent={property.monthlyRent}
-            verified={property.owner?.verificationState === "VERIFIED"}
-            href={`/property/${property.id}`}
-          />
-        ))}
-      </div>
+      {loading ? (
+        <p className="text-center text-sm text-ink-soft" role="status">
+          Loading properties…
+        </p>
+      ) : error ? (
+        <Alert variant="error">{error}</Alert>
+      ) : properties.length === 0 ? (
+        <p className="text-center text-sm text-ink-soft">
+          No published properties are available yet.
+        </p>
+      ) : (
+        <>
+          <div className="property-grid">
+            {properties.map((property) => (
+              <PropertyCard
+                key={property.id}
+                title={property.title}
+                city={property.city}
+                neighborhood={property.neighborhood ?? undefined}
+                bedrooms={property.bedrooms ?? 0}
+                bathrooms={property.bathrooms ?? 0}
+                sizeSqm={property.sizeSqm}
+                monthlyRent={property.monthlyRent}
+                verified={property.owner?.verificationState === "VERIFIED"}
+                href={`/property/${property.id}`}
+              />
+            ))}
+          </div>
 
-      <div className="mt-12 text-center">
-        <Link href="/properties" className="btn btn-outline">
-          Explore all properties
-        </Link>
-      </div>
+          <div className="mt-12 text-center">
+            <Link href="/properties" className="btn btn-outline">
+              Explore all properties
+            </Link>
+          </div>
+        </>
+      )}
     </section>
   );
 }

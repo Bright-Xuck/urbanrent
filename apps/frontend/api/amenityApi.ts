@@ -1,4 +1,3 @@
-import { useAuthStore } from "../Store/useUserStore";
 import { apiFetch as fetch } from "../lib/api-client";
 import type { Amenity, PropertyAmenityLink, PropertyAmenityRow } from "./types";
 
@@ -26,22 +25,13 @@ import type { Amenity, PropertyAmenityLink, PropertyAmenityRow } from "./types";
 //     row's own id
 // ============================================================
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
-
 // ------------------------------------------------------------
 // LIST — GET /api/properties/:propid
 // ------------------------------------------------------------
 export async function getPropertyAmenities(
   propertyId: string
 ): Promise<PropertyAmenityRow[]> {
-  // The token is sent when we have one, but this read is public — a logged-out
-  // visitor gets the chips too, so we send no header at all rather than
-  // `Bearer null`.
-  const token = useAuthStore.getState().accessToken;
-
-  const response = await fetch(`${API_URL}/properties/${propertyId}/amenities`, {
-    headers: token ? { Authorization: `Bearer ${token}` } : {},
-  });
+  const response = await fetch(`/properties/${propertyId}/amenities`);
 
   const data = await response.json();
 
@@ -68,13 +58,10 @@ export async function createAmenity(
   name: string,
   pictureurl?: string
 ): Promise<{ amenity: Amenity; link: PropertyAmenityLink }> {
-  const token = useAuthStore.getState().accessToken;
-
-  const response = await fetch(`${API_URL}/properties/${propertyId}/amenities`, {
+  const response = await fetch(`/properties/${propertyId}/amenities`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
     },
     body: JSON.stringify(pictureurl ? { name, pictureurl } : { name }),
   });
@@ -99,11 +86,8 @@ export async function deleteAmenity(
   propertyId: string,
   amenityId: string
 ): Promise<Amenity> {
-  const token = useAuthStore.getState().accessToken;
-
-  const response = await fetch(`${API_URL}/properties/${propertyId}/amenities/${amenityId}`, {
+  const response = await fetch(`/properties/${propertyId}/amenities/${amenityId}`, {
     method: "DELETE",
-    headers: { Authorization: `Bearer ${token}` },
   });
 
   const data = await response.json();

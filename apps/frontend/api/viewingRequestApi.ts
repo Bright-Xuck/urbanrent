@@ -1,4 +1,3 @@
-import { useAuthStore } from "../Store/useUserStore";
 import { apiFetch as fetch } from "../lib/api-client";
 import type { ViewingRequest, ViewingRequestStatus } from "./types";
 
@@ -14,8 +13,6 @@ import type { ViewingRequest, ViewingRequestStatus } from "./types";
 // it COMPLETED or NO_SHOW.
 // ============================================================
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
-
 // ------------------------------------------------------------
 // CREATE — POST /api/properties/:propertyId/viewing-requests (tenant only)
 // ------------------------------------------------------------
@@ -27,13 +24,10 @@ export async function createViewingRequest(
   propertyId: string,
   proposedTimes: string[]
 ): Promise<ViewingRequest> {
-  const token = useAuthStore.getState().accessToken;
-
-  const response = await fetch(`${API_URL}/properties/${propertyId}/viewing-requests`, {
+  const response = await fetch(`/properties/${propertyId}/viewing-requests`, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
     },
     body: JSON.stringify({ proposedTimes }),
   });
@@ -52,11 +46,7 @@ export async function createViewingRequest(
 // MY VIEWING REQUESTS — GET /api/viewing-requests/mine
 // ------------------------------------------------------------
 export async function getMyViewingRequests(): Promise<ViewingRequest[]> {
-  const token = useAuthStore.getState().accessToken;
-
-  const response = await fetch(`${API_URL}/viewing-requests/mine`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+  const response = await fetch(`/viewing-requests/mine`);
 
   const data = await response.json();
 
@@ -73,11 +63,7 @@ export async function getMyViewingRequests(): Promise<ViewingRequest[]> {
 // Every viewing request submitted to ANY property the caller owns, with
 // the requesting tenant included. A tenant calling this gets a 403.
 export async function getIncomingViewingRequests(): Promise<ViewingRequest[]> {
-  const token = useAuthStore.getState().accessToken;
-
-  const response = await fetch(`${API_URL}/viewing-requests/incoming`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+  const response = await fetch(`/viewing-requests/incoming`);
 
   const data = await response.json();
 
@@ -92,11 +78,7 @@ export async function getIncomingViewingRequests(): Promise<ViewingRequest[]> {
 // SINGLE — GET /api/viewing-requests/:id
 // ------------------------------------------------------------
 export async function getViewingRequestById(id: string): Promise<ViewingRequest> {
-  const token = useAuthStore.getState().accessToken;
-
-  const response = await fetch(`${API_URL}/viewing-requests/${id}`, {
-    headers: { Authorization: `Bearer ${token}` },
-  });
+  const response = await fetch(`/viewing-requests/${id}`);
 
   const data = await response.json();
 
@@ -121,13 +103,10 @@ export async function changeViewingRequestStatus(
   status: ViewingRequestStatus,
   confirmedTime?: string
 ): Promise<ViewingRequest> {
-  const token = useAuthStore.getState().accessToken;
-
-  const response = await fetch(`${API_URL}/viewing-requests/${id}/status`, {
+  const response = await fetch(`/viewing-requests/${id}/status`, {
     method: "PATCH",
     headers: {
       "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
     },
     // Only include confirmedTime when we actually have one.
     body: JSON.stringify(confirmedTime ? { status, confirmedTime } : { status }),

@@ -1,4 +1,3 @@
-import { useAuthStore } from "../Store/useUserStore";
 import { apiFetch as fetch } from "../lib/api-client";
 import { readApiJson } from "../lib/api-response";
 import type {
@@ -7,15 +6,6 @@ import type {
   PaginatedUsers,
   Role,
 } from "./types";
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
-
-// Same defensive body reader as propertyApi: the backend always sends
-// JSON, but a proxy error page must not crash the parse.
-function authHeaders(): Record<string, string> {
-  const token = useAuthStore.getState().accessToken;
-  return token ? { Authorization: `Bearer ${token}` } : {};
-}
 
 // The query options GET /api/admin/users understands.
 export type AdminUserFilters = {
@@ -51,8 +41,7 @@ export async function getUsers(
   pagination: Pagination = {}
 ): Promise<PaginatedUsers> {
   const response = await fetch(
-    `${API_URL}/admin/users${buildQuery(filters, pagination)}`,
-    { headers: authHeaders() }
+    `/admin/users${buildQuery(filters, pagination)}`
   );
 
   const data = await readApiJson<PaginatedUsers>(response, "Admin service");
@@ -70,9 +59,8 @@ export async function getUsers(
 // For a LANDLORD this also flips their PUBLISHED listings to
 // UNPUBLISHED — one transaction on the backend.
 export async function suspendUser(id: string): Promise<AdminUser> {
-  const response = await fetch(`${API_URL}/admin/users/${id}/suspend`, {
+  const response = await fetch(`/admin/users/${id}/suspend`, {
     method: "PATCH",
-    headers: authHeaders(),
   });
 
   const data = await readApiJson<{ user: AdminUser }>(response, "Admin service");
@@ -90,9 +78,8 @@ export async function suspendUser(id: string): Promise<AdminUser> {
 // Only the account state flips; listings stay UNPUBLISHED (the landlord
 // republishes them manually).
 export async function reinstateUser(id: string): Promise<AdminUser> {
-  const response = await fetch(`${API_URL}/admin/users/${id}/reinstate`, {
+  const response = await fetch(`/admin/users/${id}/reinstate`, {
     method: "PATCH",
-    headers: authHeaders(),
   });
 
   const data = await readApiJson<{ user: AdminUser }>(response, "Admin service");
