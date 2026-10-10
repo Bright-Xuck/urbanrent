@@ -174,11 +174,10 @@ dashboard-statistics API.
 
 ### Frontend observations from the Phase 0 review
 
-- Frontend routes group public pages under `(public)` and signed-in pages
-  under `(protected)`. The public group supplies the site layout; tenant,
-  landlord, and admin layouts enforce their own roles. Shared signed-in detail
-  pages use the session guard directly. Login and registration live under
-  `app/` because they need no separate layout.
+- Frontend uses `(public)` for pages with the public site layout. Tenant,
+  landlord, and admin route folders have role-specific layouts; shared
+  signed-in detail pages use the session guard directly. Login and registration
+  live under `app/` because they need no separate layout.
 - Public property browse/detail pages are Client Components that fetch in
   effects after hydration. This is functional, but does not provide the
   server-rendered listing content needed for strong public-page SEO.

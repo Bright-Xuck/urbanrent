@@ -16,21 +16,21 @@ app/
     property/[id]/page.tsx  /property/:id
   login/page.tsx            /login
   register/page.tsx         /register
-  (protected)/              Signed-in pages, grouped by access
-    tenant/                 Tenant shell and tenant pages
-      profile/page.tsx      /tenant/profile
-    landlord/               Landlord shell and landlord pages
-      profile/page.tsx      /landlord/profile
-    admin/                  Admin shell and admin pages
-      profile/page.tsx      /admin/profile
-    applications/[id]/      Shared application detail
-    viewings/[id]/          Shared viewing detail
-    profile/page.tsx        Shared account summary
+    tenant/                   Tenant shell and tenant pages
+      profile/page.tsx        /tenant/profile
+    landlord/                 Landlord shell and landlord pages
+      profile/page.tsx        /landlord/profile
+    admin/                    Admin shell and admin pages
+      profile/page.tsx        /admin/profile
+    applications/[id]/        Shared application detail
+    viewings/[id]/            Shared viewing detail
+    profile/page.tsx          Shared account summary
 ```
 
-Only `(public)` needs a route-group layout. Login and registration use the root
-layout directly. Tenant, landlord, and admin layouts guard their own routes;
-the shared account and resource-detail pages use `SessionGuard` directly.
+`(public)` is the only route group; it adds the public navbar and footer without
+changing URLs. Login and registration use the root layout directly. Tenant,
+landlord, and admin folders each have a role layout. Shared account and
+resource-detail pages use `SessionGuard` directly.
 
 Role-specific route prefixes keep tenant and landlord workflows distinct. A
 detail route is shared when both parties are allowed to see and act on the same
