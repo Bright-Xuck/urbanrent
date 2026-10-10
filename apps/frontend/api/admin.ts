@@ -1,11 +1,13 @@
-import { apiFetch as fetch } from "../lib/api-client";
-import { readApiJson } from "../lib/api-response";
 import type {
   AccountState,
   AdminUser,
   PaginatedUsers,
   Role,
 } from "./types";
+import { getAuthHeaders } from "./userApi";
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL;
+
 
 // The query options GET /api/admin/users understands.
 export type AdminUserFilters = {
@@ -41,10 +43,11 @@ export async function getUsers(
   pagination: Pagination = {}
 ): Promise<PaginatedUsers> {
   const response = await fetch(
-    `/admin/users${buildQuery(filters, pagination)}`
+    `${API_URL}/admin/users${buildQuery(filters, pagination)}`,
+    { headers: getAuthHeaders() }
   );
 
-  const data = await readApiJson<PaginatedUsers>(response, "Admin service");
+  const data = await response.json();
 
   if (!response.ok) {
     throw new Error(data.message || "Could not load users");
@@ -59,11 +62,12 @@ export async function getUsers(
 // For a LANDLORD this also flips their PUBLISHED listings to
 // UNPUBLISHED — one transaction on the backend.
 export async function suspendUser(id: string): Promise<AdminUser> {
-  const response = await fetch(`/admin/users/${id}/suspend`, {
+  const response = await fetch(`${API_URL}/admin/users/${id}/suspend`, {
     method: "PATCH",
+    headers: getAuthHeaders(),
   });
 
-  const data = await readApiJson<{ user: AdminUser }>(response, "Admin service");
+  const data = await response.json();
 
   if (!response.ok) {
     throw new Error(data.message || "Could not suspend this user");
@@ -78,11 +82,12 @@ export async function suspendUser(id: string): Promise<AdminUser> {
 // Only the account state flips; listings stay UNPUBLISHED (the landlord
 // republishes them manually).
 export async function reinstateUser(id: string): Promise<AdminUser> {
-  const response = await fetch(`/admin/users/${id}/reinstate`, {
+  const response = await fetch(`${API_URL}/admin/users/${id}/reinstate`, {
     method: "PATCH",
+    headers: getAuthHeaders(),
   });
 
-  const data = await readApiJson<{ user: AdminUser }>(response, "Admin service");
+  const data = await response.json();
 
   if (!response.ok) {
     throw new Error(data.message || "Could not reinstate this user");

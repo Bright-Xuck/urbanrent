@@ -1,5 +1,7 @@
-import { apiFetch as fetch } from "../lib/api-client";
 import type { Amenity, PropertyAmenityLink, PropertyAmenityRow } from "./types";
+import { getAuthHeaders } from "./userApi";
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 // ============================================================
 // AMENITY API
@@ -31,7 +33,9 @@ import type { Amenity, PropertyAmenityLink, PropertyAmenityRow } from "./types";
 export async function getPropertyAmenities(
   propertyId: string
 ): Promise<PropertyAmenityRow[]> {
-  const response = await fetch(`/properties/${propertyId}/amenities`);
+  const response = await fetch(`${API_URL}/properties/${propertyId}/amenities`, {
+    headers: getAuthHeaders(),
+  });
 
   const data = await response.json();
 
@@ -58,9 +62,10 @@ export async function createAmenity(
   name: string,
   pictureurl?: string
 ): Promise<{ amenity: Amenity; link: PropertyAmenityLink }> {
-  const response = await fetch(`/properties/${propertyId}/amenities`, {
+  const response = await fetch(`${API_URL}/properties/${propertyId}/amenities`, {
     method: "POST",
     headers: {
+      ...getAuthHeaders(),
       "Content-Type": "application/json",
     },
     body: JSON.stringify(pictureurl ? { name, pictureurl } : { name }),
@@ -86,8 +91,9 @@ export async function deleteAmenity(
   propertyId: string,
   amenityId: string
 ): Promise<Amenity> {
-  const response = await fetch(`/properties/${propertyId}/amenities/${amenityId}`, {
+  const response = await fetch(`${API_URL}/properties/${propertyId}/amenities/${amenityId}`, {
     method: "DELETE",
+    headers: getAuthHeaders(),
   });
 
   const data = await response.json();

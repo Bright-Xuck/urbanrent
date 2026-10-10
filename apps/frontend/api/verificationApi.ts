@@ -1,10 +1,11 @@
-import { apiFetch as fetch } from "../lib/api-client";
-import { readApiJson } from "../lib/api-response";
+import { getAuthHeaders } from "./userApi";
 import type {
   VerificationDocument,
   VerificationDocumentType,
   VerificationState,
 } from "./types";
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 export type MyDocumentsResponse = {
   documents: VerificationDocument[];
@@ -34,15 +35,13 @@ export async function uploadVerificationDocument(
   formData.append("document", file);
   formData.append("documentType", documentType);
 
-  const response = await fetch(`/verification/documents`, {
+  const response = await fetch(`${API_URL}/verification/documents`, {
     method: "POST",
+    headers: getAuthHeaders(),
     body: formData,
   });
 
-  const data = await readApiJson<{ document: VerificationDocument }>(
-    response,
-    "Verification service"
-  );
+  const data = await response.json();
 
   if (!response.ok) {
     throw new Error(data.message || "Could not upload the document");
@@ -55,12 +54,11 @@ export async function uploadVerificationDocument(
 // MINE — GET /api/verification/documents (own uploads + my state)
 // ------------------------------------------------------------
 export async function getMyVerificationDocuments(): Promise<MyDocumentsResponse> {
-  const response = await fetch(`/verification/documents`);
+  const response = await fetch(`${API_URL}/verification/documents`, {
+    headers: getAuthHeaders(),
+  });
 
-  const data = await readApiJson<MyDocumentsResponse>(
-    response,
-    "Verification service"
-  );
+  const data = await response.json();
 
   if (!response.ok) {
     throw new Error(data.message || "Could not load your documents");
@@ -77,13 +75,11 @@ export async function getPendingDocuments(
   limit = 10
 ): Promise<PendingDocumentsResponse> {
   const response = await fetch(
-    `/admin/verification/pending?offset=${offset}&limit=${limit}`
+    `${API_URL}/admin/verification/pending?offset=${offset}&limit=${limit}`,
+    { headers: getAuthHeaders() }
   );
 
-  const data = await readApiJson<PendingDocumentsResponse>(
-    response,
-    "Verification service"
-  );
+  const data = await response.json();
 
   if (!response.ok) {
     throw new Error(data.message || "Could not load the review queue");
@@ -100,16 +96,13 @@ export async function reviewVerificationDocument(
   decision: ReviewDecision,
   reviewNote?: string
 ): Promise<VerificationDocument> {
-  const response = await fetch(`/admin/verification/${id}/review`, {
+  const response = await fetch(`${API_URL}/admin/verification/${id}/review`, {
     method: "PATCH",
-    headers: { "Content-Type": "application/json" },
+    headers: { ...getAuthHeaders(), "Content-Type": "application/json" },
     body: JSON.stringify({ decision, reviewNote }),
   });
 
-  const data = await readApiJson<{ document: VerificationDocument }>(
-    response,
-    "Verification service"
-  );
+  const data = await response.json();
 
   if (!response.ok) {
     throw new Error(data.message || "Could not review the document");
