@@ -4,7 +4,7 @@ import type {
   PaginatedUsers,
   Role,
 } from "./types";
-import { getAuthHeaders } from "./userApi";
+import { useAuthStore } from "../Store/useUserStore";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
@@ -42,9 +42,10 @@ export async function getUsers(
   filters: AdminUserFilters = {},
   pagination: Pagination = {}
 ): Promise<PaginatedUsers> {
+  const token = useAuthStore.getState().accessToken;
   const response = await fetch(
     `${API_URL}/admin/users${buildQuery(filters, pagination)}`,
-    { headers: getAuthHeaders() }
+    { headers: token ? { Authorization: `Bearer ${token}` } : {} }
   );
 
   const data = await response.json();
@@ -62,9 +63,10 @@ export async function getUsers(
 // For a LANDLORD this also flips their PUBLISHED listings to
 // UNPUBLISHED — one transaction on the backend.
 export async function suspendUser(id: string): Promise<AdminUser> {
+  const token = useAuthStore.getState().accessToken;
   const response = await fetch(`${API_URL}/admin/users/${id}/suspend`, {
     method: "PATCH",
-    headers: getAuthHeaders(),
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
   });
 
   const data = await response.json();
@@ -82,9 +84,10 @@ export async function suspendUser(id: string): Promise<AdminUser> {
 // Only the account state flips; listings stay UNPUBLISHED (the landlord
 // republishes them manually).
 export async function reinstateUser(id: string): Promise<AdminUser> {
+  const token = useAuthStore.getState().accessToken;
   const response = await fetch(`${API_URL}/admin/users/${id}/reinstate`, {
     method: "PATCH",
-    headers: getAuthHeaders(),
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
   });
 
   const data = await response.json();

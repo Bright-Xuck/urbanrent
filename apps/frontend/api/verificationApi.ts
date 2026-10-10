@@ -1,4 +1,4 @@
-import { getAuthHeaders } from "./userApi";
+import { useAuthStore } from "../Store/useUserStore";
 import type {
   VerificationDocument,
   VerificationDocumentType,
@@ -35,9 +35,10 @@ export async function uploadVerificationDocument(
   formData.append("document", file);
   formData.append("documentType", documentType);
 
+  const token = useAuthStore.getState().accessToken;
   const response = await fetch(`${API_URL}/verification/documents`, {
     method: "POST",
-    headers: getAuthHeaders(),
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
     body: formData,
   });
 
@@ -54,8 +55,9 @@ export async function uploadVerificationDocument(
 // MINE — GET /api/verification/documents (own uploads + my state)
 // ------------------------------------------------------------
 export async function getMyVerificationDocuments(): Promise<MyDocumentsResponse> {
+  const token = useAuthStore.getState().accessToken;
   const response = await fetch(`${API_URL}/verification/documents`, {
-    headers: getAuthHeaders(),
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
   });
 
   const data = await response.json();
@@ -74,9 +76,10 @@ export async function getPendingDocuments(
   offset = 0,
   limit = 10
 ): Promise<PendingDocumentsResponse> {
+  const token = useAuthStore.getState().accessToken;
   const response = await fetch(
     `${API_URL}/admin/verification/pending?offset=${offset}&limit=${limit}`,
-    { headers: getAuthHeaders() }
+    { headers: token ? { Authorization: `Bearer ${token}` } : {} }
   );
 
   const data = await response.json();
@@ -96,9 +99,13 @@ export async function reviewVerificationDocument(
   decision: ReviewDecision,
   reviewNote?: string
 ): Promise<VerificationDocument> {
+  const token = useAuthStore.getState().accessToken;
   const response = await fetch(`${API_URL}/admin/verification/${id}/review`, {
     method: "PATCH",
-    headers: { ...getAuthHeaders(), "Content-Type": "application/json" },
+    headers: {
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
+      "Content-Type": "application/json",
+    },
     body: JSON.stringify({ decision, reviewNote }),
   });
 

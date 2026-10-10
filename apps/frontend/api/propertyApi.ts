@@ -1,4 +1,4 @@
-import { getAuthHeaders } from "./userApi";
+import { useAuthStore } from "../Store/useUserStore";
 import type {
   PaginatedProperties,
   Property,
@@ -74,8 +74,9 @@ export async function getProperties(
   filters: PropertyFilters = {},
   pagination: Pagination = {}
 ): Promise<PaginatedProperties> {
+  const token = useAuthStore.getState().accessToken;
   const response = await fetch(`${API_URL}/properties${buildQuery(filters, pagination)}`, {
-    headers: getAuthHeaders(),
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
   });
 
   const data = await response.json();
@@ -94,9 +95,10 @@ export async function getMyProperties(
   pagination: Pagination = {}
 ): Promise<PaginatedProperties> {
   const query = buildQuery({}, pagination);
+  const token = useAuthStore.getState().accessToken;
 
   const response = await fetch(`${API_URL}/properties/mine${query}`, {
-    headers: getAuthHeaders(),
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
   });
 
   const data = await response.json();
@@ -113,8 +115,9 @@ export async function getMyProperties(
 // ------------------------------------------------------------
 // Owners can also read their own unpublished listings.
 export async function getPropertyById(id: string): Promise<Property> {
+  const token = useAuthStore.getState().accessToken;
   const response = await fetch(`${API_URL}/properties/${id}`, {
-    headers: getAuthHeaders(),
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
   });
 
   const data = await response.json();
@@ -131,10 +134,11 @@ export async function getPropertyById(id: string): Promise<Property> {
 // CREATE — POST /api/properties (landlord only)
 // ------------------------------------------------------------
 export async function createProperty(input: CreatePropertyInput): Promise<Property> {
+  const token = useAuthStore.getState().accessToken;
   const response = await fetch(`${API_URL}/properties`, {
     method: "POST",
     headers: {
-      ...getAuthHeaders(),
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
       "Content-Type": "application/json",
     },
     body: JSON.stringify(input),
@@ -156,10 +160,11 @@ export async function updateProperty(
   id: string,
   input: UpdatePropertyInput
 ): Promise<Property> {
+  const token = useAuthStore.getState().accessToken;
   const response = await fetch(`${API_URL}/properties/${id}`, {
     method: "PATCH",
     headers: {
-      ...getAuthHeaders(),
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
       "Content-Type": "application/json",
     },
     body: JSON.stringify(input),
@@ -200,9 +205,10 @@ export function archiveProperty(id: string): Promise<Property> {
 // DELETE — DELETE /api/properties/:id (owner only)
 // ------------------------------------------------------------
 export async function deleteProperty(id: string): Promise<void> {
+  const token = useAuthStore.getState().accessToken;
   const response = await fetch(`${API_URL}/properties/${id}`, {
     method: "DELETE",
-    headers: getAuthHeaders(),
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
   });
 
   if (!response.ok) {
@@ -224,9 +230,10 @@ export async function uploadPropertyImages(id: string, images: File[]): Promise<
     formData.append("images", image);
   }
 
+  const token = useAuthStore.getState().accessToken;
   const response = await fetch(`${API_URL}/properties/${id}/images`, {
     method: "POST",
-    headers: getAuthHeaders(),
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
     body: formData,
   });
 
@@ -244,8 +251,9 @@ export async function uploadPropertyImages(id: string, images: File[]): Promise<
 // ------------------------------------------------------------
 // Public, same as the listing itself — see getPropertyById above.
 export async function getPropertyImages(id: string): Promise<PropertyImage[]> {
+  const token = useAuthStore.getState().accessToken;
   const response = await fetch(`${API_URL}/properties/${id}/images`, {
-    headers: getAuthHeaders(),
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
   });
 
   const data = await response.json();

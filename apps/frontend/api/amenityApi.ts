@@ -1,5 +1,5 @@
 import type { Amenity, PropertyAmenityLink, PropertyAmenityRow } from "./types";
-import { getAuthHeaders } from "./userApi";
+import { useAuthStore } from "../Store/useUserStore";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
@@ -33,8 +33,9 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL;
 export async function getPropertyAmenities(
   propertyId: string
 ): Promise<PropertyAmenityRow[]> {
+  const token = useAuthStore.getState().accessToken;
   const response = await fetch(`${API_URL}/properties/${propertyId}/amenities`, {
-    headers: getAuthHeaders(),
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
   });
 
   const data = await response.json();
@@ -62,10 +63,11 @@ export async function createAmenity(
   name: string,
   pictureurl?: string
 ): Promise<{ amenity: Amenity; link: PropertyAmenityLink }> {
+  const token = useAuthStore.getState().accessToken;
   const response = await fetch(`${API_URL}/properties/${propertyId}/amenities`, {
     method: "POST",
     headers: {
-      ...getAuthHeaders(),
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
       "Content-Type": "application/json",
     },
     body: JSON.stringify(pictureurl ? { name, pictureurl } : { name }),
@@ -91,9 +93,10 @@ export async function deleteAmenity(
   propertyId: string,
   amenityId: string
 ): Promise<Amenity> {
+  const token = useAuthStore.getState().accessToken;
   const response = await fetch(`${API_URL}/properties/${propertyId}/amenities/${amenityId}`, {
     method: "DELETE",
-    headers: getAuthHeaders(),
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
   });
 
   const data = await response.json();

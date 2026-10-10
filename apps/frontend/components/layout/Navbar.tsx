@@ -20,6 +20,8 @@ export default function Navbar() {
           ? `Signed out here, but the server did not confirm logout: ${error.message}`
           : "Signed out here, but the server did not confirm logout."
       );
+    } finally {
+      useAuthStore.getState().logout();
     }
     router.replace("/");
   }

@@ -1,5 +1,5 @@
 import type { ViewingRequest, ViewingRequestStatus } from "./types";
-import { getAuthHeaders } from "./userApi";
+import { useAuthStore } from "../Store/useUserStore";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
@@ -26,10 +26,11 @@ export async function createViewingRequest(
   propertyId: string,
   proposedTimes: string[]
 ): Promise<ViewingRequest> {
+  const token = useAuthStore.getState().accessToken;
   const response = await fetch(`${API_URL}/properties/${propertyId}/viewing-requests`, {
     method: "POST",
     headers: {
-      ...getAuthHeaders(),
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
       "Content-Type": "application/json",
     },
     body: JSON.stringify({ proposedTimes }),
@@ -49,8 +50,9 @@ export async function createViewingRequest(
 // MY VIEWING REQUESTS — GET /api/viewing-requests/mine
 // ------------------------------------------------------------
 export async function getMyViewingRequests(): Promise<ViewingRequest[]> {
+  const token = useAuthStore.getState().accessToken;
   const response = await fetch(`${API_URL}/viewing-requests/mine`, {
-    headers: getAuthHeaders(),
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
   });
 
   const data = await response.json();
@@ -68,8 +70,9 @@ export async function getMyViewingRequests(): Promise<ViewingRequest[]> {
 // Every viewing request submitted to ANY property the caller owns, with
 // the requesting tenant included. A tenant calling this gets a 403.
 export async function getIncomingViewingRequests(): Promise<ViewingRequest[]> {
+  const token = useAuthStore.getState().accessToken;
   const response = await fetch(`${API_URL}/viewing-requests/incoming`, {
-    headers: getAuthHeaders(),
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
   });
 
   const data = await response.json();
@@ -85,8 +88,9 @@ export async function getIncomingViewingRequests(): Promise<ViewingRequest[]> {
 // SINGLE — GET /api/viewing-requests/:id
 // ------------------------------------------------------------
 export async function getViewingRequestById(id: string): Promise<ViewingRequest> {
+  const token = useAuthStore.getState().accessToken;
   const response = await fetch(`${API_URL}/viewing-requests/${id}`, {
-    headers: getAuthHeaders(),
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
   });
 
   const data = await response.json();
@@ -112,10 +116,11 @@ export async function changeViewingRequestStatus(
   status: ViewingRequestStatus,
   confirmedTime?: string
 ): Promise<ViewingRequest> {
+  const token = useAuthStore.getState().accessToken;
   const response = await fetch(`${API_URL}/viewing-requests/${id}/status`, {
     method: "PATCH",
     headers: {
-      ...getAuthHeaders(),
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
       "Content-Type": "application/json",
     },
     // Only include confirmedTime when we actually have one.
