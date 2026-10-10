@@ -174,10 +174,11 @@ dashboard-statistics API.
 
 ### Frontend observations from the Phase 0 review
 
-- Frontend routes now use `(public)` and `(protected)` groups for the two
-  distinct layouts. Login and registration live directly under `app/` because
-  they need no separate layout. Tenant, landlord, and admin routes have
-  role-specific paths and layouts.
+- Frontend routes group public pages under `(public)` and signed-in pages
+  under `(protected)`. The public group supplies the site layout; tenant,
+  landlord, and admin layouts enforce their own roles. Shared signed-in detail
+  pages use the session guard directly. Login and registration live under
+  `app/` because they need no separate layout.
 - Public property browse/detail pages are Client Components that fetch in
   effects after hydration. This is functional, but does not provide the
   server-rendered listing content needed for strong public-page SEO.
@@ -186,10 +187,10 @@ dashboard-statistics API.
   Some response readers use `any`, despite TypeScript strict mode. The auth
   store is a small in-memory Zustand store, but `Role` is declared separately
   in the store and API types.
-- The shell/session-restore hook and `RequireAuth` provide a client-side
-  loading wall; the protected UI cannot render its data views until restore
-  finishes. There is no central 401 refresh-and-retry client today: ordinary
-  API calls attach the current token directly.
+- In the audited baseline, the shell/session-restore hook and `RequireAuth`
+  provided a client-side loading wall. That baseline had no central 401
+  refresh-and-retry client; ordinary API calls attached the current token
+  directly.
 - Forms use native inputs and small local components, without a shared
   validation-schema layer. Several feature pages duplicate fetch/loading/
   error state patterns; `PageHeader`, `Alert`, `Pagination`, `StatusBadge`,

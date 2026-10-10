@@ -6,28 +6,19 @@
 // GET /api/applications/incoming returns every application submitted to
 // ANY property the caller owns, with the applicant included.
 //
-// RequireAuth is the wall: IncomingApplications only mounts for a
-// landlord/admin, so its load effect only ever runs with a valid session
-// behind it.
-
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { FileText, MapPin } from "lucide-react";
 import { getIncomingApplications } from "../../../../api/applicationApi";
 import type { Application } from "../../../../api/types";
 import { formatDate, formatXAF, titleCase } from "../../../../lib/format";
-import RequireAuth from "../../../../components/layout/RequireAuth";
 import PageHeader from "../../../../components/layout/PageHeader";
 import Alert from "../../../../components/ui/Alert";
 import StatusBadge from "../../../../components/ui/StatusBadge";
 import { EmptyState, Loading } from "../../../../components/ui/States";
 
 export default function IncomingApplicationsPage() {
-  return (
-    <RequireAuth roles={["LANDLORD", "ADMIN"]} title="Applications on your listings">
-      <IncomingApplications />
-    </RequireAuth>
-  );
+  return <IncomingApplications />;
 }
 
 function IncomingApplications() {

@@ -9,7 +9,7 @@
 //
 // WHY THIS PAGE IS PUBLIC:
 // a logged-out visitor can open any PUBLISHED listing. It used to sit behind
-// <RequireAuth> on the belief that every property route required a token, but
+// a sign-in guard on the belief that every property route required a token, but
 // GET /api/properties/:id and GET /api/properties/:id/images are public — they
 // run `optionalAuthenticate` on the backend, so no token is fine and a token
 // only lets the service recognise the OWNER (who may also see their own draft).

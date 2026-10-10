@@ -20,7 +20,6 @@ import type { ReactNode } from "react";
 import type { Role } from "../../api/types";
 import { logout } from "../../api/userApi";
 import { useAuthStore } from "../../Store/useUserStore";
-import { cn } from "../../lib/utils";
 
 type NavigationItem = {
   href: string;
@@ -86,12 +85,11 @@ export function RoleShell({
         return (
           <Link
             aria-current={active ? "page" : undefined}
-            className={cn(
-              "flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition",
+            className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition ${
               active
                 ? "bg-navy text-white"
                 : "text-ink-soft hover:bg-paper-dim hover:text-ink"
-            )}
+            }`}
             href={href}
             key={href}
             onClick={() => setMenuOpen(false)}

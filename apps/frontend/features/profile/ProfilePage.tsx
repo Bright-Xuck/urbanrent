@@ -14,7 +14,7 @@
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { LogOut, Mail, ShieldCheck } from "lucide-react";
-import RequireAuth from "../../components/layout/RequireAuth";
+import { SessionGuard } from "../../components/auth/SessionGuard";
 import PageHeader from "../../components/layout/PageHeader";
 import Card from "../../components/ui/Card";
 import Button from "../../components/ui/Button";
@@ -43,7 +43,7 @@ export default function MyProfilePage() {
   }
 
   return (
-    <RequireAuth title="My profile">
+    <SessionGuard>
       <div className="mx-auto max-w-3xl px-6 py-10">
         <PageHeader
           title="My profile"
@@ -103,6 +103,6 @@ export default function MyProfilePage() {
           </Button>
         </div>
       </div>
-    </RequireAuth>
+    </SessionGuard>
   );
 }

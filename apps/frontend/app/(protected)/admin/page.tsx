@@ -3,21 +3,13 @@
 // ============================================================
 // ADMIN OVERVIEW — /admin (landing page)
 // ============================================================
-// The admin section's home: four headline counts from the same
-// GET /api/admin/users endpoint the users page uses (each request asks
-// for one row and reads `total`, payload stays tiny), plus a plain link
-// card per section. Sections that aren't built yet still link — they
-// 404 until we build the page (accepted, so the roadmap is visible).
-//
-// RequireAuth is the wall: Overview only mounts for an admin, so its load
-// effect only ever runs with a valid admin session behind it.
+// The overview counts are derived from the existing admin users endpoint.
 // ============================================================
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { ArrowRight } from "lucide-react";
 import { getUsers } from "../../../api/admin";
-import RequireAuth from "../../../components/layout/RequireAuth";
 import PageHeader from "../../../components/layout/PageHeader";
 import Alert from "../../../components/ui/Alert";
 import { Loading } from "../../../components/ui/States";
@@ -43,32 +35,13 @@ const SECTIONS: SectionCard[] = [
   },
   {
     title: "Landlord verification",
-    description: "Review landlords' uploaded ID and proof-of-ownership documents. (coming soon)",
+    description: "Review landlords' uploaded verification documents.",
     href: "/admin/verification",
-  },
-  {
-    title: "Listing moderation",
-    description: "Handle reported listings: take down or archive fraudulent ads. (coming soon)",
-    href: "/admin/moderation",
-  },
-  {
-    title: "Platform stats",
-    description: "Growth and activity trends across the whole platform. (coming soon)",
-    href: "/admin/stats",
-  },
-  {
-    title: "Disputes",
-    description: "Resolve tenant-vs-landlord disputes, once Leases and Payments exist. (coming soon)",
-    href: "/admin/disputes",
   },
 ];
 
 export default function AdminOverviewPage() {
-  return (
-    <RequireAuth roles={["ADMIN"]} title="Admin overview">
-      <Overview />
-    </RequireAuth>
-  );
+  return <Overview />;
 }
 
 function Overview() {

@@ -16,9 +16,7 @@
 // that is the backend refusing to double-book one landlord across all of
 // their properties, and the message is shown as-is.
 //
-// RequireAuth is the wall: ViewingDetail only mounts for a signed-in user,
-// so its load effect only ever runs with a valid session behind it. `user`
-// from the store feeds the role-aware back link and the action row.
+// `user` from the store feeds the role-aware back link and the action row.
 // ============================================================
 
 import { useEffect, useState } from "react";
@@ -32,7 +30,7 @@ import {
 import type { ViewingRequest, ViewingRequestStatus } from "../../../../api/types";
 import { useAuthStore } from "../../../../Store/useUserStore";
 import { formatDate, formatDateTime, formatTimes } from "../../../../lib/format";
-import RequireAuth from "../../../../components/layout/RequireAuth";
+import { SessionGuard } from "../../../../components/auth/SessionGuard";
 import PageHeader from "../../../../components/layout/PageHeader";
 import ViewingActions, {
   type ViewingAction,
@@ -52,9 +50,9 @@ const ACTION_STATUS: Record<ViewingAction, ViewingRequestStatus> = {
 
 export default function ViewingDetailPage() {
   return (
-    <RequireAuth title="This viewing request">
+    <SessionGuard>
       <ViewingDetail />
-    </RequireAuth>
+    </SessionGuard>
   );
 }
 

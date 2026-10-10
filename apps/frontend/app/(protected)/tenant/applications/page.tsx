@@ -12,8 +12,6 @@
 // TENANT inbox — what I submitted — so it's TENANT-only. Landlords have
 // their own inbox at /dashboard/applications (applications they RECEIVED).
 //
-// RequireAuth is the wall: MyApplications only mounts for a tenant, so its
-// load effect only ever runs with a valid session behind it.
 // ============================================================
 
 import { useEffect, useState } from "react";
@@ -22,18 +20,13 @@ import { FileText, MapPin } from "lucide-react";
 import { getMyApplications } from "../../../../api/applicationApi";
 import type { Application } from "../../../../api/types";
 import { formatDate, formatXAF, titleCase } from "../../../../lib/format";
-import RequireAuth from "../../../../components/layout/RequireAuth";
 import PageHeader from "../../../../components/layout/PageHeader";
 import Alert from "../../../../components/ui/Alert";
 import StatusBadge from "../../../../components/ui/StatusBadge";
 import { EmptyState, Loading } from "../../../../components/ui/States";
 
 export default function ApplicationsPage() {
-  return (
-    <RequireAuth roles={["TENANT"]} title="Your applications">
-      <MyApplications />
-    </RequireAuth>
-  );
+  return <MyApplications />;
 }
 
 function MyApplications() {

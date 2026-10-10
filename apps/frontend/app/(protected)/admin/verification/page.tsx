@@ -26,7 +26,6 @@ import type {
   VerificationDocument,
   VerificationDocumentType,
 } from "../../../../api/types";
-import RequireAuth from "../../../../components/layout/RequireAuth";
 import PageHeader from "../../../../components/layout/PageHeader";
 import Alert from "../../../../components/ui/Alert";
 import Button from "../../../../components/ui/Button";
@@ -42,11 +41,7 @@ const DOCUMENT_LABELS: Record<VerificationDocumentType, string> = {
 };
 
 export default function VerificationQueuePage() {
-  return (
-    <RequireAuth roles={["ADMIN"]} title="Verification queue">
-      <ReviewQueue />
-    </RequireAuth>
-  );
+  return <ReviewQueue />;
 }
 
 function ReviewQueue() {

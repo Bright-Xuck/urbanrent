@@ -3,9 +3,6 @@
 // ============================================================
 // EDIT LISTING — /dashboard/properties/[id]/edit
 // ============================================================
-// RequireAuth is the wall: EditProperty only mounts for a landlord/admin,
-// so its load effects only ever run with a valid session behind them.
-
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
@@ -18,7 +15,6 @@ import {
   type CreatePropertyInput,
 } from "../../../../../../api/propertyApi";
 import type { Property, PropertyImage } from "../../../../../../api/types";
-import RequireAuth from "../../../../../../components/layout/RequireAuth";
 import PageHeader from "../../../../../../components/layout/PageHeader";
 import PropertyForm, {
   type PropertyFormInitial,
@@ -30,11 +26,7 @@ import Card from "../../../../../../components/ui/Card";
 import { Loading } from "../../../../../../components/ui/States";
 
 export default function EditPropertyPage() {
-  return (
-    <RequireAuth roles={["LANDLORD", "ADMIN"]} title="Edit listing">
-      <EditProperty />
-    </RequireAuth>
-  );
+  return <EditProperty />;
 }
 
 function EditProperty() {

@@ -19,8 +19,6 @@
 // A 403 here is a normal answer (someone else's application) and is shown
 // as a message, not as an empty page.
 //
-// RequireAuth is the wall: ApplicationDetail only mounts for a signed-in
-// user, so its load effect only ever runs with a valid session behind it.
 // `user` from the store feeds the role-aware back link and the action row.
 // ============================================================
 
@@ -38,7 +36,7 @@ import {
 import type { Application } from "../../../../api/types";
 import { useAuthStore } from "../../../../Store/useUserStore";
 import { formatDate, formatXAF, titleCase } from "../../../../lib/format";
-import RequireAuth from "../../../../components/layout/RequireAuth";
+import { SessionGuard } from "../../../../components/auth/SessionGuard";
 import PageHeader from "../../../../components/layout/PageHeader";
 import ApplicationActions, {
   type ApplicationAction,
@@ -58,9 +56,9 @@ const ACTION_CALLS: Record<ApplicationAction, (id: string) => Promise<Applicatio
 
 export default function ApplicationDetailPage() {
   return (
-    <RequireAuth title="This application">
+    <SessionGuard>
       <ApplicationDetail />
-    </RequireAuth>
+    </SessionGuard>
   );
 }
 

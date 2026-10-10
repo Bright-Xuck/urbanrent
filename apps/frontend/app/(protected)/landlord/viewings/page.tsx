@@ -3,27 +3,19 @@
 // ============================================================
 // LANDLORD INBOX — VIEWING REQUESTS — /dashboard/viewings
 // ============================================================
-// RequireAuth is the wall: IncomingViewings only mounts for a landlord/
-// admin, so its load effect only ever runs with a valid session behind it.
-
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { CalendarDays, MapPin } from "lucide-react";
 import { getIncomingViewingRequests } from "../../../../api/viewingRequestApi";
 import type { ViewingRequest } from "../../../../api/types";
 import { formatDateTime, formatTimes } from "../../../../lib/format";
-import RequireAuth from "../../../../components/layout/RequireAuth";
 import PageHeader from "../../../../components/layout/PageHeader";
 import Alert from "../../../../components/ui/Alert";
 import StatusBadge from "../../../../components/ui/StatusBadge";
 import { EmptyState, Loading } from "../../../../components/ui/States";
 
 export default function IncomingViewingsPage() {
-  return (
-    <RequireAuth roles={["LANDLORD", "ADMIN"]} title="Viewing requests on your listings">
-      <IncomingViewings />
-    </RequireAuth>
-  );
+  return <IncomingViewings />;
 }
 
 function IncomingViewings() {

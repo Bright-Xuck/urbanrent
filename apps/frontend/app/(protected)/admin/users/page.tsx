@@ -12,9 +12,7 @@
 // cannot suspend themselves, and suspending a landlord unpublishes their
 // listings in the same transaction.
 //
-// RequireAuth is the wall: UsersManager only mounts for an admin, so its
-// load effect only ever runs with a valid admin session behind it. `me`
-// from the store is used purely for display — the "(you)" badge and hiding
+// `me` from the store is used purely for display — the "(you)" badge and hiding
 // the self-suspend button that could only fail.
 // ============================================================
 
@@ -23,7 +21,6 @@ import { Users } from "lucide-react";
 import { getUsers, reinstateUser, suspendUser } from "../../../../api/admin";
 import type { AccountState, AdminUser, Role } from "../../../../api/types";
 import { useAuthStore } from "../../../../Store/useUserStore";
-import RequireAuth from "../../../../components/layout/RequireAuth";
 import PageHeader from "../../../../components/layout/PageHeader";
 import Alert from "../../../../components/ui/Alert";
 import Button from "../../../../components/ui/Button";
@@ -35,11 +32,7 @@ import { EmptyState, Loading } from "../../../../components/ui/States";
 const PAGE_SIZE = 10;
 
 export default function AdminUsersPage() {
-  return (
-    <RequireAuth roles={["ADMIN"]} title="User management">
-      <UsersManager />
-    </RequireAuth>
-  );
+  return <UsersManager />;
 }
 
 function UsersManager() {

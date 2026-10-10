@@ -7,16 +7,12 @@
 // status (drafts and archived included), which is the whole point of this
 // page: the public browse endpoint only ever shows PUBLISHED rows.
 //
-// RequireAuth is the wall: MyListings only mounts for a landlord/admin, so
-// its load effect only ever runs with a valid session behind it.
-
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Bath, BedDouble, Building2, MapPin } from "lucide-react";
 import { getMyProperties } from "../../../../api/propertyApi";
 import type { Property } from "../../../../api/types";
 import { formatXAF } from "../../../../lib/format";
-import RequireAuth from "../../../../components/layout/RequireAuth";
 import PageHeader from "../../../../components/layout/PageHeader";
 import PropertyAdminActions from "../../../../components/properties/PropertyAdminActions";
 import Alert from "../../../../components/ui/Alert";
@@ -27,11 +23,7 @@ import { EmptyState, Loading } from "../../../../components/ui/States";
 const PAGE_SIZE = 10;
 
 export default function DashboardPage() {
-  return (
-    <RequireAuth roles={["LANDLORD", "ADMIN"]} title="Your listings">
-      <MyListings />
-    </RequireAuth>
-  );
+  return <MyListings />;
 }
 
 function MyListings() {

@@ -13,8 +13,6 @@
 // the backend only lets the property owner drive the status, so the rows
 // link through to the detail page to read the whole thing.
 //
-// RequireAuth is the wall: MyViewings only mounts for a tenant, so its
-// load effect only ever runs with a valid session behind it.
 // ============================================================
 
 import { useEffect, useState } from "react";
@@ -23,18 +21,13 @@ import { CalendarDays, MapPin } from "lucide-react";
 import { getMyViewingRequests } from "../../../../api/viewingRequestApi";
 import type { ViewingRequest } from "../../../../api/types";
 import { formatDateTime, formatTimes } from "../../../../lib/format";
-import RequireAuth from "../../../../components/layout/RequireAuth";
 import PageHeader from "../../../../components/layout/PageHeader";
 import Alert from "../../../../components/ui/Alert";
 import StatusBadge from "../../../../components/ui/StatusBadge";
 import { EmptyState, Loading } from "../../../../components/ui/States";
 
 export default function ViewingsPage() {
-  return (
-    <RequireAuth roles={["TENANT"]} title="Your viewings">
-      <MyViewings />
-    </RequireAuth>
-  );
+  return <MyViewings />;
 }
 
 function MyViewings() {

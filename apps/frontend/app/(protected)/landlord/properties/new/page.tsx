@@ -25,7 +25,6 @@ import {
   type CreatePropertyInput,
 } from "../../../../../api/propertyApi";
 import type { PropertyStatus } from "../../../../../api/types";
-import RequireAuth from "../../../../../components/layout/RequireAuth";
 import PageHeader from "../../../../../components/layout/PageHeader";
 import PropertyForm from "../../../../../components/properties/PropertyForm";
 import ImageUploader from "../../../../../components/properties/ImageUploader";
@@ -33,11 +32,7 @@ import Alert from "../../../../../components/ui/Alert";
 import Card from "../../../../../components/ui/Card";
 
 export default function NewPropertyPage() {
-  return (
-    <RequireAuth roles={["LANDLORD", "ADMIN"]} title="Add a listing">
-      <NewProperty />
-    </RequireAuth>
-  );
+  return <NewProperty />;
 }
 
 function NewProperty() {

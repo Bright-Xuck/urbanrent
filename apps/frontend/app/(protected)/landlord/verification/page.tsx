@@ -25,7 +25,6 @@ import type {
   VerificationDocumentType,
   VerificationState,
 } from "../../../../api/types";
-import RequireAuth from "../../../../components/layout/RequireAuth";
 import PageHeader from "../../../../components/layout/PageHeader";
 import Alert from "../../../../components/ui/Alert";
 import Button from "../../../../components/ui/Button";
@@ -34,11 +33,7 @@ import StatusBadge from "../../../../components/ui/StatusBadge";
 import { EmptyState, Loading } from "../../../../components/ui/States";
 
 export default function VerificationPage() {
-  return (
-    <RequireAuth roles={["LANDLORD", "ADMIN"]} title="Verification">
-      <Verification />
-    </RequireAuth>
-  );
+  return <Verification />;
 }
 
 const DOCUMENT_LABELS: Record<VerificationDocumentType, string> = {

@@ -16,7 +16,7 @@ app/
     property/[id]/page.tsx  /property/:id
   login/page.tsx            /login
   register/page.tsx         /register
-  (protected)/              Signed-in session gate
+  (protected)/              Signed-in pages, grouped by access
     tenant/                 Tenant shell and tenant pages
       profile/page.tsx      /tenant/profile
     landlord/               Landlord shell and landlord pages
@@ -28,9 +28,9 @@ app/
     profile/page.tsx        Shared account summary
 ```
 
-Only public pages and protected pages need route-group layouts. Login and
-registration use the root layout directly; avoid an extra group when it adds
-no layout or behavior.
+Only `(public)` needs a route-group layout. Login and registration use the root
+layout directly. Tenant, landlord, and admin layouts guard their own routes;
+the shared account and resource-detail pages use `SessionGuard` directly.
 
 Role-specific route prefixes keep tenant and landlord workflows distinct. A
 detail route is shared when both parties are allowed to see and act on the same
@@ -53,8 +53,7 @@ is unambiguous. Resource detail URLs remain shared.
   wrappers. Keep each wire resource type in one place; mirror backend enums
   exactly.
 - `lib/api-client.ts` owns browser requests, credentials, access-token
-  attachment, and refresh/retry behavior. `lib/` also holds domain-neutral
-  utilities such as `cn` and formatters.
+  attachment, and refresh/retry behavior. `lib/` also holds formatters.
 - `Store/useUserStore.ts` is only the in-memory identity/session store. Never
   persist the access token to local storage, cookies, or session storage.
 - `components/ui/` contains reusable primitives; `components/layout/` contains
@@ -85,11 +84,11 @@ justifies it; keep labels and errors accessible either way.
 
 The refresh cookie is `httpOnly` and belongs to the backend domain. Vercel's
 Next.js middleware cannot read it, so middleware cannot correctly determine
-whether a browser has a session. The protected route-group layout instead
-waits for the browser bootstrap to finish, then a role layout checks the
-in-memory user. This prevents protected content from flashing while refresh
-runs. These guards are UX boundaries only; the backend must authorize every
-request.
+whether a browser has a session. `AuthBootstrap` restores the session in the
+browser. Role layouts and shared protected pages wait for that restore through
+`SessionGuard`, preventing protected content from flashing before the session
+is known. These guards are UX boundaries only; the backend must authorize
+every request.
 
 Only the access token is held in Zustand memory. The user record restored from
 the token's claims is for navigation and display, not proof of identity.
