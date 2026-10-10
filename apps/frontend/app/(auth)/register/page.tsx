@@ -1,34 +1,39 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { CircleAlert, UserRoundPlus } from "lucide-react";
+import { UserRoundPlus } from "lucide-react";
 import { register } from "../../../api/userApi";
+import type { RegistrationRole } from "../../../api/types";
 import { Input } from "../../../components/ui/Fields";
 import Alert from "../../../components/ui/Alert";
 
 export default function RegisterPage() {
   const router = useRouter();
 
-  const [role, setRole] = useState<"TENANT"|"LANDLORD">("TENANT");
+  const [role, setRole] = useState<RegistrationRole>("TENANT");
   const [error, setError] = useState<string | null>(null);
   const [pending, setPending] = useState(false);
 
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
+
+    const formData = new FormData(event.currentTarget);
+    const email = formData.get("email");
+    const password = formData.get("password");
+
+    if (typeof email !== "string" || typeof password !== "string") {
+      setError("Enter your email and password.");
+      return;
+    }
+
     setPending(true);
-
-    const data = Object.fromEntries(new FormData(event.currentTarget).entries())
-
     try {
-      await register(
-        (data.email as string).trim(),
-        data.password as string, role
-      );
+      await register(email.trim(), password, role);
       router.push("/login");
     } catch (err) {
-      // 409 comes back here if the email is already taken.
       setError(err instanceof Error ? err.message : "Something went wrong");
     } finally {
       setPending(false);
@@ -46,18 +51,21 @@ export default function RegisterPage() {
         <h1>Create your account</h1>
         <p className="muted">
           Already have one?{" "}
-          <a href="/login" className="link">
+          <Link href="/login" className="link">
             Log in
-          </a>
+          </Link>
         </p>
 
-        <div className="mt-6">
-          <p>I am a</p>
+        <fieldset className="mt-6 border-0 p-0">
+          <legend>I am a</legend>
           <div className="role-picker mt-2">
             <button
               type="button"
               onClick={() => setRole("TENANT")}
-              className={role === "TENANT" ? "role-option is-active" : "role-option"}
+              className={
+                role === "TENANT" ? "role-option is-active" : "role-option"
+              }
+              aria-pressed={role === "TENANT"}
             >
               <strong>Tenant</strong>
               <span>Looking for a place</span>
@@ -65,13 +73,16 @@ export default function RegisterPage() {
             <button
               type="button"
               onClick={() => setRole("LANDLORD")}
-              className={role === "LANDLORD" ? "role-option is-active" : "role-option"}
+              className={
+                role === "LANDLORD" ? "role-option is-active" : "role-option"
+              }
+              aria-pressed={role === "LANDLORD"}
             >
               <strong>Landlord</strong>
               <span>Listing a property</span>
             </button>
           </div>
-        </div>
+        </fieldset>
 
         <form className="mt-6" onSubmit={handleSubmit}>
           <Input

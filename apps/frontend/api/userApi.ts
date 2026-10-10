@@ -1,4 +1,5 @@
 import type { User } from "../Store/useUserStore";
+import type { RegistrationRole } from "./types";
 import { apiFetch as fetch } from "../lib/api-client";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
@@ -43,7 +44,7 @@ export async function login(email: string, password: string): Promise<AuthRespon
 // ------------------------------------------------------------
 // POST /api/auth/register
 // ------------------------------------------------------------
-export async function register(email: string, password: string, role:"TENANT"| "LANDLORD" ): Promise<RegisterResponse> {
+export async function register(email: string, password: string, role: RegistrationRole): Promise<RegisterResponse> {
   const response = await fetch(`${API_URL}/auth/register`, {
     method: "POST",
     headers: { "Content-Type": "application/json" },

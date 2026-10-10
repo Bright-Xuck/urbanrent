@@ -1,15 +1,7 @@
 "use client";
 
-// ============================================================
-// LOGIN — POST /api/auth/login
-// ============================================================
-// Sends { email, password }. On success the backend sets an httpOnly
-// refresh cookie AND returns { user, accessToken } — the cookie keeps
-// working after a reload, the access token lives in the store only.
-// Successful sign-in starts at the home of the user's role.
-// ============================================================
-
 import { useState, type FormEvent } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { LogIn } from "lucide-react";
 import { login } from "../../../api/userApi";
@@ -27,17 +19,19 @@ export default function LoginPage() {
   async function handleSubmit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     setError(null);
+
+    const formData = new FormData(event.currentTarget);
+    const email = formData.get("email");
+    const password = formData.get("password");
+
+    if (typeof email !== "string" || typeof password !== "string") {
+      setError("Enter your email and password.");
+      return;
+    }
+
     setPending(true);
-
-    const data = Object.fromEntries(
-      new FormData(event.currentTarget).entries(),
-    );
-
     try {
-      const { user, accessToken } = await login(
-        (data.email as string).trim(),
-        data.password as string,
-      );
+      const { user, accessToken } = await login(email.trim(), password);
       setSession(user, accessToken);
       const roleHome = {
         TENANT: "/tenant",
@@ -63,9 +57,9 @@ export default function LoginPage() {
         <h1>Log in to your account</h1>
         <p className="muted">
           New here?{" "}
-          <a href="/register" className="link">
+          <Link href="/register" className="link">
             Create an account
-          </a>
+          </Link>
         </p>
 
         <form className="mt-6" onSubmit={handleSubmit}>

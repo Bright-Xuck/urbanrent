@@ -54,6 +54,9 @@ is unambiguous. Resource detail URLs remain shared.
   persist the access token to local storage, cookies, or session storage.
 - `components/ui/` contains reusable primitives; `components/layout/` contains
   cross-feature shells and layout elements.
+- Keep the codebase small: prefer existing pages, API wrappers, and shared
+  fields over extra layers or one-off files. Add dependencies only when they
+  remove more complexity than they introduce.
 
 ## Rendering and data flow
 
@@ -69,10 +72,9 @@ states and move reusable workflow logic into the owning feature. All requests
 go directly to `NEXT_PUBLIC_API_URL` (which includes `/api`); there is no
 Next.js API proxy.
 
-Use `react-hook-form` with Zod schemas for new multi-field forms when the form
-slice adds those dependencies. The schema is the shared source for input
-validation and TypeScript inference; field components should expose labels,
-descriptions, and errors accessibly.
+Use native form controls and browser validation for simple forms. Add a form
+library or schema dependency only when a workflow's validation complexity
+justifies it; keep labels and errors accessible either way.
 
 ## Authentication and route protection
 
@@ -90,8 +92,8 @@ the token's claims is for navigation and display, not proof of identity.
 ### Request, refresh, and retry
 
 1. `apiFetch` reads the latest access token from the store and sends it as a
-   Bearer token. Browser credentials are included so the backend can receive
-   its refresh cookie on auth requests.
+   bearer token when available. Browser credentials are included so the backend
+   can receive its refresh cookie on auth requests.
 2. If a request gets `401`, the client starts one refresh request. Concurrent
    `401`s share that same promise rather than stampeding the refresh endpoint.
 3. Refresh reads the backend-domain cookie, receives a new access token, checks

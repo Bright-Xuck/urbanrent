@@ -17,6 +17,7 @@
 // Enums (mirror generated/prisma/enums.ts)
 // ------------------------------------------------------------
 export type Role = "TENANT" | "LANDLORD" | "ADMIN";
+export type RegistrationRole = Exclude<Role, "ADMIN">;
 
 export type PropertyStatus = "DRAFT" | "PUBLISHED" | "UNPUBLISHED" | "ARCHIVED";
 
