@@ -235,3 +235,41 @@ export type VerificationDocument = {
   viewUrl?: string;
   user?: PropertyOwnerRef;
 };
+// ------------------------------------------------------------
+// Property reports (listing moderation)
+// ------------------------------------------------------------
+export type PropertyReportReason =
+  | "SCAM_OR_FRAUD"
+  | "MISLEADING_INFORMATION"
+  | "ALREADY_RENTED"
+  | "OTHER";
+
+export type PropertyReportStatus = "OPEN" | "REVIEWED" | "DISMISSED";
+
+// The property summary included on admin-queue rows.
+export type ReportedPropertyRef = {
+  id: string;
+  title: string;
+  city: string;
+  status: PropertyStatus;
+};
+
+export type PropertyReport = {
+  id: string;
+  reporterId: string;
+  propertyId: string;
+  reason: PropertyReportReason;
+  status: PropertyReportStatus;
+  createdAt: string;
+  // Present on admin-queue reads only.
+  reporter?: PropertyOwnerRef;
+  property?: ReportedPropertyRef;
+};
+
+export type PaginatedReports = {
+  reports: PropertyReport[];
+  total: number;
+  offset: number;
+  limit: number;
+  totalPages: number;
+};

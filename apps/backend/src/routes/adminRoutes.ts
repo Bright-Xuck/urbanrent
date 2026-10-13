@@ -11,6 +11,12 @@ import {
   GetPendingDocuments,
   ReviewVerificationDocument,
 } from "../controllers/verificationController.js";
+import {
+  CreateReport,
+  GetReports,
+  ModerateProperty,
+  ReviewReport,
+} from "../controllers/reportController.js";
 
 const router: express.Router = express.Router();
 
@@ -25,5 +31,11 @@ router.patch("/users/:id/reinstate", authenticate, requireAdmin, ReinstateUser);
 router.get("/verification/pending", authenticate, requireAdmin, GetPendingDocuments);
 
 router.patch("/verification/:documentId/review", authenticate, requireAdmin, ReviewVerificationDocument);
+
+router.get("/reports", authenticate, requireAdmin, GetReports);
+
+router.patch("/reports/:id/review", authenticate, requireAdmin, ReviewReport);
+
+router.patch("/properties/:id/moderate", authenticate, requireAdmin, ModerateProperty);
 
 export default router;

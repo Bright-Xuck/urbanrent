@@ -1,8 +1,8 @@
 // ============================================================
 // STATUS BADGE
 // ============================================================
-// Shows an application / viewing / property status as a small coloured
-// pill.
+// Shows an application / viewing / property / account / report status
+// as a small coloured pill.
 //
 // The backend sends SCREAMING_SNAKE_CASE ("UNDER_REVIEW"); we lowercase
 // it and look it up, so the component works straight off API data with no
@@ -34,6 +34,10 @@ const TONES: Record<string, Tone> = {
   suspended: "bad",
   verified: "ok",
   unverified: "muted",
+  // report statuses (admin moderation queue)
+  open: "warn",
+  reviewed: "ok",
+  dismissed: "muted",
   // roles (used on the profile page)
   tenant: "muted",
   landlord: "ok",
@@ -60,6 +64,10 @@ const LABELS: Record<string, string> = {
   suspended: "Suspended",
   verified: "Verified",
   unverified: "Unverified",
+  // report statuses (admin moderation queue)
+  open: "Open",
+  reviewed: "Reviewed",
+  dismissed: "Dismissed",
   // roles (used on the profile page)
   tenant: "Tenant",
   landlord: "Landlord",

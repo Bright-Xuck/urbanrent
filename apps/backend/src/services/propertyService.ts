@@ -9,6 +9,7 @@ import {
   type UpdatePropertyInput,
   type PropertyFilters,
 } from "../repositories/propertyRepository.js";
+import type { PropertyStatus } from "../../generated/prisma/enums.js";
 import { requireVerifiedOwner } from "./verificationService.js";
 
 // ============================================================
@@ -141,4 +142,22 @@ export async function deletePropertyForOwner(id: string, ownerId: string) {
 
   // 3. Perform the delete
   return deleteProperty(id);
+}
+// ------------------------------------------------------------
+// MODERATE PROPERTY (admin)
+// ------------------------------------------------------------
+// Takes a listing down: UNPUBLISHED or ARCHIVED. Unlike
+// updatePropertyForOwner this SKIPS the ownership check — the caller is
+// an admin, not the owner — so the admin routes must guard it with
+// requireAdmin (they do). Still validates the property exists.
+//
+// ARCHIVED is the admin's "delete": the row (and everything hanging off
+// it — applications, viewing requests, reports) survives; the listing
+// simply leaves the public marketplace.
+// ------------------------------------------------------------
+export async function moderateProperty(id: string, action: PropertyStatus) {
+  const property = await findPropertyById(id);
+  if (!property) throw new Error("Property not found");
+
+  return updateProperty(id, { status: action });
 }

@@ -9,6 +9,7 @@ import viewingRequestRoutes from './routes/viewingRequestRoutes.js'
 import propertyViewingRequestRoutes from './routes/propertyViewingRequestRoutes.js'
 import adminRoutes from "./routes/adminRoutes.js"
 import verificationRoutes from "./routes/verificationRoutes.js"
+import propertyReportRoutes from "./routes/propertyReportRoutes.js"
 import cors from 'cors'
 import cookieParser from 'cookie-parser'
 
@@ -40,6 +41,7 @@ app.use('/api/properties/:propid', amenityRoutes)
 app.use('/api/properties/:propertyId/applications', propertyApplicationRoutes)
 app.use('/api/applications', applicationRoutes)
 app.use('/api/properties/:propertyId/viewing-requests', propertyViewingRequestRoutes)
+app.use('/api/properties/:propertyId/reports', propertyReportRoutes)
 app.use('/api/viewing-requests', viewingRequestRoutes)
 app.use('/api/admin', adminRoutes)
 app.use('/api/verification', verificationRoutes)

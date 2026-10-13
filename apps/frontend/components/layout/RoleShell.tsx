@@ -6,6 +6,7 @@ import {
   BadgeCheck,
   Building2,
   CalendarDays,
+  Flag,
   FileText,
   LayoutDashboard,
   LogOut,
@@ -46,6 +47,7 @@ const NAVIGATION: Record<Role, readonly NavigationItem[]> = {
     { href: "/admin", label: "Overview", icon: LayoutDashboard },
     { href: "/admin/users", label: "Users", icon: Users },
     { href: "/admin/verification", label: "Verification queue", icon: BadgeCheck },
+    { href: "/admin/moderation", label: "Listing moderation", icon: Flag },
     { href: "/profile", label: "My profile", icon: Users },
   ],
 };
