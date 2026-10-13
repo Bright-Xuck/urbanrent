@@ -1,9 +1,8 @@
 // ============================================================
 // PROPERTY CARD
 // ============================================================
-// One card in a property grid (the home page's featured strip, the listing
-// page). Purely presentational — the page decides where it links and what
-// data to pass.
+// One card in a property grid. Loads the property's public cover image from
+// the existing image endpoint because browse rows contain no image URLs.
 //
 // Layout follows the demo card: photo on top with a status pill over it,
 // then price, title, address and a beds/baths/area meta row. The list
@@ -11,9 +10,13 @@
 // here — real photos appear on the detail page, which fetches them.
 // ============================================================
 
+"use client";
+
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { Bath, BedDouble, Building2, MapPin, Ruler } from "lucide-react";
 import { formatXAF } from "../../lib/format";
+import { getPropertyImages } from "../../api/propertyApi";
 
 type PropertyCardProps = {
   title: string;
@@ -25,6 +28,7 @@ type PropertyCardProps = {
   monthlyRent: number;
   /** True when the owner is a verified landlord — shows the trust badge. */
   verified?: boolean;
+  propertyId?: string;
   /** A property status. Omitted on public browse, where every row is published. */
   status?: string;
   href: string;
@@ -54,10 +58,21 @@ export default function PropertyCard({
   sizeSqm,
   monthlyRent,
   verified,
+  propertyId,
   status,
   href,
 }: PropertyCardProps) {
   const pill = badgeFor(status);
+  const [photo, setPhoto] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!propertyId) return;
+    let active = true;
+    getPropertyImages(propertyId)
+      .then((images) => { if (active && images[0]?.url) setPhoto(images[0].url); })
+      .catch(() => { if (active) setPhoto(null); });
+    return () => { active = false; };
+  }, [propertyId]);
 
   return (
     <Link href={href} className="property-card">
@@ -65,10 +80,7 @@ export default function PropertyCard({
         <span className={pill.muted ? "badge badge-muted" : "badge"}>
           {pill.label}
         </span>
-        <div className="grid justify-items-center gap-2 text-ink-soft">
-          <Building2 aria-hidden="true" className="h-8 w-8" />
-          <span className="text-xs">View listing for photos</span>
-        </div>
+        {photo ? <img src={photo} alt={title} loading="lazy" decoding="async" onError={() => setPhoto(null)} /> : <div className="grid justify-items-center gap-2 text-ink-soft"><Building2 aria-hidden="true" className="h-8 w-8" /><span className="text-xs">{propertyId ? "No photos yet" : "View listing for photos"}</span></div>}
       </div>
 
       <div className="property-info">

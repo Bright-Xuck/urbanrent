@@ -33,6 +33,7 @@ import PropertyCard from "../../../components/properties/PropertyCard";
 import PropertyFilters, {
   PROPERTY_TYPES,
 } from "../../../components/properties/PropertyFilters";
+import PropertyAmenities from "../../../components/properties/PropertyAmenities";
 import Alert from "../../../components/ui/Alert";
 import Pagination from "../../../components/ui/Pagination";
 import { EmptyState, Loading } from "../../../components/ui/States";
@@ -166,11 +167,14 @@ function BrowseContent() {
       <div className="listing-layout mt-8">
         {/* The key re-mounts the card when the URL params change (a second
             hero search), so the inputs always match the results shown. */}
-        <PropertyFilters
-          key={paramKey}
-          initial={filters}
-          onSearch={handleSearch}
-        />
+        <aside className="listing-sidebar">
+          <PropertyFilters
+            key={paramKey}
+            initial={filters}
+            onSearch={handleSearch}
+          />
+          <PropertyAmenities properties={properties} loading={loading} />
+        </aside>
 
         <div>
           {error && <Alert variant="error">{error}</Alert>}
@@ -190,6 +194,7 @@ function BrowseContent() {
               {properties.map((property) => (
                 <PropertyCard
                   key={property.id}
+                  propertyId={property.id}
                   title={property.title}
                   city={property.city}
                   neighborhood={property.neighborhood ?? undefined}

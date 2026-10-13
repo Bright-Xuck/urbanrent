@@ -1,356 +1,102 @@
 "use client";
 
-// ============================================================
-// LISTING DETAIL — /property/[id]
-// ============================================================
-// One listing in full: photos, facts, amenities, then — depending on who is
-// looking — either the owner's controls or the tenant's apply /
-// request-a-viewing panels.
-//
-// WHY THIS PAGE IS PUBLIC:
-// a logged-out visitor can open any PUBLISHED listing. It used to sit behind
-// a sign-in guard on the belief that every property route required a token, but
-// GET /api/properties/:id and GET /api/properties/:id/images are public — they
-// run `optionalAuthenticate` on the backend, so no token is fine and a token
-// only lets the service recognise the OWNER (who may also see their own draft).
-//
-// WHAT STILL NEEDS AN ACCOUNT lives in the sidebar, not the page: applying and
-// requesting a viewing are tenant actions, and editing/publishing is for the
-// owner. A guest gets a "log in to continue" prompt there instead.
-//
-// Ownership is compared on `property.ownerId` — the backend's findPropertyById
-// returns the raw row with no owner relation, so there is no owner email here.
-// ============================================================
-
 import { useEffect, useState } from "react";
+import type { ReactNode } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
-import { LogIn, MapPin } from "lucide-react";
-import { getPropertyById } from "../../../../api/propertyApi";
+import { ArrowLeft, ArrowRight, BedDouble, Bath, CalendarDays, Heart, LogIn, MapPin, Ruler, Share2, Star } from "lucide-react";
+import { getProperties, getPropertyById } from "../../../../api/propertyApi";
 import type { Property } from "../../../../api/types";
 import { useAuthStore } from "../../../../Store/useUserStore";
 import { formatDate, formatXAF, titleCase } from "../../../../lib/format";
-import PageHeader from "../../../../components/layout/PageHeader";
 import PropertyGallery from "../../../../components/properties/PropertyGallery";
 import AmenityPanel from "../../../../components/properties/AmenityPanel";
+import PropertyCard from "../../../../components/properties/PropertyCard";
 import PropertyAdminActions from "../../../../components/properties/PropertyAdminActions";
 import ApplyForm from "../../../../components/applications/ApplyForm";
 import RequestViewingForm from "../../../../components/viewings/RequestViewingForm";
 import Alert from "../../../../components/ui/Alert";
 import { EmptyState, Loading } from "../../../../components/ui/States";
-import StatusBadge from "../../../../components/ui/StatusBadge";
-
-// The demo's detail tabs: one "All" panel that shows everything, then a tab
-// per section.
-const TABS = [
-  { id: "all", label: "Overview" },
-  { id: "description", label: "Description" },
-  { id: "details", label: "Details" },
-  { id: "amenities", label: "Amenities" },
-] as const;
-
-type TabId = (typeof TABS)[number]["id"];
 
 export default function PropertyDetailPage() {
   const { id } = useParams<{ id: string }>();
   const router = useRouter();
   const user = useAuthStore((state) => state.user);
-
   const [property, setProperty] = useState<Property | null>(null);
+  const [similar, setSimilar] = useState<Property[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [tab, setTab] = useState<TabId>("all");
 
   useEffect(() => {
     let active = true;
-
-    const load = async () => {
-      if (!active) return;
-      setLoading(true);
-      setError(null);
+    async function load() {
       try {
         const data = await getPropertyById(id);
-        if (active) setProperty(data);
+        if (!active) return;
+        setProperty(data);
+        const related = await getProperties({ propertyType: data.propertyType, city: data.city }, { limit: 7 });
+        if (active) setSimilar(related.properties.filter((item) => item.id !== data.id).slice(0, 6));
       } catch (err: unknown) {
-        if (active) {
-          setError(err instanceof Error ? err.message : "Could not load this listing");
-        }
+        if (active) setError(err instanceof Error ? err.message : "Could not load this listing");
       } finally {
         if (active) setLoading(false);
       }
-    };
-
+    }
     void load();
-
-    return () => {
-      active = false;
-    };
+    return () => { active = false; };
   }, [id]);
 
-  if (loading) {
-    // Reserve roughly the height of the loaded page (~2.7k px measured
-    // in Lighthouse) so the footer — which sits high on the short shell
-    // — doesn't get shoved down when the client-side fetch resolves.
-    // That pop was the single biggest CLS source on this page (0.70).
-    return (
-      <div className="rp-container detail-page min-h-[2700px]">
-        <Loading text="Loading listing…" />
-      </div>
-    );
-  }
-
-  if (error || !property) {
-    return (
-      <div className="rp-container detail-page">
-        {error === "Property not found" ? (
-          <EmptyState
-            title="That listing no longer exists"
-            description="It may have been deleted or archived by its owner."
-            link={{ label: "Browse other properties", href: "/properties" }}
-          />
-        ) : (
-          <>
-            <PageHeader title="Listing" backHref="/properties" backLabel="All properties" />
-            <div className="mt-6">
-              <Alert variant="error">{error ?? "Could not load this listing"}</Alert>
-            </div>
-          </>
-        )}
-      </div>
-    );
-  }
+  if (loading) return <div className="rp-container detail-page detail-loading"><Loading text="Loading listing…" /></div>;
+  if (error || !property) return <div className="rp-container detail-page"><EmptyState title="That listing is unavailable" description={error ?? "It may have been removed or archived."} link={{ label: "Browse properties", href: "/properties" }} /></div>;
 
   const isOwner = !!user && user.id === property.ownerId;
   const isTenant = user?.role === "TENANT";
   const acceptsRequests = property.status === "PUBLISHED";
+  const location = [property.neighborhood, property.city, property.address].filter(Boolean).join(", ");
 
-  return (
-    <div className="rp-container detail-page">
-      {/* The demo's breadcrumb reads "Home / Villa / Individual Houses", so
-          the middle crumb is the property type. */}
-      <PageHeader
-        title={property.title}
-        backHref="/properties"
-        backLabel={titleCase(property.propertyType)}
-      />
+  return <main className="property-detail-redesign">
+    <div className="rp-container detail-shell">
+      <div className="detail-breadcrumb"><Link href="/">Home</Link><span>/</span><Link href="/properties">Properties</Link><span>/</span><strong>{property.title}</strong></div>
+      <div className="detail-toolbar"><Link href="/properties" className="back-link"><ArrowLeft size={16} /> Back to listings</Link><div><button type="button" aria-label="Share listing"><Share2 size={17} /></button><button type="button" aria-label="Save listing"><Heart size={18} /></button></div></div>
 
-      <div className="detail-content">
-        {/* ---------------- Left: the listing itself ---------------- */}
-        <div className="min-w-0">
-          <PropertyGallery propertyId={property.id} />
+      <PropertyGallery propertyId={property.id} />
 
-          <div className="mt-6 flex flex-wrap items-center gap-3">
-            <StatusBadge status={property.status} />
-            {property.cautionFee ? (
-              <span className="status-pill" data-tone="muted">
-                Caution fee {formatXAF(property.cautionFee)}
-              </span>
-            ) : null}
+      <div className="detail-main-grid">
+        <article className="detail-main-column">
+          <div className="detail-heading">
+            <div><span className="detail-status"><span /> For rent</span><span className="detail-type">{titleCase(property.propertyType)}</span></div>
+            <h1>{property.title}</h1>
+            <div className="detail-review-row"><span className="detail-stars"><Star /><Star /><Star /><Star /><Star /></span><span>No reviews yet</span></div>
+            <p className="detail-location"><MapPin size={17} />{location || "Location not provided"}</p>
           </div>
 
-          <p className="detail-address mt-3">
-            <MapPin className="h-4 w-4" aria-hidden />
-            {property.neighborhood ? `${property.neighborhood}, ` : ""}
-            {property.city}
-            {property.address ? ` — ${property.address}` : ""}
-          </p>
+          <div className="detail-price-row"><div><strong>{formatXAF(property.monthlyRent)}</strong><span>/ month</span></div><div className="detail-price-meta"><span>{property.sizeSqm ? `${property.sizeSqm} m²` : "Size not stated"}</span>{property.cautionFee ? <small>Deposit {formatXAF(property.cautionFee)}</small> : null}</div></div>
 
-          <p className="detail-price">
-            {formatXAF(property.monthlyRent)} <small>/ month</small>
-          </p>
+          <section className="detail-section"><div className="detail-section-title"><h2>Overview</h2><span>Listing ID {property.id.slice(0, 8).toUpperCase()}</span></div><div className="detail-facts">
+            <Fact icon={<BedDouble />} label="Bedrooms" value={property.bedrooms ?? "—"} /><Fact icon={<Bath />} label="Bathrooms" value={property.bathrooms ?? "—"} /><Fact icon={<Ruler />} label="Area size" value={property.sizeSqm ? `${property.sizeSqm} m²` : "—"} /><Fact icon={<CalendarDays />} label="Listed" value={formatDate(property.createdAt)} />
+          </div></section>
 
-          {/* The demo's "Overview" box: quick facts in a bordered grid. */}
-          <div className="detail-overview">
-            <div>
-              <span>Bedrooms</span>
-              <strong>{property.bedrooms ?? "—"}</strong>
-            </div>
-            <div>
-              <span>Bathrooms</span>
-              <strong>{property.bathrooms ?? "—"}</strong>
-            </div>
-            <div>
-              <span>Area size</span>
-              <strong>{property.sizeSqm ? `${property.sizeSqm} m²` : "—"}</strong>
-            </div>
-            <div>
-              <span>Type</span>
-              <strong>{titleCase(property.propertyType)}</strong>
-            </div>
-            <div>
-              <span>Monthly rent</span>
-              <strong>{formatXAF(property.monthlyRent)}</strong>
-            </div>
-            <div>
-              <span>Listed</span>
-              <strong>{formatDate(property.createdAt)}</strong>
-            </div>
-          </div>
+          <nav className="detail-info-tabs" aria-label="Property information"><a href="#description">Description</a><a href="#details">Details</a><a href="#amenities">Featured</a><a href="#location">Location</a></nav>
 
-          <div className="detail-tabs" role="tablist" aria-label="Listing details">
-            {TABS.map((item) => (
-              <button
-                key={item.id}
-                type="button"
-                role="tab"
-                aria-selected={tab === item.id}
-                onClick={() => setTab(item.id)}
-                className={tab === item.id ? "detail-tab is-active" : "detail-tab"}
-              >
-                {item.label}
-              </button>
-            ))}
-          </div>
+          <section id="description" className="detail-section detail-description"><div className="detail-section-title"><h2>Description</h2></div><p>{property.description || "The landlord has not added a description for this home yet."}</p></section>
 
-          {(tab === "all" || tab === "description") && (
-            <div>
-              <h2 className="panel-title">Description</h2>
-              <p className="detail-body mt-3">
-                {property.description ??
-                  "The landlord hasn't written a description yet."}
-              </p>
-            </div>
-          )}
+          <section id="details" className="detail-section"><div className="detail-section-title"><h2>Details</h2></div><dl className="detail-data-grid"><Data label="Property type" value={titleCase(property.propertyType)} /><Data label="Bedrooms" value={property.bedrooms ?? "Not stated"} /><Data label="Bathrooms" value={property.bathrooms ?? "Not stated"} /><Data label="Area size" value={property.sizeSqm ? `${property.sizeSqm} m²` : "Not stated"} /><Data label="Neighborhood" value={property.neighborhood ?? "Not stated"} /><Data label="Last updated" value={formatDate(property.updatedAt)} /></dl></section>
 
-          {(tab === "all" || tab === "details") && (
-            <div className={tab === "all" ? "mt-10" : ""}>
-              <h2 className="panel-title">Details</h2>
-              <dl className="detail-list mt-4">
-                <div>
-                  <dt>Type</dt>
-                  <dd>{titleCase(property.propertyType)}</dd>
-                </div>
-                <div>
-                  <dt>Bedrooms</dt>
-                  <dd>{property.bedrooms ?? "Not stated"}</dd>
-                </div>
-                <div>
-                  <dt>Bathrooms</dt>
-                  <dd>{property.bathrooms ?? "Not stated"}</dd>
-                </div>
-                <div>
-                  <dt>Area size</dt>
-                  <dd>{property.sizeSqm ? `${property.sizeSqm} m²` : "Not stated"}</dd>
-                </div>
-                <div>
-                  <dt>Neighborhood</dt>
-                  <dd>{property.neighborhood ?? "Not stated"}</dd>
-                </div>
-                <div>
-                  <dt>Address</dt>
-                  <dd>{property.address ?? "Not stated"}</dd>
-                </div>
-                <div>
-                  <dt>Caution fee</dt>
-                  <dd>
-                    {property.cautionFee ? formatXAF(property.cautionFee) : "Not stated"}
-                  </dd>
-                </div>
-                <div>
-                  <dt>Last updated</dt>
-                  <dd>{formatDate(property.updatedAt)}</dd>
-                </div>
-              </dl>
-            </div>
-          )}
+          <section id="amenities" className="detail-section detail-amenities"><div className="detail-section-title"><h2>Featured</h2><span>What this home offers</span></div><AmenityPanel propertyId={property.id} canManage={isOwner} /></section>
+        </article>
 
-          {(tab === "all" || tab === "amenities") && (
-            <AmenityPanel propertyId={property.id} canManage={isOwner} />
-          )}
-        </div>
-
-        {/* ---------------- Right: what you can do ---------------- */}
-        <aside className="space-y-6">
-          {/* The demo's sidebar contact card, used here for the owner's
-              listing controls. */}
-          {isOwner && (
-            <div className="agent-card">
-              <div className="agent-avatar">UR</div>
-              <h3>Your listing</h3>
-              <p className="agent-role">You own this property</p>
-
-              <dl className="agent-rows">
-                <div>
-                  <dt>Status</dt>
-                  <dd>{titleCase(property.status)}</dd>
-                </div>
-                <div>
-                  <dt>Monthly rent</dt>
-                  <dd>{formatXAF(property.monthlyRent)}</dd>
-                </div>
-                <div>
-                  <dt>Caution fee</dt>
-                  <dd>
-                    {property.cautionFee ? formatXAF(property.cautionFee) : "Not stated"}
-                  </dd>
-                </div>
-              </dl>
-
-              <div className="mt-5">
-                <PropertyAdminActions
-                  property={property}
-                  showEdit={false}
-                  onChanged={setProperty}
-                  onDeleted={() => router.push("/landlord/properties")}
-                />
-              </div>
-
-              <Link
-                href={`/landlord/properties/${property.id}/edit`}
-                className="btn btn-block mt-5"
-              >
-                Edit listing
-              </Link>
-            </div>
-          )}
-
-          {/* A logged-out visitor: the listing itself is readable, the ACTIONS
-              are not. This is the only gate the page still has, and it lives
-              here in the sidebar rather than over the whole page. Guests can
-              only ever load a PUBLISHED listing (the backend hides the rest),
-              so no status check is needed. */}
-          {!user && (
-            <div className="agent-card">
-              <h3>Like this property?</h3>
-              <p className="agent-role">
-                Log in to apply for it or request a viewing.
-              </p>
-
-              <Link href="/login" className="btn btn-block mt-5">
-                <LogIn className="h-4 w-4" aria-hidden /> Log in
-              </Link>
-            </div>
-          )}
-
-          {!isOwner && isTenant && acceptsRequests && (
-            <>
-              <ApplyForm propertyId={property.id} />
-              <RequestViewingForm propertyId={property.id} />
-            </>
-          )}
-
-          {/* A signed-in tenant on a listing that is not taking requests.
-              `isTenant` is already false for a guest, so no extra `!user`
-              guard is needed here. */}
-          {!isOwner && isTenant && !acceptsRequests && (
-            <Alert variant="info">
-              This listing isn&apos;t published right now, so it isn&apos;t
-              taking applications or viewing requests. Check back, or browse
-              other properties.
-            </Alert>
-          )}
-
-          {/* A signed-in user who is neither the owner nor a tenant. `!user`
-              is required so a guest falls through to nothing here — they get
-              the "log in" card above, not a message about another landlord. */}
-          {!user && !isOwner && !isTenant && (
-            <Alert variant="info">
-              You&apos;re viewing a listing owned by another landlord. Only the
-              owner can change it, and only tenants can apply for or view it.
-            </Alert>
-          )}
+        <aside className="detail-sidebar">
+          <div className="detail-action-card"><div className="action-card-heading"><span>Ready to see it?</span><strong>Schedule a tour</strong></div><p>Choose a time that works and the landlord will confirm your visit.</p><div className="tour-dates"><span><b>Tue</b><strong>13</strong><small>Oct</small></span><span><b>Wed</b><strong>14</strong><small>Oct</small></span><span><b>Thu</b><strong>15</strong><small>Oct</small></span></div>{isOwner ? <><div className="owner-note"><strong>Your listing</strong><span>{titleCase(property.status)}</span></div><PropertyAdminActions property={property} showEdit={false} onChanged={setProperty} onDeleted={() => router.push("/landlord/properties")} /><Link className="btn btn-block" href={`/landlord/properties/${property.id}/edit`}>Edit listing</Link></> : isTenant && acceptsRequests ? <RequestViewingForm propertyId={property.id} /> : user ? <Alert variant="info">This listing is not currently accepting requests.</Alert> : <Link href="/login" className="btn btn-block"><LogIn size={17} /> Log in to continue</Link>}</div>
+          <div className="detail-contact-card"><div className="side-card-title">Contact</div><div className="contact-person"><div className="contact-avatar">UR</div><div><strong>UrbanRent landlord</strong><span>Property owner</span><a href="mailto:hello@urbanrent.cm">Contact by email</a></div></div><p>Have a question about this home? Send a message after signing in.</p></div>
+          {!isOwner && isTenant && acceptsRequests ? <ApplyForm propertyId={property.id} /> : null}
+          {!user && <div className="detail-help-card"><h3>Interested in this home?</h3><p>Log in to apply or request a viewing.</p><Link href="/login" className="story-link">Sign in to continue <ArrowRight size={16} /></Link></div>}
         </aside>
       </div>
     </div>
-  );
+
+    <section className="similar-section"><div className="rp-container"><div className="similar-heading"><div><span className="home-kicker">Keep exploring</span><h2>Similar <em>listings.</em></h2><p>More homes in {property.city} that may be a good fit.</p></div><Link href={`/properties?city=${encodeURIComponent(property.city)}`} className="story-link">View all listings <ArrowRight size={16} /></Link></div>{similar.length ? <div className="similar-grid">{similar.map((item) => <PropertyCard key={item.id} propertyId={item.id} title={item.title} city={item.city} neighborhood={item.neighborhood ?? undefined} bedrooms={item.bedrooms ?? 0} bathrooms={item.bathrooms ?? 0} sizeSqm={item.sizeSqm} monthlyRent={item.monthlyRent} verified={item.owner?.verificationState === "VERIFIED"} href={`/property/${item.id}`} />)}</div> : <div className="similar-empty">No similar listings are available yet. <Link href="/properties">Browse all homes</Link></div>}</div></section>
+  </main>;
 }
+
+function Fact({ icon, label, value }: { icon: ReactNode; label: string; value: ReactNode }) { return <div className="detail-fact"><span>{icon}</span><small>{label}</small><strong>{value}</strong></div>; }
+function Data({ label, value }: { label: string; value: ReactNode }) { return <div><dt>{label}</dt><dd>{value}</dd></div>; }

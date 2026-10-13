@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { LogIn, LogOut, Plus, UserRound } from "lucide-react";
+import { LogIn, LogOut, Menu, Plus, UserRound, X } from "lucide-react";
 import { logout } from "../../api/userApi";
 import { useAuthStore } from "../../Store/useUserStore";
 
@@ -10,6 +11,7 @@ export default function Navbar() {
   const router = useRouter();
   const user = useAuthStore((state) => state.user);
   const initialized = useAuthStore((state) => state.initialized);
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   async function handleLogout() {
     try {
@@ -37,7 +39,7 @@ export default function Navbar() {
   const primaryLabel = !user ? "Sign up" : isTenant ? "My applications" : "My listings";
 
   return (
-    <header className="site-header">
+    <header className={`site-header${mobileOpen ? " mobile-open" : ""}`}>
       <div className="header-inner">
         <Link href="/" className="brand">
           <span
@@ -48,12 +50,12 @@ export default function Navbar() {
           <span className="font-display text-lg text-ink">UrbanRent</span>
         </Link>
 
-        <nav className="main-nav">
-          <Link className="active" href="/">Home</Link>
-          <Link href="/properties">Properties</Link>
+        <nav className="main-nav" aria-label="Main navigation">
+          <Link className="active" href="/" onClick={() => setMobileOpen(false)}>Home</Link>
+          <Link href="/properties" onClick={() => setMobileOpen(false)}>Properties</Link>
 
           {user && user.role !== "TENANT" ? (
-            <Link href={user?.role === "ADMIN" ? "/admin" : "/landlord/properties"}>
+            <Link href={user?.role === "ADMIN" ? "/admin" : "/landlord/properties"} onClick={() => setMobileOpen(false)}>
               Dashboard
             </Link>
           ) : null}
@@ -104,6 +106,22 @@ export default function Navbar() {
             </>
           ) : null}
         </div>
+
+        <button className="mobile-menu-toggle" type="button" aria-label={mobileOpen ? "Close navigation menu" : "Open navigation menu"} aria-expanded={mobileOpen} aria-controls="mobile-navigation" onClick={() => setMobileOpen((open) => !open)}>
+          {mobileOpen ? <X size={21} /> : <Menu size={21} />}
+        </button>
+      </div>
+      <div className="mobile-navigation" id="mobile-navigation" aria-hidden={!mobileOpen}>
+        <nav aria-label="Mobile navigation">
+          <Link href="/" onClick={() => setMobileOpen(false)}>Home<span>01</span></Link>
+          <Link href="/properties" onClick={() => setMobileOpen(false)}>Properties<span>02</span></Link>
+          {user && user.role !== "TENANT" ? <Link href={user.role === "ADMIN" ? "/admin" : "/landlord/properties"} onClick={() => setMobileOpen(false)}>Dashboard<span>03</span></Link> : null}
+        </nav>
+        {initialized ? <div className="mobile-navigation-actions">
+          {user ? <Link href="/profile" onClick={() => setMobileOpen(false)}><UserRound size={17} />My profile</Link> : <Link href="/login" onClick={() => setMobileOpen(false)}><LogIn size={17} />Log in</Link>}
+          <Link className="mobile-primary-action" href={primaryHref} onClick={() => setMobileOpen(false)}>{user && !isTenant ? <Plus size={17} /> : null}{primaryLabel}<span aria-hidden>↗</span></Link>
+          {user ? <button type="button" onClick={handleLogout}><LogOut size={16} />Log out</button> : null}
+        </div> : null}
       </div>
     </header>
   );

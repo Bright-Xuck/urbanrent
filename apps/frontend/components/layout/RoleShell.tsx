@@ -115,67 +115,46 @@ export function RoleShell({
   if (user.role !== role) return null;
 
   const navigation = (
-    <nav aria-label={`${role.toLowerCase()} navigation`} className="grid gap-1">
+    <nav aria-label={`${role.toLowerCase()} navigation`} className="dashboard-nav">
       {NAVIGATION[role].map(({ href, icon: Icon, label }) => {
         const active = pathname === href || pathname.startsWith(`${href}/`);
         return (
           <Link
             aria-current={active ? "page" : undefined}
-            className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition ${
+            className={`dashboard-nav-link ${
               active
-                ? "bg-navy text-white"
-                : "text-ink-soft hover:bg-paper-dim hover:text-ink"
+                ? "is-active"
+                : ""
             }`}
             href={href}
             key={href}
             onClick={() => setMenuOpen(false)}
           >
-            <Icon aria-hidden="true" className="h-4 w-4" />
-            {label}
+            <Icon aria-hidden="true" className="h-[17px] w-[17px]" />
+            <span>{label}</span>
           </Link>
         );
       })}
     </nav>
   );
 
+  const roleLabel = role === "TENANT" ? "Resident space" : role === "LANDLORD" ? "Owner space" : "Admin space";
+  const firstName = user.email?.split("@")[0] || "there";
+
   return (
-    <div className="min-h-[calc(100vh-5rem)] bg-paper-dim">
-      <div className="mx-auto grid max-w-7xl gap-6 px-4 py-5 sm:px-6 lg:grid-cols-[15rem_minmax(0,1fr)] lg:px-8 lg:py-8">
-        <header className="flex items-center justify-between rounded-xl border border-line bg-white p-3 lg:hidden">
-          <Link className="font-display text-lg font-semibold text-navy" href="/">
-            UrbanRent
-          </Link>
-          <button
-            aria-expanded={menuOpen}
-            aria-label={menuOpen ? "Close navigation" : "Open navigation"}
-            className="grid h-10 w-10 place-items-center rounded-lg border border-line text-ink"
-            onClick={() => setMenuOpen((open) => !open)}
-            type="button"
-          >
-            {menuOpen ? <X aria-hidden="true" className="h-5 w-5" /> : <Menu aria-hidden="true" className="h-5 w-5" />}
-          </button>
-        </header>
-
-        <aside
-          className={`${menuOpen ? "block" : "hidden"} rounded-xl border border-line bg-white p-3 lg:sticky lg:top-6 lg:block lg:h-fit`}
-        >
-          <div className="mb-4 hidden border-b border-line px-3 pb-4 pt-2 lg:block">
-            <Link className="font-display text-xl font-semibold text-navy" href="/">
-              UrbanRent
-            </Link>
-          </div>
-          {navigation}
-          <button
-            className="mt-4 flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-left text-sm font-medium text-ink-soft hover:bg-paper-dim hover:text-ink"
-            onClick={handleLogout}
-            type="button"
-          >
-            <LogOut aria-hidden="true" className="h-4 w-4" />
-            Sign out
-          </button>
-        </aside>
-
-        <main className="min-w-0">{children}</main>
+    <div className={`dashboard-shell dashboard-${role.toLowerCase()}`}>
+      <div className={`dashboard-mobile-bar ${menuOpen ? "is-open" : ""}`}>
+        <Link href="/" className="dashboard-brand"><span>UR</span><strong>UrbanRent</strong></Link>
+        <button aria-expanded={menuOpen} aria-label={menuOpen ? "Close navigation" : "Open navigation"} onClick={() => setMenuOpen((open) => !open)} type="button">{menuOpen ? <X /> : <Menu />}</button>
+      </div>
+      <aside className={`dashboard-sidebar ${menuOpen ? "is-open" : ""}`}>
+        <div className="dashboard-sidebar-top"><Link href="/" className="dashboard-brand"><span>UR</span><strong>UrbanRent</strong></Link><span className="dashboard-role">{roleLabel}</span></div>
+        <div className="dashboard-nav-label">Workspace</div>{navigation}
+        <div className="dashboard-sidebar-bottom"><Link href="/" className="dashboard-back-home">← Back to site</Link><button className="dashboard-signout" onClick={handleLogout} type="button"><LogOut /> Sign out</button></div>
+      </aside>
+      <div className="dashboard-canvas">
+        <header className="dashboard-topbar"><div><span className="dashboard-section-kicker">{roleLabel}</span><h1>Good morning, {firstName}</h1></div><div className="dashboard-top-actions"><span className="dashboard-date">{new Intl.DateTimeFormat("en", { weekday: "long", month: "short", day: "numeric" }).format(new Date())}</span><Link href="/profile" className="dashboard-avatar" aria-label="Open profile">{firstName.slice(0, 1).toUpperCase()}</Link></div></header>
+        <main className="dashboard-content">{children}</main>
       </div>
     </div>
   );
