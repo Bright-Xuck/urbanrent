@@ -7,6 +7,7 @@ import {
   UploadVerificationDocument,
 } from "../controllers/verificationController.js";
 import { documentUpload } from "../middleware/upload.js";
+import { uploadLimiter } from "../middleware/rateLimit.js";
 
 const router: express.Router = express.Router();
 
@@ -15,6 +16,7 @@ router.post(
   authenticate,
   blockIfSuspended,
   requireLandlord,
+  uploadLimiter,
   documentUpload.single("document"),
   UploadVerificationDocument,
 );

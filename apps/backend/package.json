@@ -27,9 +27,12 @@
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
+    "express-rate-limit": "^8.7.1",
     "jsonwebtoken": "^9.0.3",
     "multer": "^2.2.0",
-    "pg": "^8.23.0"
+    "pg": "^8.23.0",
+    "rate-limit-redis": "^6.0.1",
+    "redis": "^6.3.0"
   },
   "devDependencies": {
     "@types/bcryptjs": "^2.4.6",

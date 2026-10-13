@@ -11,6 +11,7 @@ import {
 } from "../repositories/propertyRepository.js";
 import type { PropertyStatus } from "../../generated/prisma/enums.js";
 import { requireVerifiedOwner } from "./verificationService.js";
+import { getOrSet, invalidatePropertiesCache } from "./propertyCache.js";
 
 // ============================================================
 // PROPERTY SERVICE - Business Logic Layer
@@ -38,7 +39,9 @@ export async function createPropertyForOwner(ownerId: string, data: Omit<CreateP
   if (data.status === "PUBLISHED") {
     await requireVerifiedOwner(ownerId);
   }
-  return createProperty({ ...data, ownerId });
+  const property = await createProperty({ ...data, ownerId });
+  await invalidatePropertiesCache();
+  return property;
 }
 
 // ------------------------------------------------------------
@@ -58,6 +61,22 @@ export async function createPropertyForOwner(ownerId: string, data: Omit<CreateP
 export async function getPropertyById(
   id: string,
   viewer?: { userId: string; role: string } | null
+) {
+  // Guests all see the same thing, so their reads are cacheable.
+  // Owner/admin reads are viewer-dependent and stay uncached —
+  // caching those risks serving one viewer's view to another.
+  if (!viewer) {
+    const { data } = await getOrSet(`detail:${id}`, () =>
+      loadProperty(id, null)
+    );
+    return data;
+  }
+  return loadProperty(id, viewer);
+}
+
+async function loadProperty(
+  id: string,
+  viewer: { userId: string; role: string } | null
 ) {
   const property = await findPropertyById(id);
   if (!property) throw new Error("Property not found");
@@ -96,7 +115,11 @@ export async function getPublishedProperties(
   offset: number,
   limit: number
 ) {
-  return findPublishedProperties(filters, offset, limit);
+  const { data, fromCache } = await getOrSet(
+    `browse:${JSON.stringify(filters)}:${offset}:${limit}`,
+    () => findPublishedProperties(filters, offset, limit)
+  );
+  return { ...data, fromCache };
 }
 
 // ------------------------------------------------------------
@@ -122,7 +145,9 @@ export async function updatePropertyForOwner(id: string, ownerId: string, data: 
   }
 
   // 4. Perform the update
-  return updateProperty(id, data);
+  const updated = await updateProperty(id, data);
+  await invalidatePropertiesCache();
+  return updated;
 }
 
 // ------------------------------------------------------------
@@ -141,7 +166,9 @@ export async function deletePropertyForOwner(id: string, ownerId: string) {
   }
 
   // 3. Perform the delete
-  return deleteProperty(id);
+  const deleted = await deleteProperty(id);
+  await invalidatePropertiesCache();
+  return deleted;
 }
 // ------------------------------------------------------------
 // MODERATE PROPERTY (admin)
@@ -159,5 +186,7 @@ export async function moderateProperty(id: string, action: PropertyStatus) {
   const property = await findPropertyById(id);
   if (!property) throw new Error("Property not found");
 
-  return updateProperty(id, { status: action });
+  const updated = await updateProperty(id, { status: action });
+  await invalidatePropertiesCache();
+  return updated;
 }

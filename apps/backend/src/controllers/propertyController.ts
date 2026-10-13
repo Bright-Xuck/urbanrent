@@ -124,7 +124,13 @@ export async function GetProperties(req: Request, res: Response) {
   if (minBedrooms > 0) filters.minBedrooms = minBedrooms;
 
   try {
-    const result = await getPublishedProperties(filters, offset, limit);
+    // fromCache is the cache signal (internal), not part of the body.
+    const { fromCache, ...result } = await getPublishedProperties(
+      filters,
+      offset,
+      limit
+    );
+    res.setHeader("X-Cache", fromCache ? "HIT" : "MISS");
     res.status(200).json(result);
   } catch (error) {
     res.status(500).json({ message: "Internal server error" });

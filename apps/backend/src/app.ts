@@ -10,10 +10,22 @@ import propertyViewingRequestRoutes from './routes/propertyViewingRequestRoutes.
 import adminRoutes from "./routes/adminRoutes.js"
 import verificationRoutes from "./routes/verificationRoutes.js"
 import propertyReportRoutes from "./routes/propertyReportRoutes.js"
+import { apiLimiter } from './middleware/rateLimit.js';
 import cors from 'cors'
 import cookieParser from 'cookie-parser'
 
 const app: Express = express();
+
+// Render (and most hosts) put the app behind exactly one proxy hop.
+// Trusting it makes req.ip read the real client from X-Forwarded-For;
+// without it every request looks like the proxy's IP and the whole
+// platform would share one rate-limit bucket. Locally there is no
+// proxy, and trusting one would let clients spoof their IP via a
+// header and dodge the limiters — so this only turns on when
+// deployed (RENDER is set there; TRUST_PROXY is a manual override).
+if (process.env.RENDER || process.env.TRUST_PROXY) {
+  app.set("trust proxy", 1);
+}
 
 app.use(express.json());
 // In production, restrict cross-origin requests to the deployed frontend
@@ -34,6 +46,10 @@ app.use(cookieParser())
 app.get('/health', (_req, res) => {
   res.json({ ok: true, message: 'Server is running' });
 });
+
+// Global rate limit for all API traffic (mounted on /api only, so
+// uptime checks on /health never count against anyone).
+app.use('/api', apiLimiter);
 
 app.use('/api/auth', authRoutes);
 app.use('/api/properties', propertyRoutes);

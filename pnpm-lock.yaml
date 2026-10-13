@@ -233,6 +233,9 @@ importers:
       express:
         specifier: ^5.2.1
         version: 5.2.1(supports-color@7.2.0)
+      express-rate-limit:
+        specifier: ^8.7.1
+        version: 8.7.1(express@5.2.1(supports-color@7.2.0))(supports-color@7.2.0)
       jsonwebtoken:
         specifier: ^9.0.3
         version: 9.0.3
@@ -242,6 +245,12 @@ importers:
       pg:
         specifier: ^8.23.0
         version: 8.23.0
+      rate-limit-redis:
+        specifier: ^6.0.1
+        version: 6.0.1(express-rate-limit@8.7.1(express@5.2.1(supports-color@7.2.0))(supports-color@7.2.0))
+      redis:
+        specifier: ^6.3.0
+        version: 6.3.0
     devDependencies:
       '@types/bcryptjs':
         specifier: ^2.4.6
@@ -1034,6 +1043,42 @@ packages:
     peerDependenciesMeta:
       '@types/react':
         optional: true
+
+  '@redis/bloom@6.3.0':
+    resolution: {integrity: sha512-NQ5poYpZr0jv6zazN1cy6JY5kIipKFZ3R9GTL4kOUTX3a9YAfY29U8bsE4lWhVQEM+G4V0BXVC57mubIdDijeA==}
+    engines: {node: '>= 20.0.0'}
+    peerDependencies:
+      '@redis/client': ^6.3.0
+
+  '@redis/client@6.3.0':
+    resolution: {integrity: sha512-fHrjwGCBvAANGi+TuRuwKi83sIOzgHr8eh+Uf48w3fSX7Hhrz174NrWqfJhAC2vnN0d/tfaZpdr6+o6JC3QHwg==}
+    engines: {node: '>= 20.0.0'}
+    peerDependencies:
+      '@node-rs/xxhash': ^1.1.0
+      '@opentelemetry/api': '>=1 <2'
+    peerDependenciesMeta:
+      '@node-rs/xxhash':
+        optional: true
+      '@opentelemetry/api':
+        optional: true
+
+  '@redis/json@6.3.0':
+    resolution: {integrity: sha512-yt6vRfPBXtW/3qm53cF81TSQpLMjWdW4/2E9WQ2GgbvsKkuCKCFQIcMiKlil1ZMnezK+IQuS795xKU5psbaegw==}
+    engines: {node: '>= 20.0.0'}
+    peerDependencies:
+      '@redis/client': ^6.3.0
+
+  '@redis/search@6.3.0':
+    resolution: {integrity: sha512-RPXAZmKjZZG7Tm7m1w9keFdXzbL91PiSHQBfQRe9xwW40jNsTRbG0FwhIz4QlHPU4gKDAsCy8IQHj4yZl4H9rw==}
+    engines: {node: '>= 20.0.0'}
+    peerDependencies:
+      '@redis/client': ^6.3.0
+
+  '@redis/time-series@6.3.0':
+    resolution: {integrity: sha512-+fJOB8mN1z5WRakCJNh5lVdz1KqvHGSOistsKeitD24QsCtPwyRQXWC0iq6T/i/ubLE/YcguZqPm8F598MKk4A==}
+    engines: {node: '>= 20.0.0'}
+    peerDependencies:
+      '@redis/client': ^6.3.0
 
   '@rtsao/scc@1.1.0':
     resolution: {integrity: sha512-zt6OdqaDoOnJ1ZYsCYGt9YmWzDXl4vQdKTyJev62gFhRGKdx7mcT54V9KIjg+d2wi9EXsPvAPKe7i7WjfVWB8g==}
@@ -2194,6 +2239,12 @@ packages:
     resolution: {integrity: sha512-aIL5Fx7mawVa300al2BnEE4iNvo1qETxLrPI/o05L7z6go7fCw1J6EQmbK4FmJ2AS7kgVF/KEZWufBfdClMcPg==}
     engines: {node: '>= 0.6'}
 
+  express-rate-limit@8.7.1:
+    resolution: {integrity: sha512-2FXbqkygil3mZiXzEtM0IjE/UBmBNot0J1GEVrJT4JbrvwOSoEtqtO+wHbiMQELWe1eNvHoYRg2dkjOid+6JkA==}
+    engines: {node: '>= 16'}
+    peerDependencies:
+      express: '>= 4.11'
+
   express@5.2.1:
     resolution: {integrity: sha512-hIS4idWWai69NezIdRt2xFVofaF4j+6INOpJlVOLDO8zXGpUVEVzIYk12UUi2JzjEzWL3IOAxcTubgz9Po0yXw==}
     engines: {node: '>= 18'}
@@ -2434,6 +2485,10 @@ packages:
   internmap@2.0.3:
     resolution: {integrity: sha512-5Hh7Y1wQbvY5ooGgPbDaL5iYLAPzMTUrjMulskHLH6wnv/A+1q5rgEaiuqEjB+oxGXIVZs1FF+R/KPN3ZSQYYg==}
     engines: {node: '>=12'}
+
+  ip-address@10.7.4:
+    resolution: {integrity: sha512-DWBMKyeM25D70nrIiTkgQth59/G+naKOTep6huF9j+GmeK3DMD60Zvxg5d5qQnz+38AHgou6ean2LECX+lrKDg==}
+    engines: {node: '>= 12'}
 
   ipaddr.js@1.9.1:
     resolution: {integrity: sha512-0KI/607xoxSToH7GjN1FfSbLoU0+btTicjsQSWQlh/hZykN8KpmMf7uYwPW3R+akZ6R/w18ZlXSHBYXiYUPO3g==}
@@ -3080,6 +3135,12 @@ packages:
     resolution: {integrity: sha512-hek2mFQpPuI4E1BBKrSto+BU3e3x4xuarsbiwr3+lf7p44juvFMV0XFWQAP3xUyqXA4RrXLIoaSUGbSt056ZMw==}
     engines: {node: '>= 0.6'}
 
+  rate-limit-redis@6.0.1:
+    resolution: {integrity: sha512-qys7ulbh5X4Bohfjm6BXFWBiyzK6r5eGdFghPWZfJwggnDFTDwCIRq1u7tmN50vLTp4Kbe1h/ZAuBOn/hVpjtQ==}
+    engines: {node: '>= 16'}
+    peerDependencies:
+      express-rate-limit: '>= 8.6.0'
+
   raw-body@3.0.2:
     resolution: {integrity: sha512-K5zQjDllxWkf7Z5xJdV0/B0WTNqx6vxG70zJE4N0kBs4LovmEYWJzQGxC9bS9RAKu3bgM40lrd5zoLJ12MQ5BA==}
     engines: {node: '>= 0.10'}
@@ -3106,6 +3167,10 @@ packages:
   readdirp@5.1.1:
     resolution: {integrity: sha512-Kko+Y5XQ6fM+Ce3dq3m9YGxnacYZYl9cA1wZjaF3Vbry2L3i1qVg8+CAgNPsXRArPMUMCaOR7oa9Nqntc43JKA==}
     engines: {node: '>= 20.19.0'}
+
+  redis@6.3.0:
+    resolution: {integrity: sha512-XFQbPie1lGpKeUZ8ySYY43yLnQy/iIQtHNvIr/1XdaABpb96rUSdm3Mfl+98FEVbv9ZJIzINMno5s0Nh8E5LEw==}
+    engines: {node: '>= 20.0.0'}
 
   reflect.getprototypeof@1.0.10:
     resolution: {integrity: sha512-00o4I+DVrefhv+nX0ulyi3biSHCPDe+yLv5o/p6d/UVlirijB8E16FtfwSAi4g3tcqrQ4lRAqQSoFEZJehYEcw==}
@@ -4153,6 +4218,24 @@ snapshots:
       react: 19.2.8
     optionalDependencies:
       '@types/react': 19.2.18
+
+  '@redis/bloom@6.3.0(@redis/client@6.3.0)':
+    dependencies:
+      '@redis/client': 6.3.0
+
+  '@redis/client@6.3.0': {}
+
+  '@redis/json@6.3.0(@redis/client@6.3.0)':
+    dependencies:
+      '@redis/client': 6.3.0
+
+  '@redis/search@6.3.0(@redis/client@6.3.0)':
+    dependencies:
+      '@redis/client': 6.3.0
+
+  '@redis/time-series@6.3.0(@redis/client@6.3.0)':
+    dependencies:
+      '@redis/client': 6.3.0
 
   '@rtsao/scc@1.1.0': {}
 
@@ -5452,6 +5535,14 @@ snapshots:
 
   etag@1.8.1: {}
 
+  express-rate-limit@8.7.1(express@5.2.1(supports-color@7.2.0))(supports-color@7.2.0):
+    dependencies:
+      debug: 4.4.3(supports-color@7.2.0)
+      express: 5.2.1(supports-color@7.2.0)
+      ip-address: 10.7.4
+    transitivePeerDependencies:
+      - supports-color
+
   express@5.2.1(supports-color@7.2.0):
     dependencies:
       accepts: 2.0.0
@@ -5717,6 +5808,8 @@ snapshots:
       side-channel: 1.1.1
 
   internmap@2.0.3: {}
+
+  ip-address@10.7.4: {}
 
   ipaddr.js@1.9.1: {}
 
@@ -6336,6 +6429,10 @@ snapshots:
 
   range-parser@1.3.0: {}
 
+  rate-limit-redis@6.0.1(express-rate-limit@8.7.1(express@5.2.1(supports-color@7.2.0))(supports-color@7.2.0)):
+    dependencies:
+      express-rate-limit: 8.7.1(express@5.2.1(supports-color@7.2.0))(supports-color@7.2.0)
+
   raw-body@3.0.2:
     dependencies:
       bytes: 3.1.2
@@ -6364,6 +6461,17 @@ snapshots:
       util-deprecate: 1.0.2
 
   readdirp@5.1.1: {}
+
+  redis@6.3.0:
+    dependencies:
+      '@redis/bloom': 6.3.0(@redis/client@6.3.0)
+      '@redis/client': 6.3.0
+      '@redis/json': 6.3.0(@redis/client@6.3.0)
+      '@redis/search': 6.3.0(@redis/client@6.3.0)
+      '@redis/time-series': 6.3.0(@redis/client@6.3.0)
+    transitivePeerDependencies:
+      - '@node-rs/xxhash'
+      - '@opentelemetry/api'
 
   reflect.getprototypeof@1.0.10:
     dependencies:
