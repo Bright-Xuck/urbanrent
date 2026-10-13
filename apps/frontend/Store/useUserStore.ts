@@ -1,7 +1,6 @@
 import { create } from "zustand";
+import type { Role } from "../api/types";
 
-
-type Role = "TENANT" | "LANDLORD" | "ADMIN";
 
 export type User = {
   id: string;
@@ -12,23 +11,19 @@ export type User = {
 type AuthState = {
   user: User | null;
   accessToken: string | null;
-  sessionRestoring: boolean;
+  initialized: boolean;
   login: (user: User, accessToken: string) => void;
   logout: () => void;
-  setSessionRestoring: (value: boolean) => void;
+  finishInitialization: () => void;
 };
 
 export const useAuthStore = create<AuthState>((set) => ({
   user: null,
   accessToken: null,
-  sessionRestoring: false,
+  initialized: false,
   login: (user, accessToken) => {
-    set({ user, accessToken, sessionRestoring: false });
+    set({ user, accessToken, initialized: true });
   },
-  logout: () => {
-    set({ user: null, accessToken: null, sessionRestoring: false });
-  },
-  setSessionRestoring: (value) => {
-    set({ sessionRestoring: value });
-  },
+  logout: () => set({ user: null, accessToken: null, initialized: true }),
+  finishInitialization: () => set({ initialized: true }),
 }));

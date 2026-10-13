@@ -1,5 +1,6 @@
 import prisma from "../config/prisma.js";
 import type { PropertyStatus, PropertyType } from "../../generated/prisma/enums.js";
+import type { Prisma } from "../../generated/prisma/client.js";
 
 // ============================================================
 // PROPERTY REPOSITORY
@@ -82,6 +83,10 @@ export async function createProperty(data: CreatePropertyInput) {
 export async function findPropertyById(id: string) {
   return prisma.property.findUnique({
     where: { id },
+    include: {
+      owner: { select: { verificationState: true } },
+      images: { orderBy: { createdAt: "asc" }, take: 1 },
+    },
   });
 }
 
@@ -171,6 +176,10 @@ export async function findPublishedProperties(
   const [properties, total] = await Promise.all([
     prisma.property.findMany({
       where,
+      include: {
+        owner: { select: { verificationState: true } },
+        images: { orderBy: { createdAt: "asc" }, take: 1 },
+      },
       orderBy: { createdAt: "desc" },
       skip: offset,
       take: limit,
@@ -224,5 +233,17 @@ export async function updateProperty(id: string, data: UpdatePropertyInput) {
 export async function deleteProperty(id: string) {
   return prisma.property.delete({
     where: { id },
+  });
+}
+
+// Pull every PUBLISHED listing an owner has back to UNPUBLISHED.
+// `db` lets this run inside a suspend transaction (pass the tx client).
+export async function unpublishAllPropertiesForOwner(
+  ownerId: string,
+  db: Prisma.TransactionClient = prisma
+) {
+  return db.property.updateMany({
+    where: { ownerId, status: "PUBLISHED" },
+    data: { status: "UNPUBLISHED" },
   });
 }

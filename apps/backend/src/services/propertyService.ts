@@ -9,6 +9,9 @@ import {
   type UpdatePropertyInput,
   type PropertyFilters,
 } from "../repositories/propertyRepository.js";
+import type { PropertyStatus } from "../../generated/prisma/enums.js";
+import { requireVerifiedOwner } from "./verificationService.js";
+import { getOrSet, invalidatePropertiesCache } from "./propertyCache.js";
 
 // ============================================================
 // PROPERTY SERVICE - Business Logic Layer
@@ -30,7 +33,15 @@ import {
 // creating a property owned by someone else.
 // ------------------------------------------------------------
 export async function createPropertyForOwner(ownerId: string, data: Omit<CreatePropertyInput, "ownerId">) {
-  return createProperty({ ...data, ownerId });
+  // A listing can only be BORN published if its owner is verified.
+  // (The new-listing page's "Publish listing" button POSTs with
+  // status PUBLISHED, so this path needs the same gate as updates.)
+  if (data.status === "PUBLISHED") {
+    await requireVerifiedOwner(ownerId);
+  }
+  const property = await createProperty({ ...data, ownerId });
+  await invalidatePropertiesCache();
+  return property;
 }
 
 // ------------------------------------------------------------
@@ -50,6 +61,22 @@ export async function createPropertyForOwner(ownerId: string, data: Omit<CreateP
 export async function getPropertyById(
   id: string,
   viewer?: { userId: string; role: string } | null
+) {
+  // Guests all see the same thing, so their reads are cacheable.
+  // Owner/admin reads are viewer-dependent and stay uncached —
+  // caching those risks serving one viewer's view to another.
+  if (!viewer) {
+    const { data } = await getOrSet(`detail:${id}`, () =>
+      loadProperty(id, null)
+    );
+    return data;
+  }
+  return loadProperty(id, viewer);
+}
+
+async function loadProperty(
+  id: string,
+  viewer: { userId: string; role: string } | null
 ) {
   const property = await findPropertyById(id);
   if (!property) throw new Error("Property not found");
@@ -88,7 +115,11 @@ export async function getPublishedProperties(
   offset: number,
   limit: number
 ) {
-  return findPublishedProperties(filters, offset, limit);
+  const { data, fromCache } = await getOrSet(
+    `browse:${JSON.stringify(filters)}:${offset}:${limit}`,
+    () => findPublishedProperties(filters, offset, limit)
+  );
+  return { ...data, fromCache };
 }
 
 // ------------------------------------------------------------
@@ -107,8 +138,16 @@ export async function updatePropertyForOwner(id: string, ownerId: string, data: 
     throw new Error("You do not have permission to update this property");
   }
 
-  // 3. Perform the update
-  return updateProperty(id, data);
+  // 3. Gate: only a VERIFIED owner may move a listing TO published.
+  // Drafts, unpublishing, archiving, and ordinary edits never touch it.
+  if (data.status === "PUBLISHED" && property.status !== "PUBLISHED") {
+    await requireVerifiedOwner(ownerId);
+  }
+
+  // 4. Perform the update
+  const updated = await updateProperty(id, data);
+  await invalidatePropertiesCache();
+  return updated;
 }
 
 // ------------------------------------------------------------
@@ -127,5 +166,27 @@ export async function deletePropertyForOwner(id: string, ownerId: string) {
   }
 
   // 3. Perform the delete
-  return deleteProperty(id);
+  const deleted = await deleteProperty(id);
+  await invalidatePropertiesCache();
+  return deleted;
+}
+// ------------------------------------------------------------
+// MODERATE PROPERTY (admin)
+// ------------------------------------------------------------
+// Takes a listing down: UNPUBLISHED or ARCHIVED. Unlike
+// updatePropertyForOwner this SKIPS the ownership check — the caller is
+// an admin, not the owner — so the admin routes must guard it with
+// requireAdmin (they do). Still validates the property exists.
+//
+// ARCHIVED is the admin's "delete": the row (and everything hanging off
+// it — applications, viewing requests, reports) survives; the listing
+// simply leaves the public marketplace.
+// ------------------------------------------------------------
+export async function moderateProperty(id: string, action: PropertyStatus) {
+  const property = await findPropertyById(id);
+  if (!property) throw new Error("Property not found");
+
+  const updated = await updateProperty(id, { status: action });
+  await invalidatePropertiesCache();
+  return updated;
 }

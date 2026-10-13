@@ -1,5 +1,6 @@
 import type { Request, Response } from "express";
 import type { PropertyType } from "../../generated/prisma/enums.js";
+import { readPagination } from "../utils/pagination.js";
 import {
   createPropertyForOwner,
   getPropertyById,
@@ -77,10 +78,13 @@ export async function CreateProperty(req: Request, res: Response) {
       property,
     });
   } catch (error) {
+    if (error instanceof Error && error.message.includes("verified")) {
+      res.status(403).json({ message: error.message });
+      return;
+    }
     res.status(500).json({ message: "Internal server error" });
   }
 }
-
 // ============================================================
 // GET PROPERTIES (public marketplace browse)
 // ============================================================
@@ -90,12 +94,12 @@ export async function CreateProperty(req: Request, res: Response) {
 // ============================================================
 export async function GetProperties(req: Request, res: Response) {
   // Read + validate query params. Defaults: offset 0, 10 per request.
-  const offset = Number(req.query.offset) || 0;
-  const limit = Number(req.query.limit) || 10;
-  if (offset < 0 || limit < 1) {
+  const pagination = readPagination(req);
+  if (!pagination) {
     res.status(400).json({ message: "offset must be >= 0 and limit must be >= 1" });
     return;
   }
+  const { offset, limit } = pagination;
 
   // Read the optional filter params.
   const { propertyType, city } = req.query;
@@ -121,13 +125,18 @@ export async function GetProperties(req: Request, res: Response) {
   if (minBedrooms > 0) filters.minBedrooms = minBedrooms;
 
   try {
-    const result = await getPublishedProperties(filters, offset, limit);
+    // fromCache is the cache signal (internal), not part of the body.
+    const { fromCache, ...result } = await getPublishedProperties(
+      filters,
+      offset,
+      limit
+    );
+    res.setHeader("X-Cache", fromCache ? "HIT" : "MISS");
     res.status(200).json(result);
   } catch (error) {
     res.status(500).json({ message: "Internal server error" });
   }
 }
-
 // Helper: only accept a `propertyType` value that matches a real enum member.
 function isPropertyType(value: string): boolean {
   return ["APARTMENT", "STUDIO", "HOUSE", "VILLA", "COMMERCIAL", "OTHER"].includes(value);
@@ -149,12 +158,12 @@ export async function GetMyProperties(req: Request, res: Response) {
   }
 
   // Read + validate query params. Defaults: offset 0, 10 per request.
-  const offset = Number(req.query.offset) || 0;
-  const limit = Number(req.query.limit) || 10;
-  if (offset < 0 || limit < 1) {
+  const pagination = readPagination(req);
+  if (!pagination) {
     res.status(400).json({ message: "offset must be >= 0 and limit must be >= 1" });
     return;
   }
+  const { offset, limit } = pagination;
 
   try {
     const result = await getMyProperties(ownerId, offset, limit);
@@ -163,7 +172,6 @@ export async function GetMyProperties(req: Request, res: Response) {
     res.status(500).json({ message: "Internal server error" });
   }
 }
-
 // ============================================================
 // GET PROPERTY BY ID
 // ============================================================
@@ -258,6 +266,10 @@ export async function UpdateProperty(req: Request, res: Response) {
       res.status(403).json({ message: error.message });
       return;
     }
+    if (error instanceof Error && error.message.includes("verified")) {
+      res.status(403).json({ message: error.message });
+      return;
+    }
     res.status(500).json({ message: "Internal server error" });
   }
 }
@@ -290,6 +302,10 @@ export async function DeleteProperty(req: Request, res: Response) {
       return;
     }
     if (error instanceof Error && error.message.includes("permission")) {
+      res.status(403).json({ message: error.message });
+      return;
+    }
+    if (error instanceof Error && error.message.includes("verified")) {
       res.status(403).json({ message: error.message });
       return;
     }

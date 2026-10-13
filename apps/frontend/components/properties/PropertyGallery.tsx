@@ -33,9 +33,10 @@ export default function PropertyGallery({
 
   useEffect(() => {
     let active = true;
-    setLoading(true);
 
     const load = async () => {
+      if (!active) return;
+      setLoading(true);
       try {
         const data = await getPropertyImages(propertyId);
         if (active) setImages(data);
@@ -46,7 +47,7 @@ export default function PropertyGallery({
       }
     };
 
-    load();
+    void load();
 
     return () => {
       active = false;
@@ -54,7 +55,11 @@ export default function PropertyGallery({
   }, [propertyId]);
 
   if (loading) {
-    return <div className="skeleton h-64 w-full" aria-hidden />;
+    // Same .detail-gallery box as the loaded state (fixed height in
+    // CSS, incl. responsive rules) so swapping in the real gallery
+    // shifts nothing — a shorter placeholder caused most of the
+    // detail page's CLS (0.70 before this change).
+    return <div className="detail-gallery skeleton" aria-hidden />;
   }
 
   if (images.length === 0) {
@@ -68,18 +73,34 @@ export default function PropertyGallery({
 
   return (
     <div className="detail-gallery">
+      {/* Main image is the detail page's LCP element: keep it eager and
+          prioritised. width/height reserve its intrinsic ratio. */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
         src={cover.url}
         alt="Listing photo"
         className="detail-main-image"
+        width={1200}
+        height={800}
+        fetchPriority="high"
+        decoding="async"
       />
 
       {thumbs.length > 0 && (
         <div className="detail-thumbs">
           {thumbs.map((image) => (
+            // Lazy: thumbs below the fold (and hidden on mobile via
+            // CSS) shouldn't download — they were ~440KB per page load.
             // eslint-disable-next-line @next/next/no-img-element
-            <img key={image.id} src={image.url} alt="Listing photo" />
+            <img
+              key={image.id}
+              src={image.url}
+              alt="Listing photo"
+              width={1200}
+              height={800}
+              loading="lazy"
+              decoding="async"
+            />
           ))}
         </div>
       )}

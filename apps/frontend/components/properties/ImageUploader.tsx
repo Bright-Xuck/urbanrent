@@ -1,16 +1,5 @@
 "use client";
 
-// ============================================================
-// IMAGE UPLOADER
-// ============================================================
-// File picker + selected-files list + upload button shared by the new and
-// edit pages. It owns which files are picked; the parent does the actual
-// upload (different endpoints / moments), so it just calls `onUpload(files)`
-// with what was picked.
-//
-// Backend limits to restate: max 5 files, 5 MB each, JPEG/PNG/WEBP.
-// ============================================================
-
 import { useState, type ChangeEvent } from "react";
 import { ImagePlus } from "lucide-react";
 import Alert from "../ui/Alert";

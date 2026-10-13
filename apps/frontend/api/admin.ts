@@ -1,0 +1,100 @@
+import type {
+  AccountState,
+  AdminUser,
+  PaginatedUsers,
+  Role,
+} from "./types";
+import { useAuthStore } from "../Store/useUserStore";
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL;
+
+
+// The query options GET /api/admin/users understands.
+export type AdminUserFilters = {
+  role?: Role;
+  accountState?: AccountState;
+};
+
+// The backend uses offset 0 and limit 10 when these are left out.
+export type Pagination = {
+  offset?: number;
+  limit?: number;
+};
+
+function buildQuery(filters: AdminUserFilters, pagination: Pagination): string {
+  const params = new URLSearchParams();
+
+  if (filters.role) params.set("role", filters.role);
+  if (filters.accountState) params.set("accountState", filters.accountState);
+  if (pagination.offset !== undefined) params.set("offset", String(pagination.offset));
+  if (pagination.limit !== undefined) params.set("limit", String(pagination.limit));
+
+  const query = params.toString();
+  return query ? `?${query}` : "";
+}
+
+// ------------------------------------------------------------
+// LIST — GET /api/admin/users
+// ------------------------------------------------------------
+// ADMIN only: the backend answers 403 for anyone else, which we throw
+// as a normal Error so the page can show it in an Alert.
+export async function getUsers(
+  filters: AdminUserFilters = {},
+  pagination: Pagination = {}
+): Promise<PaginatedUsers> {
+  const token = useAuthStore.getState().accessToken;
+  const response = await fetch(
+    `${API_URL}/admin/users${buildQuery(filters, pagination)}`,
+    { headers: token ? { Authorization: `Bearer ${token}` } : {} }
+  );
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.message || "Could not load users");
+  }
+
+  return data;
+}
+
+// ------------------------------------------------------------
+// SUSPEND — PATCH /api/admin/users/:id/suspend
+// ------------------------------------------------------------
+// For a LANDLORD this also flips their PUBLISHED listings to
+// UNPUBLISHED — one transaction on the backend.
+export async function suspendUser(id: string): Promise<AdminUser> {
+  const token = useAuthStore.getState().accessToken;
+  const response = await fetch(`${API_URL}/admin/users/${id}/suspend`, {
+    method: "PATCH",
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.message || "Could not suspend this user");
+  }
+
+  return data.user;
+}
+
+// ------------------------------------------------------------
+// REINSTATE — PATCH /api/admin/users/:id/reinstate
+// ------------------------------------------------------------
+// Only the account state flips; listings stay UNPUBLISHED (the landlord
+// republishes them manually).
+export async function reinstateUser(id: string): Promise<AdminUser> {
+  const token = useAuthStore.getState().accessToken;
+  const response = await fetch(`${API_URL}/admin/users/${id}/reinstate`, {
+    method: "PATCH",
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.message || "Could not reinstate this user");
+  }
+
+  return data.user;
+}

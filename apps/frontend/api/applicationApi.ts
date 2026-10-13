@@ -1,5 +1,7 @@
-import { useAuthStore } from "../Store/useUserStore";
 import type { Application, ApplicationStatus } from "./types";
+import { useAuthStore } from "../Store/useUserStore";
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 // ============================================================
 // APPLICATION API
@@ -10,8 +12,6 @@ import type { Application, ApplicationStatus } from "./types";
 //
 // Both are wrapped here so the rest of the app doesn't have to care.
 // ============================================================
-
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 // ------------------------------------------------------------
 // CREATE — POST /api/properties/:propertyId/applications (tenant only)
@@ -25,12 +25,11 @@ export async function createApplication(
   note?: string
 ): Promise<Application> {
   const token = useAuthStore.getState().accessToken;
-
   const response = await fetch(`${API_URL}/properties/${propertyId}/applications`, {
     method: "POST",
     headers: {
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
       "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
     },
     // Only send note when we have one. The backend saves null otherwise.
     body: JSON.stringify(note ? { note } : {}),
@@ -52,9 +51,8 @@ export async function createApplication(
 // Each one comes with the full property it was made against.
 export async function getMyApplications(): Promise<Application[]> {
   const token = useAuthStore.getState().accessToken;
-
   const response = await fetch(`${API_URL}/applications/mine`, {
-    headers: { Authorization: `Bearer ${token}` },
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
   });
 
   const data = await response.json();
@@ -73,9 +71,8 @@ export async function getMyApplications(): Promise<Application[]> {
 // applicant (tenant) included. A tenant calling this gets a 403.
 export async function getIncomingApplications(): Promise<Application[]> {
   const token = useAuthStore.getState().accessToken;
-
   const response = await fetch(`${API_URL}/applications/incoming`, {
-    headers: { Authorization: `Bearer ${token}` },
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
   });
 
   const data = await response.json();
@@ -93,9 +90,8 @@ export async function getIncomingApplications(): Promise<Application[]> {
 // Only the applicant, the property owner, or an admin can see it.
 export async function getApplicationById(id: string): Promise<Application> {
   const token = useAuthStore.getState().accessToken;
-
   const response = await fetch(`${API_URL}/applications/${id}`, {
-    headers: { Authorization: `Bearer ${token}` },
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
   });
 
   const data = await response.json();
@@ -122,12 +118,11 @@ export async function changeApplicationStatus(
   status: ApplicationStatus
 ): Promise<Application> {
   const token = useAuthStore.getState().accessToken;
-
   const response = await fetch(`${API_URL}/applications/${id}/status`, {
     method: "PATCH",
     headers: {
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
       "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
     },
     body: JSON.stringify({ status }),
   });

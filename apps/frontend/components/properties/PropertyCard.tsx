@@ -1,9 +1,8 @@
 // ============================================================
 // PROPERTY CARD
 // ============================================================
-// One card in a property grid (the home page's featured strip, the listing
-// page). Purely presentational — the page decides where it links and what
-// data to pass.
+// One card in a property grid. Loads the property's public cover image from
+// the existing image endpoint because browse rows contain no image URLs.
 //
 // Layout follows the demo card: photo on top with a status pill over it,
 // then price, title, address and a beds/baths/area meta row. The list
@@ -11,9 +10,13 @@
 // here — real photos appear on the detail page, which fetches them.
 // ============================================================
 
+"use client";
+
+import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Bath, BedDouble, MapPin, Ruler } from "lucide-react";
+import { Bath, BedDouble, Building2, MapPin, Ruler } from "lucide-react";
 import { formatXAF } from "../../lib/format";
+import { getPropertyImages } from "../../api/propertyApi";
 
 type PropertyCardProps = {
   title: string;
@@ -23,6 +26,10 @@ type PropertyCardProps = {
   bathrooms: number;
   sizeSqm?: number | null;
   monthlyRent: number;
+  /** True when the owner is a verified landlord — shows the trust badge. */
+  verified?: boolean;
+  propertyId?: string;
+  imageUrl?: string | null;
   /** A property status. Omitted on public browse, where every row is published. */
   status?: string;
   href: string;
@@ -51,25 +58,31 @@ export default function PropertyCard({
   bathrooms,
   sizeSqm,
   monthlyRent,
+  verified,
+  propertyId,
+  imageUrl,
   status,
   href,
 }: PropertyCardProps) {
   const pill = badgeFor(status);
-  const images = [
-    "1600585154340-be6161a56a0c",
-    "1600607687939-ce8a6c25118c",
-    "1600566753190-17f0baa2a6c3",
-    "1600047509807-ba8f99d2cdde",
-  ];
-  const image = `https://images.unsplash.com/photo-${images[title.length % images.length]}?auto=format&fit=crop&w=900&q=82`;
+  const [photo, setPhoto] = useState<string | null>(imageUrl ?? null);
+
+  useEffect(() => {
+    if (!propertyId || imageUrl) return;
+    let active = true;
+    getPropertyImages(propertyId)
+      .then((images) => { if (active && images[0]?.url) setPhoto(images[0].url); })
+      .catch(() => { if (active) setPhoto(null); });
+    return () => { active = false; };
+  }, [propertyId, imageUrl]);
 
   return (
     <Link href={href} className="property-card">
-      <div className="property-image">
+      <div className="property-image grid place-items-center bg-paper-dim">
         <span className={pill.muted ? "badge badge-muted" : "badge"}>
           {pill.label}
         </span>
-        <img src={image} alt="" />
+        {photo ? <img src={photo} alt={title} loading="lazy" decoding="async" onError={() => setPhoto(null)} /> : <div className="grid justify-items-center gap-2 text-ink-soft"><Building2 aria-hidden="true" className="h-8 w-8" /><span className="text-xs">{propertyId ? "No photos yet" : "View listing for photos"}</span></div>}
       </div>
 
       <div className="property-info">
@@ -82,6 +95,14 @@ export default function PropertyCard({
           {neighborhood ? `${neighborhood}, ` : ""}
           {city}
         </p>
+
+        <div className="property-owner">
+          {verified ? (
+            <span className="status-pill" data-tone="ok">
+              Verified landlord
+            </span>
+          ) : null}
+        </div>
 
         <div className="meta">
           <span>

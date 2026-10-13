@@ -1,57 +1,45 @@
 "use client";
 
-// ============================================================
-// NAVBAR — public / marketing site
-// ============================================================
-// Reads the session from the store, so what it shows depends on who is
-// logged in:
-//   nobody      → Log in icon + "Sign up" button
-//   signed in   → avatar, "Log out" + ONE role-appropriate primary CTA.
-//                 No Log in, no Sign up — you're already in.
-//
-// The signed-in area has its own bar (DashboardNavbar): once you're in,
-// the marketing pages show just a light "you're logged in" state, and
-// the dashboards carry the role-specific links (listings, applications,
-// viewings).
-//
-// Blog and the "Features" dropdown were removed — they were duplicate
-// clutter pointing at /properties.
-// ============================================================
-
 import Link from "next/link";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { ChevronDown, LogIn, LogOut, Plus, UserRound } from "lucide-react";
+import { LogIn, LogOut, Menu, Plus, UserRound, X } from "lucide-react";
 import { logout } from "../../api/userApi";
 import { useAuthStore } from "../../Store/useUserStore";
 
 export default function Navbar() {
   const router = useRouter();
   const user = useAuthStore((state) => state.user);
-  const clearSession = useAuthStore((state) => state.logout);
+  const initialized = useAuthStore((state) => state.initialized);
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   async function handleLogout() {
-    // If the cookie is already dead this throws — that's fine, we still
-    // want to clear the local session.
     try {
       await logout();
-    } catch {
-      // ignore and continue
+    } catch (error) {
+      window.alert(
+        error instanceof Error
+          ? `Signed out here, but the server did not confirm logout: ${error.message}`
+          : "Signed out here, but the server did not confirm logout."
+      );
+    } finally {
+      useAuthStore.getState().logout();
     }
-
-    clearSession();
-    router.push("/");
+    router.replace("/");
   }
 
-  // One primary CTA per state, no duplicates:
-  //   logged out  → "Sign up"     /register
-  //   TENANT      → "My applications"  /applications
-  //   LANDLORD / ADMIN → "My listings"  /dashboard
   const isTenant = user?.role === "TENANT";
-  const primaryHref = !user ? "/register" : isTenant ? "/applications" : "/dashboard";
+  const primaryHref = !user
+    ? "/register"
+    : isTenant
+      ? "/tenant/applications"
+      : user.role === "ADMIN"
+        ? "/admin"
+        : "/landlord/properties";
   const primaryLabel = !user ? "Sign up" : isTenant ? "My applications" : "My listings";
 
   return (
-    <header className="site-header">
+    <header className={`site-header${mobileOpen ? " mobile-open" : ""}`}>
       <div className="header-inner">
         <Link href="/" className="brand">
           <span
@@ -62,38 +50,22 @@ export default function Navbar() {
           <span className="font-display text-lg text-ink">UrbanRent</span>
         </Link>
 
-        <nav className="main-nav">
-          <Link className="active" href="/">Home</Link>
-
-          <div className="nav-dropdown">
-            <Link href="/properties">Properties <ChevronDown aria-hidden /></Link>
-            <div className="dropdown-menu">
-              <Link href="/properties">All properties</Link>
-              <Link href="/properties?propertyType=HOUSE">Houses</Link>
-              <Link href="/properties?propertyType=APARTMENT">Apartments</Link>
-            </div>
-          </div>
-
-          <Link href="/properties?propertyType=HOUSE">Property</Link>
-
-          <div className="nav-dropdown">
-            <Link href="/properties">Features <ChevronDown aria-hidden /></Link>
-            <div className="dropdown-menu compact">
-              <Link href="/properties">Find a home</Link>
-              <Link href="/properties">Rental guide</Link>
-            </div>
-          </div>
+        <nav className="main-nav" aria-label="Main navigation">
+          <Link className="active" href="/" onClick={() => setMobileOpen(false)}>Home</Link>
+          <Link href="/properties" onClick={() => setMobileOpen(false)}>Properties</Link>
 
           {user && user.role !== "TENANT" ? (
-            <Link href="/dashboard">Dashboard</Link>
+            <Link href={user?.role === "ADMIN" ? "/admin" : "/landlord/properties"} onClick={() => setMobileOpen(false)}>
+              Dashboard
+            </Link>
           ) : null}
         </nav>
 
         <div className="header-actions">
-          {user ? (
+          {initialized && user ? (
             <>
               <Link
-                href="/my-profile"
+                href="/profile"
                 className="user-icon"
                 aria-label="My profile"
                 title="My profile"
@@ -112,13 +84,13 @@ export default function Navbar() {
               <Link className="create-listing" href={primaryHref}>
                 {isTenant ? (
                   <UserRound className="h-5 w-5" aria-hidden />
-                ) : (
+                ) : initialized ? (
                   <Plus className="h-5 w-5" aria-hidden />
-                )}
+                ) : null}
                 {primaryLabel}
               </Link>
             </>
-          ) : (
+          ) : initialized ? (
             <>
               <Link
                 href="/login"
@@ -132,8 +104,24 @@ export default function Navbar() {
                 <Plus className="h-5 w-5" aria-hidden /> Sign up
               </Link>
             </>
-          )}
+          ) : null}
         </div>
+
+        <button className="mobile-menu-toggle" type="button" aria-label={mobileOpen ? "Close navigation menu" : "Open navigation menu"} aria-expanded={mobileOpen} aria-controls="mobile-navigation" onClick={() => setMobileOpen((open) => !open)}>
+          {mobileOpen ? <X size={21} /> : <Menu size={21} />}
+        </button>
+      </div>
+      <div className="mobile-navigation" id="mobile-navigation" aria-hidden={!mobileOpen}>
+        <nav aria-label="Mobile navigation">
+          <Link href="/" onClick={() => setMobileOpen(false)}>Home<span>01</span></Link>
+          <Link href="/properties" onClick={() => setMobileOpen(false)}>Properties<span>02</span></Link>
+          {user && user.role !== "TENANT" ? <Link href={user.role === "ADMIN" ? "/admin" : "/landlord/properties"} onClick={() => setMobileOpen(false)}>Dashboard<span>03</span></Link> : null}
+        </nav>
+        {initialized ? <div className="mobile-navigation-actions">
+          {user ? <Link href="/profile" onClick={() => setMobileOpen(false)}><UserRound size={17} />My profile</Link> : <Link href="/login" onClick={() => setMobileOpen(false)}><LogIn size={17} />Log in</Link>}
+          <Link className="mobile-primary-action" href={primaryHref} onClick={() => setMobileOpen(false)}>{user && !isTenant ? <Plus size={17} /> : null}{primaryLabel}<span aria-hidden>↗</span></Link>
+          {user ? <button type="button" onClick={handleLogout}><LogOut size={16} />Log out</button> : null}
+        </div> : null}
       </div>
     </header>
   );

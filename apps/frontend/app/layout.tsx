@@ -1,5 +1,6 @@
 import { Fraunces, Inter } from "next/font/google";
 import type { ReactNode } from "react";
+import { AuthBootstrap } from "../components/auth/AuthBootstrap";
 import "./globals.css";
 
 const fraunces = Fraunces({
@@ -16,14 +17,16 @@ const inter = Inter({
 });
 
 export const metadata = {
-  title: "RealPress – Real Estate Platform",
-  description: "Find your next property faster with RealPress.",
+  title: "UrbanRent | Find a home in Cameroon",
+  description: "Discover trusted rental homes in Buea, Douala, and Yaoundé.",
 };
 
 export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="en" className={`${fraunces.variable} ${inter.variable}`}>
-      <body className="font-sans antialiased">{children}</body>
+      <body className="font-sans antialiased">
+        <AuthBootstrap>{children}</AuthBootstrap>
+      </body>
     </html>
   );
 }

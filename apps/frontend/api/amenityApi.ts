@@ -1,5 +1,7 @@
-import { useAuthStore } from "../Store/useUserStore";
 import type { Amenity, PropertyAmenityLink, PropertyAmenityRow } from "./types";
+import { useAuthStore } from "../Store/useUserStore";
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 // ============================================================
 // AMENITY API
@@ -25,19 +27,13 @@ import type { Amenity, PropertyAmenityLink, PropertyAmenityRow } from "./types";
 //     row's own id
 // ============================================================
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL;
-
 // ------------------------------------------------------------
 // LIST — GET /api/properties/:propid
 // ------------------------------------------------------------
 export async function getPropertyAmenities(
   propertyId: string
 ): Promise<PropertyAmenityRow[]> {
-  // The token is sent when we have one, but this read is public — a logged-out
-  // visitor gets the chips too, so we send no header at all rather than
-  // `Bearer null`.
   const token = useAuthStore.getState().accessToken;
-
   const response = await fetch(`${API_URL}/properties/${propertyId}/amenities`, {
     headers: token ? { Authorization: `Bearer ${token}` } : {},
   });
@@ -68,12 +64,11 @@ export async function createAmenity(
   pictureurl?: string
 ): Promise<{ amenity: Amenity; link: PropertyAmenityLink }> {
   const token = useAuthStore.getState().accessToken;
-
   const response = await fetch(`${API_URL}/properties/${propertyId}/amenities`, {
     method: "POST",
     headers: {
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
       "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
     },
     body: JSON.stringify(pictureurl ? { name, pictureurl } : { name }),
   });
@@ -99,10 +94,9 @@ export async function deleteAmenity(
   amenityId: string
 ): Promise<Amenity> {
   const token = useAuthStore.getState().accessToken;
-
   const response = await fetch(`${API_URL}/properties/${propertyId}/amenities/${amenityId}`, {
     method: "DELETE",
-    headers: { Authorization: `Bearer ${token}` },
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
   });
 
   const data = await response.json();

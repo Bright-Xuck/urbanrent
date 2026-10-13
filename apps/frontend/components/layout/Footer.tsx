@@ -1,8 +1,7 @@
 // ============================================================
 // FOOTER
 // ============================================================
-// Static links to the real pages. Shown by the (site) and (app) route
-// group layouts — pages never render it themselves.
+// Static links to the public and supported tenant/landlord pages.
 //
 // Markup follows the demo footer: a brand column and three link columns,
 // then a bottom bar. The look is the existing `footer` / `.footer-grid` /
@@ -33,16 +32,16 @@ export default function Footer() {
         <div>
           <h4>For tenants</h4>
           <Link href="/properties">Browse listings</Link>
-          <Link href="/applications">Track an application</Link>
-          <Link href="/viewings">My viewings</Link>
+          <Link href="/tenant/applications">Track an application</Link>
+          <Link href="/tenant/viewings">My viewings</Link>
         </div>
 
         <div>
           <h4>For landlords</h4>
-          <Link href="/dashboard">My listings</Link>
-          <Link href="/dashboard/properties/new">List a property</Link>
-          <Link href="/dashboard/applications">Applications</Link>
-          <Link href="/dashboard/viewings">Viewing requests</Link>
+          <Link href="/landlord/properties">My listings</Link>
+          <Link href="/landlord/properties/new">List a property</Link>
+          <Link href="/landlord/applications">Applications</Link>
+          <Link href="/landlord/viewings">Viewing requests</Link>
         </div>
 
         <div>

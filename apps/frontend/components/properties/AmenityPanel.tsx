@@ -52,9 +52,10 @@ export default function AmenityPanel({
 
   useEffect(() => {
     let active = true;
-    setLoadError(null);
 
     const load = async () => {
+      if (!active) return;
+      setLoadError(null);
       try {
         const data = await getPropertyAmenities(propertyId);
         if (active) setRows(data);
@@ -69,7 +70,7 @@ export default function AmenityPanel({
       }
     };
 
-    load();
+    void load();
 
     return () => {
       active = false;

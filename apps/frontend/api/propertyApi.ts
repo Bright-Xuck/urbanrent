@@ -7,34 +7,7 @@ import type {
   PropertyType,
 } from "./types";
 
-
-
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
-
-
-async function readJson(response: Response): Promise<any> {
-  const text = await response.text();
-  if (!text) return {};
-  try {
-    return JSON.parse(text) as Record<string, any>;
-  } catch {
-    return { message: `Listings service unavailable (${response.status})` };
-  }
-}
-
-// ------------------------------------------------------------
-// AUTH HEADERS
-// ------------------------------------------------------------
-// The Authorization header for a signed-in caller, or an empty object for a
-// guest. This module's public routes (GET /properties/:id and its images)
-// accept either: with no header a visitor reads the published listing, and
-// with a token the backend can also recognise the OWNER (so they still see
-// their own draft). Note we send NO header when logged out — never a
-// literal `Bearer null`.
-function authHeaders(): Record<string, string> {
-  const token = useAuthStore.getState().accessToken;
-  return token ? { Authorization: `Bearer ${token}` } : {};
-}
 
 // The query options GET /api/properties understands.
 export type PropertyFilters = {
@@ -101,9 +74,12 @@ export async function getProperties(
   filters: PropertyFilters = {},
   pagination: Pagination = {}
 ): Promise<PaginatedProperties> {
-  const response = await fetch(`${API_URL}/properties${buildQuery(filters, pagination)}`);
+  const token = useAuthStore.getState().accessToken;
+  const response = await fetch(`${API_URL}/properties${buildQuery(filters, pagination)}`, {
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
+  });
 
-  const data = await readJson(response);
+  const data = await response.json();
 
   if (!response.ok) {
     throw new Error(data.message || "Could not load properties");
@@ -118,16 +94,14 @@ export async function getProperties(
 export async function getMyProperties(
   pagination: Pagination = {}
 ): Promise<PaginatedProperties> {
-  // The token we saved when the user logged in.
+  const query = buildQuery({}, pagination);
   const token = useAuthStore.getState().accessToken;
 
-  const query = buildQuery({}, pagination);
-
   const response = await fetch(`${API_URL}/properties/mine${query}`, {
-    headers: { Authorization: `Bearer ${token}` },
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
   });
 
-  const data = await readJson(response);
+  const data = await response.json();
 
   if (!response.ok) {
     throw new Error(data.message || "Could not load your properties");
@@ -139,16 +113,14 @@ export async function getMyProperties(
 // ------------------------------------------------------------
 // SINGLE — GET /api/properties/:id
 // ------------------------------------------------------------
-// Public: a logged-out visitor can read a published listing. The token is
-// sent when we have one, because the backend uses it to tell whether the
-// caller is the OWNER (who may also view their own draft/unpublished
-// listing) or just another visitor.
+// Owners can also read their own unpublished listings.
 export async function getPropertyById(id: string): Promise<Property> {
+  const token = useAuthStore.getState().accessToken;
   const response = await fetch(`${API_URL}/properties/${id}`, {
-    headers: authHeaders(),
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
   });
 
-  const data = await readJson(response);
+  const data = await response.json();
 
   if (!response.ok) {
     throw new Error(data.message || "Could not load this property");
@@ -163,17 +135,16 @@ export async function getPropertyById(id: string): Promise<Property> {
 // ------------------------------------------------------------
 export async function createProperty(input: CreatePropertyInput): Promise<Property> {
   const token = useAuthStore.getState().accessToken;
-
   const response = await fetch(`${API_URL}/properties`, {
     method: "POST",
     headers: {
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
       "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
     },
     body: JSON.stringify(input),
   });
 
-  const data = await readJson(response);
+  const data = await response.json();
 
   if (!response.ok) {
     throw new Error(data.message || "Could not create the property");
@@ -190,17 +161,16 @@ export async function updateProperty(
   input: UpdatePropertyInput
 ): Promise<Property> {
   const token = useAuthStore.getState().accessToken;
-
   const response = await fetch(`${API_URL}/properties/${id}`, {
     method: "PATCH",
     headers: {
+      ...(token ? { Authorization: `Bearer ${token}` } : {}),
       "Content-Type": "application/json",
-      Authorization: `Bearer ${token}`,
     },
     body: JSON.stringify(input),
   });
 
-  const data = await readJson(response);
+  const data = await response.json();
 
   if (!response.ok) {
     throw new Error(data.message || "Could not update the property");
@@ -236,14 +206,13 @@ export function archiveProperty(id: string): Promise<Property> {
 // ------------------------------------------------------------
 export async function deleteProperty(id: string): Promise<void> {
   const token = useAuthStore.getState().accessToken;
-
   const response = await fetch(`${API_URL}/properties/${id}`, {
     method: "DELETE",
-    headers: { Authorization: `Bearer ${token}` },
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
   });
 
   if (!response.ok) {
-    const data = await readJson(response);
+    const data = await response.json();
     throw new Error(data.message || "Could not delete the property");
   }
 }
@@ -255,21 +224,20 @@ export async function deleteProperty(id: string): Promise<void> {
 // set a Content-Type header: the browser sets multipart/form-data itself,
 // because the value has to include a boundary string.
 export async function uploadPropertyImages(id: string, images: File[]): Promise<string> {
-  const token = useAuthStore.getState().accessToken;
-
   const formData = new FormData();
 
   for (const image of images) {
     formData.append("images", image);
   }
 
+  const token = useAuthStore.getState().accessToken;
   const response = await fetch(`${API_URL}/properties/${id}/images`, {
     method: "POST",
-    headers: { Authorization: `Bearer ${token}` },
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
     body: formData,
   });
 
-  const data = await readJson(response);
+  const data = await response.json();
 
   if (!response.ok) {
     throw new Error(data.message || "Could not upload the images");
@@ -283,11 +251,12 @@ export async function uploadPropertyImages(id: string, images: File[]): Promise<
 // ------------------------------------------------------------
 // Public, same as the listing itself — see getPropertyById above.
 export async function getPropertyImages(id: string): Promise<PropertyImage[]> {
+  const token = useAuthStore.getState().accessToken;
   const response = await fetch(`${API_URL}/properties/${id}/images`, {
-    headers: authHeaders(),
+    headers: token ? { Authorization: `Bearer ${token}` } : {},
   });
 
-  const data = await readJson(response);
+  const data = await response.json();
 
   if (!response.ok) {
     throw new Error(data.message || "Could not load the images");

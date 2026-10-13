@@ -30,25 +30,6 @@ import { Input } from "../ui/Fields";
 
 export type ViewingAction = "confirm" | "decline" | "complete" | "no_show";
 
-/** DECLINED / COMPLETED / NO_SHOW have no outgoing transitions. */
-export function viewingIsClosed(request: ViewingRequest): boolean {
-  return (
-    request.status === "DECLINED" ||
-    request.status === "COMPLETED" ||
-    request.status === "NO_SHOW"
-  );
-}
-
-/** Only the property owner (or an admin) may drive the status. */
-export function landlordCanManageViewing(
-  request: ViewingRequest,
-  userId: string,
-  role: Role,
-): boolean {
-  if (role === "ADMIN") return true;
-  return !!request.property?.owner?.id && request.property.owner.id === userId;
-}
-
 type ViewingActionsProps = {
   request: ViewingRequest;
   userId: string;
@@ -72,19 +53,34 @@ export default function ViewingActions({
     proposed[0] ? toDateTimeLocal(proposed[0]) : "",
   );
 
-  if (viewingIsClosed(request)) {
+  /** DECLINED / COMPLETED / NO_SHOW have no outgoing transitions. */
+  function viewingIsClosed(): boolean {
+    return (
+      request.status === "DECLINED" ||
+      request.status === "COMPLETED" ||
+      request.status === "NO_SHOW"
+    );
+  }
+
+  /** Only the property owner (or an admin) may drive the status. */
+  function landlordCanManageViewing(): boolean {
+    if (role === "ADMIN") return true;
+    return !!request.property?.owner?.id && request.property.owner.id === userId;
+  }
+
+  if (viewingIsClosed()) {
     return (
       <p className="alert alert-info mt-6">
         This viewing request is closed — a {request.status.toLowerCase()} viewing
-        can't be changed.
+        can&apos;t be changed.
       </p>
     );
   }
 
-  if (!landlordCanManageViewing(request, userId, role)) {
+  if (!landlordCanManageViewing()) {
     return (
       <p className="alert alert-info mt-6">
-        Only the landlord decides whether this viewing goes ahead. You'll see the
+        Only the landlord decides whether this viewing goes ahead. You&apos;ll see the
         confirmed time here once they do.
       </p>
     );
@@ -146,7 +142,7 @@ export default function ViewingActions({
       {request.status === "CONFIRMED" && (
         <div className="flex flex-wrap gap-3">
           <p className="w-full">
-            After the viewing, record what happened — it's part of the record.
+            After the viewing, record what happened — it&apos;s part of the record.
           </p>
           <Button
             variant="success"
