@@ -74,6 +74,8 @@ export type Property = {
   owner?: PropertyOwnerVerification;
   createdAt: string;
   updatedAt: string;
+  /** The browse/detail endpoints include the first public image when available. */
+  images?: PropertyImage[];
 };
 
 // The trimmed owner the backend selects when it includes a property on

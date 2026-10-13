@@ -2,7 +2,7 @@ import type { Request, Response } from "express";
 import { createHash } from "node:crypto";
 import rateLimit, { HOUR, MINUTE, ipKeyGenerator } from "express-rate-limit";
 import { RedisStore } from "rate-limit-redis";
-import redis from "../config/redis.js";
+import redis, { redisAvailable } from "../config/redis.js";
 
 // ============================================================
 // RATE LIMITERS
@@ -39,6 +39,13 @@ function createRateLimiter({
   limit,
   keyGenerator,
 }: LimiterOptions) {
+  const store = redisAvailable
+    ? new RedisStore({
+        prefix: `rl:${prefix}:`,
+        sendCommand: (...args: string[]) => redis.sendCommand(args),
+      })
+    : undefined;
+
   return rateLimit({
     windowMs,
     limit,
@@ -46,10 +53,9 @@ function createRateLimiter({
     // across restarts (an in-memory counter resets on every deploy and
     // doubles when you run two instances). One store per limiter, keyed
     // by prefix, so their counters never collide.
-    store: new RedisStore({
-      prefix: `rl:${prefix}:`,
-      sendCommand: (...args: string[]) => redis.sendCommand(args),
-    }),
+    ...(store ? { store } : {}),
+    // A Redis outage must never turn a normal API request into a 500.
+    passOnStoreError: true,
     standardHeaders: true, // RateLimit-Limit / -Remaining / -Reset
     legacyHeaders: false, // no old X-RateLimit-* headers
     ...(keyGenerator ? { keyGenerator } : {}),

@@ -29,6 +29,7 @@ type PropertyCardProps = {
   /** True when the owner is a verified landlord — shows the trust badge. */
   verified?: boolean;
   propertyId?: string;
+  imageUrl?: string | null;
   /** A property status. Omitted on public browse, where every row is published. */
   status?: string;
   href: string;
@@ -59,20 +60,21 @@ export default function PropertyCard({
   monthlyRent,
   verified,
   propertyId,
+  imageUrl,
   status,
   href,
 }: PropertyCardProps) {
   const pill = badgeFor(status);
-  const [photo, setPhoto] = useState<string | null>(null);
+  const [photo, setPhoto] = useState<string | null>(imageUrl ?? null);
 
   useEffect(() => {
-    if (!propertyId) return;
+    if (!propertyId || imageUrl) return;
     let active = true;
     getPropertyImages(propertyId)
       .then((images) => { if (active && images[0]?.url) setPhoto(images[0].url); })
       .catch(() => { if (active) setPhoto(null); });
     return () => { active = false; };
-  }, [propertyId]);
+  }, [propertyId, imageUrl]);
 
   return (
     <Link href={href} className="property-card">

@@ -195,6 +195,7 @@ function BrowseContent() {
                 <PropertyCard
                   key={property.id}
                   propertyId={property.id}
+                  imageUrl={property.images?.[0]?.url}
                   title={property.title}
                   city={property.city}
                   neighborhood={property.neighborhood ?? undefined}

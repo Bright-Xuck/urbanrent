@@ -1,4 +1,4 @@
-import redis from "../config/redis.js";
+import redis, { redisAvailable } from "../config/redis.js";
 
 // ============================================================
 // PROPERTY CACHE
@@ -26,6 +26,7 @@ export async function getOrSet<T>(
   let cacheKey: string | null = null;
 
   try {
+    if (!redisAvailable) throw new Error("Redis unavailable");
     const version = (await redis.get(VERSION_KEY)) ?? "0";
     cacheKey = `properties:${version}:${key}`;
     const cached = await redis.get(cacheKey);
@@ -40,6 +41,7 @@ export async function getOrSet<T>(
   const fresh = await loader();
 
   try {
+    if (!redisAvailable) return { data: fresh, fromCache: false };
     if (cacheKey) {
       await redis.set(cacheKey, JSON.stringify(fresh), { EX: TTL_SECONDS });
     }
@@ -54,6 +56,7 @@ export async function getOrSet<T>(
 // moderate): bumps the version, orphaning all cached responses.
 export async function invalidatePropertiesCache() {
   try {
+    if (!redisAvailable) return;
     await redis.incr(VERSION_KEY);
   } catch {
     // If the bump fails the cache just lives out its TTL.
