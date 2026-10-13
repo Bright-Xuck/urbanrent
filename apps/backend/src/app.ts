@@ -14,6 +14,8 @@ import { apiLimiter } from './middleware/rateLimit.js';
 import cors from 'cors'
 import cookieParser from 'cookie-parser'
 import compression from 'compression'
+import swaggerUi from 'swagger-ui-express';
+import { openApiSpecification } from './config/openapi.js';
 
 const app: Express = express();
 
@@ -50,12 +52,43 @@ app.use(cookieParser())
 // already-compressed content (image bytes) is skipped automatically.
 app.use(compression())
 
+/**
+ * @swagger
+ * /health:
+ *   get:
+ *     tags: [Health]
+ *     summary: Check API health
+ *     responses:
+ *       200:
+ *         description: The API is running.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               type: object
+ *               required: [ok, message]
+ *               properties:
+ *                 ok:
+ *                   type: boolean
+ *                   example: true
+ *                 message:
+ *                   type: string
+ *                   example: Server is running
+ */
 app.get('/health', (_req, res) => {
   res.json({ ok: true, message: 'Server is running' });
 });
 
-// Global rate limit for all API traffic (mounted on /api only, so
-// uptime checks on /health never count against anyone).
+app.get('/api/docs.json', (_req, res) => {
+  res.json(openApiSpecification);
+});
+app.use(
+  '/api/docs',
+  swaggerUi.serve,
+  swaggerUi.setup(openApiSpecification, { customSiteTitle: 'UrbanRent API Docs' }),
+);
+
+// Global API rate limit. Health checks and the public documentation routes
+// are registered above this limiter and do not consume API request budget.
 app.use('/api', apiLimiter);
 
 app.use('/api/auth', authRoutes);

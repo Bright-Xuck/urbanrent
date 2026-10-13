@@ -36,3 +36,5 @@ services:
       # https://urbanrent.vercel.app,https://urbanrent-*.vercel.app
       - key: FRONTEND_ORIGIN
         sync: false
+      - key: API_BASE_URL
+        value: https://urbanrent-api.onrender.com
