@@ -243,6 +243,11 @@ h1,h2,h3,h4{color:var(--rp-ink);font-weight:700;letter-spacing:-.2px;line-height
 .empty-state a:hover{text-decoration:underline}
 .loading-line{color:var(--rp-body);font-size:15px;padding:12px 0}
 .skeleton{border-radius:var(--rp-radius);background:linear-gradient(90deg,#f1f4f8 25%,#e8edf4 37%,#f1f4f8 63%);background-size:400% 100%;animation:rp-shimmer 1.4s ease infinite}
+/* The gallery placeholder must occupy the SAME box as the loaded gallery
+   (mobile: 300px main image with thumbs hidden; desktop: 520px grid),
+   otherwise swapping states shifts everything below it (measured CLS). */
+.detail-gallery.skeleton{height:300px}
+@media(min-width:769px){.detail-gallery.skeleton{height:520px}}
 @keyframes rp-shimmer{0%{background-position:100% 50%}100%{background-position:0 50%}}
 
 /* ---------------- auth pages ---------------- */

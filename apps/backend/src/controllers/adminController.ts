@@ -1,6 +1,7 @@
 import type { Request, Response } from "express";
 import type { AccountState, Role } from "../../generated/prisma/enums.js";
 import type { UserFilters } from "../repositories/userRepository.js";
+import { readPagination } from "../utils/pagination.js";
 import {
   listUsers,
   getUserById,
@@ -12,12 +13,12 @@ import {
 
 // GET /api/admin/users?offset=0&limit=10&role=LANDLORD&accountState=SUSPENDED
 export async function GetUsers(req: Request, res: Response) {
-  const offset = Number(req.query.offset) || 0;
-  const limit = Number(req.query.limit) || 10;
-  if (offset < 0 || limit < 1) {
+  const pagination = readPagination(req);
+  if (!pagination) {
     res.status(400).json({ message: "offset must be >= 0 and limit must be >= 1" });
     return;
   }
+  const { offset, limit } = pagination;
 
   const { role, accountState } = req.query;
   const filters: UserFilters = {};

@@ -6,6 +6,7 @@ import {
   reviewReport,
 } from "../services/reportService.js";
 import { moderateProperty } from "../services/propertyService.js";
+import { readPagination } from "../utils/pagination.js";
 
 const REPORT_REASONS = ["SCAM_OR_FRAUD", "MISLEADING_INFORMATION", "ALREADY_RENTED", "OTHER"];
 const REPORT_STATUSES = ["OPEN", "REVIEWED", "DISMISSED"];
@@ -60,12 +61,12 @@ export async function CreateReport(req: Request, res: Response) {
 
 // GET /api/admin/reports?offset=0&limit=10&status=OPEN
 export async function GetReports(req: Request, res: Response) {
-  const offset = Number(req.query.offset) || 0;
-  const limit = Number(req.query.limit) || 10;
-  if (offset < 0 || limit < 1) {
+  const pagination = readPagination(req);
+  if (!pagination) {
     res.status(400).json({ message: "offset must be >= 0 and limit must be >= 1" });
     return;
   }
+  const { offset, limit } = pagination;
 
   const { status } = req.query;
   if (status !== undefined && !REPORT_STATUSES.includes(status as string)) {

@@ -60,37 +60,42 @@ export async function uploadVerificationDocument(
   }
 }
 
-// Signed read link for ONE document (admin queue view + detail).
-export async function signDocumentUrl(storagePath: string) {
+// Signed read links for MANY documents in ONE request. Supabase signs
+// a batch of paths in a single REST call; the queue used to make one
+// signing request per document (10 docs = 10 roundtrips).
+async function signDocumentUrls(paths: string[]) {
+  if (paths.length === 0) return new Map<string, string>();
+
   const { data, error } = await supabase.storage
     .from(bucket)
-    .createSignedUrl(storagePath, SIGNED_URL_TTL);
+    .createSignedUrls(paths, SIGNED_URL_TTL);
   if (error) throw new Error(error.message);
-  return data.signedUrl;
+
+  return new Map((data ?? []).map((entry) => [entry.path, entry.signedUrl]));
 }
 
 // MY DOCUMENTS — the landlord's own uploads (each with a fresh read link).
 export async function getMyDocuments(userId: string) {
   const documents = await findDocumentsByUser(userId);
+  const urls = await signDocumentUrls(documents.map((d) => d.storagePath));
 
-  return Promise.all(
-    documents.map(async (document) => ({
-      ...document,
-      viewUrl: await signDocumentUrl(document.storagePath),
-    }))
-  );
+  return documents.map((document) => ({
+    ...document,
+    viewUrl: urls.get(document.storagePath),
+  }));
 }
 
 // ADMIN REVIEW QUEUE — pending docs, oldest first, each with a read link.
 export async function getPendingDocuments(offset: number, limit: number) {
   const result = await findPendingDocuments(offset, limit);
-
-  const documents = await Promise.all(
-    result.documents.map(async (document) => ({
-      ...document,
-      viewUrl: await signDocumentUrl(document.storagePath),
-    }))
+  const urls = await signDocumentUrls(
+    result.documents.map((d) => d.storagePath)
   );
+
+  const documents = result.documents.map((document) => ({
+    ...document,
+    viewUrl: urls.get(document.storagePath),
+  }));
 
   return { ...result, documents };
 }

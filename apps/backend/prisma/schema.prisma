@@ -163,6 +163,12 @@ model Property {
   reports          PropertyReport[]
 
   @@index([ownerId])
+  // The public browse query is always: WHERE status = $1 ORDER BY
+  // created_at DESC. Measured on 20k rows (EXPLAIN ANALYZE): without
+  // this the planner seq-scans all 20k rows (9.7ms first page); with
+  // it the first page is a 0.1ms index range scan. Same shape the
+  // marketplace will always use.
+  @@index([status, createdAt])
   @@map("properties")
 }
 

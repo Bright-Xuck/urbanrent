@@ -1,6 +1,7 @@
 import type { Request, Response } from "express";
 import type { VerificationDocumentType } from "../../generated/prisma/enums.js";
 import { findUserById } from "../repositories/userRepository.js";
+import { readPagination } from "../utils/pagination.js";
 import {
   getMyDocuments,
   getPendingDocuments,
@@ -72,12 +73,12 @@ export async function GetMyVerificationDocuments(req: Request, res: Response) {
 
 // GET /api/admin/verification/pending
 export async function GetPendingDocuments(req: Request, res: Response) {
-  const offset = Number(req.query.offset) || 0;
-  const limit = Number(req.query.limit) || 10;
-  if (offset < 0 || limit < 1) {
+  const pagination = readPagination(req);
+  if (!pagination) {
     res.status(400).json({ message: "offset must be >= 0 and limit must be >= 1" });
     return;
   }
+  const { offset, limit } = pagination;
 
   try {
     const result = await getPendingDocuments(offset, limit);

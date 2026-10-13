@@ -88,8 +88,12 @@ export default function PropertyDetailPage() {
   }, [id]);
 
   if (loading) {
+    // Reserve roughly the height of the loaded page (~2.7k px measured
+    // in Lighthouse) so the footer — which sits high on the short shell
+    // — doesn't get shoved down when the client-side fetch resolves.
+    // That pop was the single biggest CLS source on this page (0.70).
     return (
-      <div className="rp-container detail-page">
+      <div className="rp-container detail-page min-h-[2700px]">
         <Loading text="Loading listing…" />
       </div>
     );

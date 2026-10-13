@@ -1,5 +1,6 @@
 import type { Request, Response } from "express";
 import type { PropertyType } from "../../generated/prisma/enums.js";
+import { readPagination } from "../utils/pagination.js";
 import {
   createPropertyForOwner,
   getPropertyById,
@@ -93,12 +94,12 @@ export async function CreateProperty(req: Request, res: Response) {
 // ============================================================
 export async function GetProperties(req: Request, res: Response) {
   // Read + validate query params. Defaults: offset 0, 10 per request.
-  const offset = Number(req.query.offset) || 0;
-  const limit = Number(req.query.limit) || 10;
-  if (offset < 0 || limit < 1) {
+  const pagination = readPagination(req);
+  if (!pagination) {
     res.status(400).json({ message: "offset must be >= 0 and limit must be >= 1" });
     return;
   }
+  const { offset, limit } = pagination;
 
   // Read the optional filter params.
   const { propertyType, city } = req.query;
@@ -157,12 +158,12 @@ export async function GetMyProperties(req: Request, res: Response) {
   }
 
   // Read + validate query params. Defaults: offset 0, 10 per request.
-  const offset = Number(req.query.offset) || 0;
-  const limit = Number(req.query.limit) || 10;
-  if (offset < 0 || limit < 1) {
+  const pagination = readPagination(req);
+  if (!pagination) {
     res.status(400).json({ message: "offset must be >= 0 and limit must be >= 1" });
     return;
   }
+  const { offset, limit } = pagination;
 
   try {
     const result = await getMyProperties(ownerId, offset, limit);

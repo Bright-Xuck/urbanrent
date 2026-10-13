@@ -13,6 +13,7 @@ import propertyReportRoutes from "./routes/propertyReportRoutes.js"
 import { apiLimiter } from './middleware/rateLimit.js';
 import cors from 'cors'
 import cookieParser from 'cookie-parser'
+import compression from 'compression'
 
 const app: Express = express();
 
@@ -42,6 +43,12 @@ app.use(
   }),
 )
 app.use(cookieParser())
+
+// Gzip JSON responses before they leave the server. JSON compresses
+// ~5-8x, which matters more the bigger the payloads get (property
+// lists, admin queues). Registered early so every route benefits;
+// already-compressed content (image bytes) is skipped automatically.
+app.use(compression())
 
 app.get('/health', (_req, res) => {
   res.json({ ok: true, message: 'Server is running' });
