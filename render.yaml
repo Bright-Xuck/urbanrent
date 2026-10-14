@@ -35,8 +35,8 @@ services:
       # Comma-separated list of allowed frontend origins, e.g.
       # https://urbanrent-eta.vercel.app
       - key: FRONTEND_ORIGIN
-        sync: false
+        value: https://urbanrent-eta.vercel.app
       - key: API_BASE_URL
         value: https://urbanrent.onrender.com
       - key: GOOGLE_CLIENT_ID
-        sync: false
+        value: 401929235846-4n0rk0mpjst4qn53tgkch56mpsq3oth8.apps.googleusercontent.com
