@@ -4,7 +4,7 @@
 # (Root Directory: apps/frontend).
 services:
   - type: web
-    name: urbanrent-api
+    name: urbanrent
     runtime: node
     plan: free
     rootDir: apps/backend
@@ -33,10 +33,10 @@ services:
       - key: COOKIE_SAMESITE
         value: none
       # Comma-separated list of allowed frontend origins, e.g.
-      # https://urbanrent.vercel.app,https://urbanrent-*.vercel.app
+      # https://urbanrent-eta.vercel.app
       - key: FRONTEND_ORIGIN
         sync: false
       - key: API_BASE_URL
-        value: https://urbanrent-api.onrender.com
+        value: https://urbanrent.onrender.com
       - key: GOOGLE_CLIENT_ID
         sync: false
