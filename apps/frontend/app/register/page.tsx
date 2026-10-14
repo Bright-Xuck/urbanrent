@@ -8,6 +8,8 @@ import { register } from "../../api/userApi";
 import type { RegistrationRole } from "../../api/types";
 import { Input } from "../../components/ui/Fields";
 import Alert from "../../components/ui/Alert";
+import { AuthShell } from "../../components/auth/AuthShell";
+import { GoogleAuthButton } from "../../components/auth/GoogleAuthButton";
 
 export default function RegisterPage() {
   const router = useRouter();
@@ -41,18 +43,13 @@ export default function RegisterPage() {
   }
 
   return (
-    <div className="auth-wrap">
-      <div className="auth-card">
-        <div className="auth-brand">
-          <span className="mark">UR</span>
-          <span className="font-display text-lg text-ink">UrbanRent</span>
-        </div>
-
+    <AuthShell>
+        <span className="auth-form-eyebrow">GET STARTED</span>
         <h1>Create your account</h1>
         <p className="muted">
           Already have one?{" "}
           <Link href="/login" className="link">
-            Log in
+            Sign in <span aria-hidden="true">→</span>
           </Link>
         </p>
 
@@ -84,7 +81,12 @@ export default function RegisterPage() {
           </div>
         </fieldset>
 
-        <form className="mt-6" onSubmit={handleSubmit}>
+        <div className="auth-provider auth-provider-signup">
+          <GoogleAuthButton mode="signup" role={role} />
+        </div>
+        <div className="auth-divider"><span>or use your email</span></div>
+
+        <form className="auth-form" onSubmit={handleSubmit}>
           <Input
             name="email"
             label="Email"
@@ -116,7 +118,6 @@ export default function RegisterPage() {
             the information above is accurate.
           </p>
         </form>
-      </div>
-    </div>
+    </AuthShell>
   );
 }

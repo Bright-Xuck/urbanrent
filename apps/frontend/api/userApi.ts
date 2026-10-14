@@ -1,3 +1,4 @@
+import type { RegistrationRole } from "./types";
 import type { User } from "../Store/useUserStore";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
@@ -30,6 +31,26 @@ export async function login(email: string, password: string): Promise<AuthRespon
 
   if (!response.ok) {
     throw new Error(data.message || "Could not log you in");
+  }
+
+  return data;
+}
+
+export async function loginWithGoogle(
+  credential: string,
+  role?: RegistrationRole
+): Promise<AuthResponse> {
+  const response = await fetch(`${API_URL}/auth/google`, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({ credential, ...(role ? { role } : {}) }),
+    credentials: "include",
+  });
+
+  const data = await response.json();
+
+  if (!response.ok) {
+    throw new Error(data.message || "Could not sign in with Google");
   }
 
   return data;

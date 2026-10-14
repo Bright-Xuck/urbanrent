@@ -1,5 +1,12 @@
 import type { Request, Response } from "express";
-import { registerUser, loginUser, refreshAccessToken, logoutUser } from "../services/userService.js";
+import {
+    GoogleAuthenticationError,
+    loginUser,
+    loginWithGoogle,
+    logoutUser,
+    refreshAccessToken,
+    registerUser,
+} from "../services/userService.js";
 
 const refreshCookieOptions = {
     httpOnly: true,
@@ -66,6 +73,41 @@ export async function Login(req: Request, res: Response) {
             return;
         }
 
+        res.status(500).json({ message: "Internal server error" });
+    }
+}
+
+export async function GoogleLogin(req: Request, res: Response) {
+    const { credential, role } = req.body ?? {};
+    if (typeof credential !== "string" || credential.length === 0) {
+        res.status(400).json({ message: "Google credential is required" });
+        return;
+    }
+    if (role !== undefined && role !== "TENANT" && role !== "LANDLORD") {
+        res.status(400).json({ message: "role must be TENANT or LANDLORD" });
+        return;
+    }
+
+    try {
+        const result = await loginWithGoogle(credential, role);
+        res.cookie("RefreshToken", result.refreshToken, {
+            ...refreshCookieOptions,
+            maxAge: 7 * 24 * 60 * 60 * 1000,
+        });
+        res.status(result.created ? 201 : 200).json({
+            message: result.created ? "Google account created successfully" : "Login successful",
+            user: {
+                id: result.user.id,
+                email: result.user.email,
+                role: result.user.role,
+            },
+            accessToken: result.accessToken,
+        });
+    } catch (error) {
+        if (error instanceof GoogleAuthenticationError) {
+            res.status(error.statusCode).json({ message: error.message });
+            return;
+        }
         res.status(500).json({ message: "Internal server error" });
     }
 }

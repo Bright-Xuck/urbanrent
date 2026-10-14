@@ -18,9 +18,42 @@ export async function createUser(data: CreateUserInput) {
   });
 }
 
+export async function createGoogleUser(data: {
+  email: string;
+  googleId: string;
+  role: Role;
+}) {
+  return prisma.user.create({
+    data: {
+      email: data.email,
+      googleId: data.googleId,
+      role: data.role,
+    },
+  });
+}
+
 export async function findUserByEmail(email: string) {
   return prisma.user.findUnique({
     where: { email },
+  });
+}
+
+export async function findUserByEmailInsensitive(email: string) {
+  return prisma.user.findFirst({
+    where: { email: { equals: email, mode: "insensitive" } },
+  });
+}
+
+export async function findUserByGoogleId(googleId: string) {
+  return prisma.user.findUnique({
+    where: { googleId },
+  });
+}
+
+export async function linkGoogleAccount(userId: string, googleId: string) {
+  return prisma.user.updateMany({
+    where: { id: userId, googleId: null },
+    data: { googleId },
   });
 }
 

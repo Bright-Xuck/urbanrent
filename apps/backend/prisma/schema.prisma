@@ -93,7 +93,8 @@ enum PropertyReportStatus {
 model User {
   id                String            @id @default(uuid()) @db.Uuid
   email             String            @unique
-  passwordHash      String
+  passwordHash      String?
+  googleId          String?           @unique @map("google_id")
   role              Role
   verificationState VerificationState @default(UNVERIFIED)
   accountState      AccountState      @default(ACTIVE)
