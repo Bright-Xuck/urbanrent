@@ -1,8 +1,29 @@
 import bcrypt from "bcryptjs";
-import { createUser, findUserByEmail, findUserById } from "../repositories/userRepository.js";
+import { OAuth2Client } from "google-auth-library";
+import {
+  createGoogleUser,
+  createUser,
+  findUserByEmail,
+  findUserByEmailInsensitive,
+  findUserByGoogleId,
+  findUserById,
+  linkGoogleAccount,
+} from "../repositories/userRepository.js";
 import { createSession, findSessionByTokenHash, revokeSession } from "../repositories/sessionRepository.js";
 import { Role } from "../../generated/prisma/enums.js";
 import { signAccessToken, signRefreshToken, verifyRefreshToken, hashRefreshToken } from "../utils/token.js";
+
+const googleOAuthClient = new OAuth2Client();
+
+export class GoogleAuthenticationError extends Error {
+  constructor(
+    message: string,
+    readonly statusCode: number
+  ) {
+    super(message);
+    this.name = "GoogleAuthenticationError";
+  }
+}
 
 // ============================================================
 // USER SERVICE - Business Logic Layer
@@ -42,26 +63,136 @@ export async function registerUser(data: { email: string; password: string, role
 export async function loginUser(data: { email: string; password: string }) {
   // 1. Find the user by email
   const user = await findUserByEmail(data.email);
-  if (!user) throw new Error("Invalid email or password");
+  if (!user?.passwordHash) throw new Error("Invalid email or password");
 
   // 2. Check the password matches the stored hash
   const valid = await bcrypt.compare(data.password, user.passwordHash);
   if (!valid) throw new Error("Invalid email or password");
 
-  // 3. Create the ACCESS token (15 min, sent on API calls)
+  return { user, ...(await createLoginSession(user)) };
+}
+
+export async function loginWithGoogle(
+  credential: string,
+  role?: "TENANT" | "LANDLORD"
+) {
+  const clientId = process.env.GOOGLE_CLIENT_ID;
+  if (!clientId) {
+    throw new GoogleAuthenticationError("Google sign-in is not configured", 503);
+  }
+
+  let payload;
+  try {
+    const ticket = await googleOAuthClient.verifyIdToken({
+      idToken: credential,
+      audience: clientId,
+    });
+    payload = ticket.getPayload();
+  } catch {
+    throw new GoogleAuthenticationError("Google credential is invalid or expired", 401);
+  }
+
+  if (!payload?.sub || !payload.email || payload.email_verified !== true) {
+    throw new GoogleAuthenticationError(
+      "A Google account with a verified email address is required",
+      403
+    );
+  }
+
+  let user = await findUserByGoogleId(payload.sub);
+  let created = false;
+
+  if (!user) {
+    const existingUser =
+      (await findUserByEmail(payload.email)) ??
+      (await findUserByEmailInsensitive(payload.email));
+    if (existingUser) {
+      if (existingUser.googleId && existingUser.googleId !== payload.sub) {
+        throw new GoogleAuthenticationError(
+          "This email is already linked to a different Google account",
+          409
+        );
+      }
+
+      if (!existingUser.googleId) {
+        try {
+          await linkGoogleAccount(existingUser.id, payload.sub);
+        } catch (error) {
+          if (!isUniqueConstraintError(error)) throw error;
+        }
+      }
+      user = await findUserByGoogleId(payload.sub);
+      if (!user) {
+        throw new GoogleAuthenticationError(
+          "This Google account is already linked to another account",
+          409
+        );
+      }
+    } else {
+      if (!role) {
+        throw new GoogleAuthenticationError(
+          "No account is registered with this Google account. Create an account first.",
+          404
+        );
+      }
+
+      try {
+        user = await createGoogleUser({
+          email: payload.email,
+          googleId: payload.sub,
+          role: role === "LANDLORD" ? Role.LANDLORD : Role.TENANT,
+        });
+        created = true;
+      } catch (error) {
+        if (!isUniqueConstraintError(error)) throw error;
+
+        user = await findUserByGoogleId(payload.sub);
+        if (!user) {
+          const racedUser =
+            (await findUserByEmail(payload.email)) ??
+            (await findUserByEmailInsensitive(payload.email));
+          if (racedUser) {
+            if (racedUser.googleId && racedUser.googleId !== payload.sub) {
+              throw new GoogleAuthenticationError(
+                "This email is already linked to a different Google account",
+                409
+              );
+            }
+            if (!racedUser.googleId) {
+              try {
+                await linkGoogleAccount(racedUser.id, payload.sub);
+              } catch (linkError) {
+                if (!isUniqueConstraintError(linkError)) throw linkError;
+              }
+            }
+            user = await findUserByGoogleId(payload.sub);
+          }
+        }
+        if (!user) throw error;
+      }
+    }
+  }
+
+  if (user.accountState === "SUSPENDED") {
+    throw new GoogleAuthenticationError("This account is suspended", 403);
+  }
+
+  return {
+    user,
+    ...(await createLoginSession(user)),
+    created,
+  };
+}
+
+async function createLoginSession(user: { id: string; email: string; role: string }) {
   const accessToken = signAccessToken({
     userId: user.id,
     email: user.email,
     role: user.role,
   });
-
-  // 4. Create the REFRESH token (7 days, only for getting new access tokens)
   const refreshToken = signRefreshToken({ userId: user.id });
-
-  // 5. Remember this refresh token so we can revoke it on logout.
-  //    We store a HASH, never the raw token.
   const expiresAt = new Date();
-  expiresAt.setDate(expiresAt.getDate() + 7); // 7 days from now
+  expiresAt.setDate(expiresAt.getDate() + 7);
 
   await createSession({
     userId: user.id,
@@ -69,8 +200,16 @@ export async function loginUser(data: { email: string; password: string }) {
     expiresAt,
   });
 
-  // 6. Give the client everything they need
-  return { user, accessToken, refreshToken };
+  return { accessToken, refreshToken };
+}
+
+function isUniqueConstraintError(error: unknown): boolean {
+  return (
+    typeof error === "object" &&
+    error !== null &&
+    "code" in error &&
+    error.code === "P2002"
+  );
 }
 
 // ------------------------------------------------------------

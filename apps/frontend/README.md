@@ -14,6 +14,16 @@ pnpm --filter @urbanrent/frontend dev
 Set `NEXT_PUBLIC_API_URL` to the backend URL including `/api`, for example
 `http://localhost:5000/api`. The backend must be running for API-backed pages.
 
+## Google sign-in
+
+Create a Google OAuth **Web application** client ID in Google Cloud Console and
+add the frontend origins that will show the Google button (for local
+development, `http://localhost:3000`; add the deployed frontend origin too).
+Use the same client ID for `NEXT_PUBLIC_GOOGLE_CLIENT_ID` in this app and
+`GOOGLE_CLIENT_ID` on the backend. The backend verifies the ID token's
+signature, audience, and verified email before creating or linking an account.
+No Google client secret is used by this flow.
+
 Useful checks:
 
 ```bash

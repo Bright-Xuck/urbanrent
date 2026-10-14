@@ -38,3 +38,5 @@ services:
         sync: false
       - key: API_BASE_URL
         value: https://urbanrent-api.onrender.com
+      - key: GOOGLE_CLIENT_ID
+        sync: false

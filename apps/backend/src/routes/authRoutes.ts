@@ -1,5 +1,5 @@
 import express from 'express';
-import { Register, Login, Refresh, Logout } from '../controllers/authController.js';
+import { GoogleLogin, Register, Login, Refresh, Logout } from '../controllers/authController.js';
 import { loginLimiter, refreshLimiter, registerLimiter } from '../middleware/rateLimit.js';
 
 const router: express.Router = express.Router()
@@ -114,6 +114,90 @@ router.post('/register', registerLimiter, Register)
  *               $ref: '#/components/schemas/ErrorResponse'
  */
 router.post('/login', loginLimiter, Login)
+
+/**
+ * @swagger
+ * /api/auth/google:
+ *   post:
+ *     tags: [Authentication]
+ *     summary: Sign in or sign up with Google
+ *     description: Sends a Google Identity Services ID credential to the server for verification. A verified Google email matching an existing account is linked to that account. New accounts require a TENANT or LANDLORD role. The response sets the same Secure, HttpOnly RefreshToken cookie as password login.
+ *     requestBody:
+ *       required: true
+ *       content:
+ *         application/json:
+ *           schema:
+ *             type: object
+ *             required: [credential]
+ *             properties:
+ *               credential:
+ *                 type: string
+ *                 description: Google ID token returned as the credential by Google Identity Services.
+ *               role:
+ *                 type: string
+ *                 enum: [TENANT, LANDLORD]
+ *                 description: Required only when creating a new UrbanRent account.
+ *     responses:
+ *       200:
+ *         description: Existing account authenticated.
+ *         headers:
+ *           Set-Cookie:
+ *             description: Secure, HttpOnly RefreshToken cookie scoped to /api/auth.
+ *             schema:
+ *               type: string
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/AuthResult'
+ *       201:
+ *         description: New account created and authenticated.
+ *         headers:
+ *           Set-Cookie:
+ *             description: Secure, HttpOnly RefreshToken cookie scoped to /api/auth.
+ *             schema:
+ *               type: string
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/AuthResult'
+ *       400:
+ *         description: Missing credential or invalid account role.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       401:
+ *         description: Google credential is invalid or expired.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       403:
+ *         description: Google email is not verified or UrbanRent account is suspended.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       404:
+ *         description: No existing account was found and no role was supplied to create one.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       409:
+ *         description: Google identity or email is already linked to another account.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ *       503:
+ *         description: Google sign-in is not configured on this server.
+ *         content:
+ *           application/json:
+ *             schema:
+ *               $ref: '#/components/schemas/ErrorResponse'
+ */
+router.post('/google', loginLimiter, GoogleLogin)
 
 /**
  * @swagger

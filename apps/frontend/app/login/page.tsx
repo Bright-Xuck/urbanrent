@@ -8,6 +8,8 @@ import { login } from "../../api/userApi";
 import { useAuthStore } from "../../Store/useUserStore";
 import { Input } from "../../components/ui/Fields";
 import Alert from "../../components/ui/Alert";
+import { AuthShell } from "../../components/auth/AuthShell";
+import { GoogleAuthButton } from "../../components/auth/GoogleAuthButton";
 
 export default function LoginPage() {
   const router = useRouter();
@@ -47,22 +49,22 @@ export default function LoginPage() {
   }
 
   return (
-    <div className="auth-wrap">
-      <div className="auth-card">
-        <div className="auth-brand">
-          <span className="mark">UR</span>
-          <span className="font-display text-lg text-ink">UrbanRent</span>
-        </div>
-
-        <h1>Log in to your account</h1>
+    <AuthShell>
+        <span className="auth-form-eyebrow">WELCOME BACK</span>
+        <h1>Sign in to UrbanRent</h1>
         <p className="muted">
           New here?{" "}
           <Link href="/register" className="link">
-            Create an account
+            Create an account <span aria-hidden="true">→</span>
           </Link>
         </p>
 
-        <form className="mt-6" onSubmit={handleSubmit}>
+        <div className="auth-provider">
+          <GoogleAuthButton mode="login" />
+        </div>
+        <div className="auth-divider"><span>or continue with email</span></div>
+
+        <form className="auth-form" onSubmit={handleSubmit}>
           <Input
             name="email"
             label="Email"
@@ -85,10 +87,9 @@ export default function LoginPage() {
 
           <button type="submit" disabled={pending} className="btn btn-block">
             <LogIn className="h-4 w-4" aria-hidden />
-            {pending ? "Logging in…" : "Log in"}
+            {pending ? "Signing in…" : "Sign in"}
           </button>
         </form>
-      </div>
-    </div>
+    </AuthShell>
   );
 }

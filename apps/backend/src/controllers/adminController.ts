@@ -57,7 +57,7 @@ export async function GetUserById(req: Request, res: Response) {
 
   try {
     const user = await getUserById(id);
-    const { passwordHash, ...safeUser } = user;
+    const { passwordHash, googleId, ...safeUser } = user;
     res.status(200).json({ user: safeUser });
   } catch (error) {
     if (error instanceof Error && error.message === "User not found") {
@@ -97,7 +97,7 @@ async function changeAccountState(req: Request, res: Response, action: "suspend"
         ? await suspendUser(adminId, id)
         : await reinstateUser(adminId, id);
 
-    const { passwordHash, ...safeUser } = user;
+    const { passwordHash, googleId, ...safeUser } = user;
     const message =
       action === "suspend" ? "User suspended successfully" : "User reinstated successfully";
     res.status(200).json({ message, user: safeUser });
